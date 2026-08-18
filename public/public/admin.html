@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OEN OPTİK - Ürün Yönetimi</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="glasses-container">
+        <div class="glasses-orbit">
+          <div class="glasses-item glasses-classic" style="top:10%;left:50%;">
+            <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
+              <path d="M15 4C11 4 8 7 8 11C8 15 11 18 15 18H17L18 12L15 10" stroke="#60a5fa" stroke-width="2" fill="rgba(96,165,250,0.15)"/>
+              <path d="M45 4C49 4 52 7 52 11C52 15 49 18 45 18H43L42 12L45 10" stroke="#60a5fa" stroke-width="2" fill="rgba(96,165,250,0.15)"/>
+              <path d="M18 12C18 10 20 9 22 9H38C40 9 42 10 42 12" stroke="#60a5fa" stroke-width="2" fill="none"/>
+              <line x1="8" y1="10" x2="2" y2="8" stroke="#60a5fa" stroke-width="2"/>
+              <line x1="52" y1="10" x2="58" y2="8" stroke="#60a5fa" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="glasses-orbit">
+          <div class="glasses-item glasses-sun" style="top:50%;left:90%;">
+            <svg width="56" height="22" viewBox="0 0 56 22" fill="none">
+              <path d="M14 3C10 3 7 6 7 11C7 16 10 19 14 19H16L17 11L14 9" stroke="#f59e0b" stroke-width="2" fill="rgba(245,158,11,0.2)"/>
+              <path d="M42 3C46 3 49 6 49 11C49 16 46 19 42 19H40L39 11L42 9" stroke="#f59e0b" stroke-width="2" fill="rgba(245,158,11,0.2)"/>
+              <path d="M17 11C17 9.5 19 8.5 21 8.5H35C37 8.5 39 9.5 39 11" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <line x1="7" y1="9" x2="1" y2="7" stroke="#f59e0b" stroke-width="2"/>
+              <line x1="49" y1="9" x2="55" y2="7" stroke="#f59e0b" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="glasses-orbit">
+          <div class="glasses-item glasses-sport" style="top:85%;left:50%;">
+            <svg width="64" height="20" viewBox="0 0 64 20" fill="none">
+              <path d="M12 2C8 2 5 5 5 10C5 15 8 18 12 18H14L16 10L12 7" stroke="#22c55e" stroke-width="2" fill="rgba(34,197,94,0.15)"/>
+              <path d="M52 2C56 2 59 5 59 10C59 15 56 18 52 18H50L48 10L52 7" stroke="#22c55e" stroke-width="2" fill="rgba(34,197,94,0.15)"/>
+              <path d="M16 10L22 8H42L48 10" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <line x1="5" y1="7" x2="0" y2="5" stroke="#22c55e" stroke-width="2"/>
+              <line x1="59" y1="7" x2="64" y2="5" stroke="#22c55e" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="loading-logo-center"><span>OEN</span></div>
+      </div>
+      <div class="loading-text">OEN OPTİK</div>
+      <div class="loading-subtext">Ürünler Yükleniyor...</div>
+      <div class="loading-bar-container"><div class="loading-bar"></div></div>
+    </div>
+  </div>
+  <header class="header">
+    <div class="header-left">
+      <img src="assets/oen.jpg" alt="OEN OPTİK" class="logo">
+      <div class="brand">
+        <span class="brand-name">OEN OPTİK</span>
+        <span class="brand-sub">Eyewear</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <nav class="nav">
+        <button class="nav-btn" onclick="navigate('index.html')">📋 Sipariş Kaydı</button>
+        <button class="nav-btn" onclick="navigate('list.html')">📑 Sipariş Listesi</button>
+        <button class="nav-btn active" onclick="navigate('admin.html')">🏷️ Ürün Yönetimi</button>
+        <button class="nav-btn" onclick="navigate('kasa.html')">💰 Kasa</button>
+        <button class="nav-btn" onclick="openBackupModal()">💾 Yedekler</button>
+        <button class="nav-btn" onclick="location.reload()" title="Sayfayı Yenile">🔄</button>
+      </nav>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir"></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="form-grid">
+      <!-- Sol Kolon: Kategoriler -->
+      <div class="form-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📂 Kategoriler</h2>
+            <button class="btn btn-primary btn-sm" onclick="openKategoriModal()">+ Yeni Kategori</button>
+          </div>
+          <div id="kategoriListesi" class="table-container"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🛒 Tarihe Göre Satılan Ürünler</h2>
+          </div>
+          <div class="form-row" style="margin-bottom: 12px;">
+            <div class="form-group" style="flex: 1;">
+              <label>Tarih Seçin</label>
+              <input type="date" id="satisTarihFiltre" onchange="satisTarihiUrunleri()">
+            </div>
+          </div>
+          <div id="satisUrunListesi" class="table-container" style="max-height: 400px; overflow-y: auto;">
+            <div style="text-align: center; color: var(--text-muted); padding: 12px;">Bir tarih seçin</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sag Kolon: Urunler -->
+      <div class="form-section">
+        <div class="card">
+          <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; gap: 4px;">
+              <button class="btn btn-sm admin-tab-btn active" id="tabUrunler" onclick="adminTabAc('urunler')">🏷️ Ürünler</button>
+              <button class="btn btn-sm admin-tab-btn" id="tabTopluStok" onclick="adminTabAc('toplustok')">📦 Toplu Stok Girişi</button>
+              <button class="btn btn-sm admin-tab-btn" id="tabStokSayim" onclick="adminTabAc('stoksayim')">📋 Stok Sayım</button>
+              <button class="btn btn-sm admin-tab-btn" id="tabUTS" onclick="adminTabAc('uts')">🔬 UTS Ürünleri Eşitle</button>
+            </div>
+            <div id="tabUrunlerBtns" style="display: flex; gap: 4px;">
+              <button id="urunDetayToggleBtn" class="btn btn-outline btn-sm" onclick="toggleUrunDetay()">📋 Ürün Detayları</button>
+              <button class="btn btn-primary btn-sm" onclick="openUrunModal()">+ Yeni Ürün</button>
+            </div>
+          </div>
+
+          <!-- Ürünler Sekmesi -->
+          <div id="panelUrunler">
+            <div class="search-panel" style="margin-bottom: 16px;">
+              <div class="form-group" style="flex: 1;">
+                <label>Kategori Filtresi</label>
+                <select id="kategoriFiltre" onchange="filterUrunler()">
+                  <option value="">Tüm Kategoriler</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label>Arama</label>
+                <input type="text" id="urunArama" placeholder="Ürün adı ara..." oninput="debouncedFilterUrunler()">
+              </div>
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-danger btn-sm" onclick="stokSilOnay()">🗑️ Tüm Stoğu Sil</button>
+              </div>
+            </div>
+            <div id="urunListesi" class="table-container"></div>
+            <div id="urunPagination" class="pagination-container"></div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-success btn-sm" onclick="seciliUrunleriYazdir()"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Seçili Ürünleri Yazdır (<span id="seciliUrunAdet">0</span>)</button>
+              <button class="btn btn-outline btn-sm" onclick="seciliUrunler.clear();seciliUrunAdetGuncelle();renderUrunler();">✕ Seçimi Kaldır</button>
+            </div>
+          </div>
+
+          <!-- Toplu Stok Girişi Sekmesi -->
+          <div id="panelTopluStok" style="display: none;">
+            <div id="topluStokListesi" class="table-container"></div>
+            <div style="padding: 16px; text-align: right; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+              <button class="btn btn-success btn-sm" onclick="tumunuYazdir('toplustok')"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Tümünü Yazdır</button>
+              <button class="btn btn-primary" onclick="topluStokOnayla()">✅ Toplu Stok Girişini Onayla</button>
+            </div>
+          </div>
+
+          <!-- Stok Sayım Sekmesi -->
+          <div id="panelStokSayim" style="display: none;">
+            <div style="padding:16px;">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                <select id="stokSayimKategori" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;min-width:150px;">
+                  <option value="">Tum Kategoriler</option>
+                </select>
+                <input type="text" id="stokSayimUrunAra" placeholder="Urun adi girin..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;min-width:200px;" onkeydown="if(event.key==='Enter'){stokSayimFiltreleUrunler();}">
+                <button class="btn btn-primary btn-sm" onclick="stokSayimFiltreleUrunler()">Filtrele</button>
+                <button class="btn btn-outline btn-sm" onclick="stokSayimFiltreTemizle()">Temizle</button>
+                <span id="stokSayimFiltreBilgi" style="font-size:0.75rem;color:var(--color-primary);font-weight:600;"></span>
+              </div>
+              <div id="stokSayimFiltreListesi" style="max-height:200px;overflow-y:auto;margin-bottom:12px;display:none;"></div>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                <input type="text" id="stokSayimBarkod" placeholder="Barkod okutun..." autofocus
+                  style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font-size:0.9rem;"
+                  onkeydown="if(event.key==='Enter'){stokSayimUrunEkle();}">
+                <button class="btn btn-primary btn-sm" onclick="stokSayimUrunEkle()">Ekle</button>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                <button class="btn btn-success btn-sm" onclick="stokSayimGozdenGecir()">Gozden Gecir</button>
+                <button class="btn btn-primary btn-sm" onclick="stokSayimiEsitle()">Sayimi Esitle</button>
+                <button class="btn btn-outline btn-sm" onclick="stokSayimiTemizle()">Listeyi Temizle</button>
+                <span id="stokSayimSayac" style="font-size:0.8rem;color:var(--text-secondary);margin-left:auto;"></span>
+              </div>
+              <div id="stokSayimListesi" style="max-height:400px;overflow-y:auto;"></div>
+              <div id="stokSayimFark" style="display:none;margin-top:16px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);"></div>
+            </div>
+          </div>
+
+          <!-- UTS Ürünleri Eşitle Sekmesi -->
+          <div id="panelUTS" style="display: none;">
+            <div style="padding: 20px; text-align: center;">
+              <div style="margin-bottom: 16px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 8px;">🔬 UTS Ürün Eşitleme</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">
+                  UTS (Ulusal Takip Sistemi) üzerinden ürün listesini çekmek için aşağıdaki butona tıklayın.<br>
+                  E-Devlet şifreniz ile giriş yapmanız gerekecektir.
+                </p>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                  <button class="btn btn-primary" onclick="utsPenceresiAc()" id="utsAcBtn">
+                    🌐 UTS Sayfasını Aç
+                  </button>
+                  <button class="btn btn-outline" onclick="openCredentialModal()">
+                    ⚙️ Giriş Bilgilerini Kaydet
+                  </button>
+                  <button class="btn btn-success" onclick="utsVerileriCek()" id="utsVeriCekBtn">
+                    📥 UTS Verilerini Çek
+                  </button>
+                  <button class="btn btn-primary" onclick="utsStogaKaydet()" id="utsStogaKaydetBtn">
+                    📦 Stoğa Kaydet
+                  </button>
+                </div>
+              </div>
+              <div id="utsDurum" style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; display: none;">
+                <div id="utsDurumText" style="color: var(--text-secondary); font-size: 0.85rem;"></div>
+              </div>
+              <div id="utsUrunTablosu" style="margin-top: 16px; text-align: left;"></div>
+            </div>
+
+            <!-- Çekilen UTS Verileri -->
+            <div style="padding: 0 20px 20px 20px;">
+              <div class="card" style="margin-top: 16px;">
+                <div class="card-header">
+                  <h2 class="card-title">📋 Çekilen UTS Alım Verileri</h2>
+                  <button class="btn btn-danger btn-sm" onclick="utsVerileriTemizle()">🗑️ Tümünü Sil</button>
+                </div>
+                <div id="utsAlimListesi" class="table-container" style="max-height: 400px; overflow-y: auto;">
+                  <div style="text-align: center; color: var(--text-muted); padding: 12px;">Henüz veri çekilmedi</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Kategori Modal -->
+  <div id="kategoriModal" class="modal-overlay">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="kategoriModalTitle">Yeni Kategori</h3>
+        <button class="modal-close" onclick="closeKategoriModal()">&times;</button>
+      </div>
+      <input type="hidden" id="kategoriId">
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Kategori Adı</label>
+        <input type="text" id="kategoriAdi" placeholder="Örn: Optik Çerçeve">
+      </div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-primary" onclick="saveKategori()">💾 Kaydet</button>
+        <button class="btn btn-outline" onclick="closeKategoriModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ürün Modal -->
+  <div id="urunModal" class="modal-overlay">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="urunModalTitle">Yeni Ürün</h3>
+        <button class="modal-close" onclick="closeUrunModal()">&times;</button>
+      </div>
+      <input type="hidden" id="urunId">
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Kategori</label>
+        <select id="urunKategori"></select>
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Ürün Adı</label>
+        <input type="text" id="urunAdi" placeholder="Örn: Ray-Ban RB2140">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Alış Fiyatı (₺)</label>
+        <input type="number" id="urunAlisFiyat" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Satış Fiyatı (₺)</label>
+        <input type="number" id="urunFiyat" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Adet</label>
+        <input type="number" id="urunAdet" step="1" min="0" placeholder="0">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Menşei</label>
+        <input type="text" id="urunMensei" placeholder="Örn: Türkiye, İtalya, Çin">
+      </div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-primary" onclick="saveUrun()">💾 Kaydet</button>
+        <button class="btn btn-outline" onclick="closeUrunModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yedek Modal -->
+  <div id="backupModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">💾 Yedek Yönetimi</h3>
+        <button class="modal-close" onclick="closeBackupModal()">&times;</button>
+      </div>
+      <div class="btn-group" style="margin-bottom: 16px;">
+        <button class="btn btn-primary btn-sm" onclick="createBackup()">+ Yeni Yedek Al</button>
+        <button class="btn btn-outline btn-sm" onclick="openBackupFolder()">📁 Klasörü Aç</button>
+      </div>
+      <div id="backupList" class="table-container"></div>
+    </div>
+  </div>
+
+  <!-- Şifre Modal -->
+  <div id="sifreModal" class="modal-overlay">
+    <div class="modal" style="max-width: 350px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Şifre Gerekli</h3>
+        <button class="modal-close" onclick="closeSifreModal()">&times;</button>
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Şifre</label>
+        <input type="password" id="sifreGiris" placeholder="Şifreyi girin">
+      </div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-danger" onclick="sifreOnayla()">✅ Onayla</button>
+        <button class="btn btn-outline" onclick="closeSifreModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Etiket Yazdırma Modal -->
+  <div id="etiketModal" class="modal-overlay">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Karekod Etiket Yazdır</h3>
+        <button class="modal-close" onclick="closeEtiketModal()">&times;</button>
+      </div>
+      <div id="etiketUrunBilgisi" style="margin-bottom:12px;padding:8px;background:var(--bg-secondary);border-radius:var(--radius);font-size:0.75rem;"></div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Karekod (QR Verisi)</label>
+        <input type="text" id="etiketKarekod" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;" onchange="etiketOnizlemeGuncelle()">
+      </div>
+      <div class="form-row-3" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label>Yazıcı Tipi</label>
+          <select id="etiketSayfaBoyutu" onchange="etiketOnizlemeGuncelle()">
+            <option value="termal">Termal Rulo (Argox, Zebra vb.)</option>
+            <option value="A4">A4 Kağıt (210x297mm)</option>
+            <option value="A5">A5 Kağıt (148x210mm)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Etiket Genişliği (mm)</label>
+          <input type="number" id="etiketGenislik" value="70" min="20" max="200" onchange="etiketOnizlemeGuncelle()">
+        </div>
+        <div class="form-group">
+          <label>Etiket Yüksekliği (mm)</label>
+          <input type="number" id="etiketYukseklik" value="40" min="15" max="150" onchange="etiketOnizlemeGuncelle()">
+        </div>
+      </div>
+      <div class="form-row-3" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label>Etiketler Arası Boşluk (mm)</label>
+          <input type="number" id="etiketBoslukY" value="3" min="0" max="20" onchange="etiketOnizlemeGuncelle()">
+        </div>
+        <div class="form-group">
+          <label>Etiket Adedi</label>
+          <input type="number" id="etiketAdet" value="1" min="1" max="500">
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.65rem;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.3px;">Önizleme</label>
+        <div id="etiketOnizleme" style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--bg-secondary);min-height:120px;display:flex;align-items:center;justify-content:center;overflow:auto;"></div>
+      </div>
+      <div class="action-bar" style="border:none;padding:0;">
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+          <select id="etiketYaziciSec" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.75rem;background:var(--bg-secondary);color:var(--text);min-width:180px;">
+            <option value="">Yazıcı yükleniyor...</option>
+          </select>
+          <button class="btn btn-warning btn-sm" onclick="etiketTasarlamaAc()">🎨 Etiket Tasarlama</button>
+          <button class="btn btn-primary" onclick="etiketYazdir()">🖨️ Yazdır</button>
+        </div>
+        <button class="btn btn-outline" onclick="closeEtiketModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Etiket Tasarım Modal -->
+  <div id="etiketTasarimModal" class="modal-overlay">
+    <div class="modal" style="max-width:900px;max-height:95vh;overflow-y:auto;">
+      <div class="modal-header">
+        <h3 class="modal-title">🎨 Etiket Tasarımı</h3>
+        <button class="modal-close" onclick="etiketTasarlamaKapat()">&times;</button>
+      </div>
+      <div style="display:flex;gap:10px;min-height:420px;">
+        <!-- Sol Panel: Eleman Listesi -->
+        <div style="width:160px;flex-shrink:0;border-right:1px solid var(--border);padding-right:10px;overflow-y:auto;max-height:400px;">
+          <div style="font-size:0.65rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.3px;">Elemanlar</div>
+          <div id="etiketElemanListesi" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:8px;">
+            <div style="font-size:0.65rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;">Seçili Eleman</div>
+            <div id="etiketElemanAyarlari" style="font-size:0.7rem;color:var(--text-muted);">Bir eleman seçin</div>
+          </div>
+        </div>
+        <!-- Orta: Tasarım Alanı -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;">
+          <div style="font-size:0.6rem;color:var(--text-muted);margin-bottom:6px;">Sürükle & bırak ile yerleştirin. Çift tıklayarak silin.</div>
+          <div id="etiketTasarimAlani" style="position:relative;border:2px dashed var(--border);border-radius:6px;background:white;cursor:crosshair;overflow:visible;flex-shrink:0;"></div>
+        </div>
+        <!-- Sağ Panel: Boyut & Kaydet -->
+        <div style="width:140px;flex-shrink:0;border-left:1px solid var(--border);padding-left:10px;">
+          <div style="font-size:0.65rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;">Etiket Boyutu</div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>Genişlik (mm)</label>
+            <input type="number" id="tasarimGenislik" value="70" min="20" max="200" onchange="etiketTasarimAlaniGuncelle()">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>Yükseklik (mm)</label>
+            <input type="number" id="tasarimYukseklik" value="40" min="15" max="150" onchange="etiketTasarimAlaniGuncelle()">
+          </div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:4px;">
+            <button class="btn btn-primary btn-sm" onclick="etiketTasarakimKaydet()" style="width:100%;">💾 Kaydet</button>
+            <button class="btn btn-outline btn-sm" onclick="etiketTasarimSifirla()" style="width:100%;">🔄 Sıfırla</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onay Modal -->
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirmModalTitle">Onay</h3>
+        <button class="modal-close" onclick="resolveConfirm(false)">&times;</button>
+      </div>
+      <div id="confirmModalBody" style="padding: 0 0 16px 0; line-height: 1.6; white-space: pre-line;"></div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-danger" id="confirmModalOk" onclick="resolveConfirm(true)">✅ Evet</button>
+        <button class="btn btn-outline" onclick="resolveConfirm(false)">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UTS Giriş Bilgileri Modal -->
+  <div id="credentialModal" class="modal-overlay">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 UTS Giriş Bilgileri</h3>
+        <button class="modal-close" onclick="closeCredentialModal()">&times;</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+        E-Devlet giriş bilgileriniz güvenli şekilde kaydedilir.
+      </p>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>TC Kimlik No</label>
+        <input type="text" id="credTc" maxlength="11" placeholder="11 haneli TC Kimlik No">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>E-Devlet Şifresi</label>
+        <input type="password" id="credSifre" placeholder="E-Devlet şifreniz">
+      </div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-primary" onclick="credentialKaydet()">💾 Kaydet</button>
+        <button class="btn btn-outline" onclick="closeCredentialModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UTS Şifre Modal -->
+  <div id="utsSifreModal" class="modal-overlay">
+    <div class="modal" style="max-width: 350px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Şifre Gerekli</h3>
+        <button class="modal-close" onclick="closeUtsSifreModal()">&times;</button>
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Şifre</label>
+        <input type="password" id="utsSifreGiris" placeholder="Şifreyi girin" onkeydown="if(event.key==='Enter'){utsSifreOnayla();}">
+      </div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-primary" onclick="utsSifreOnayla()">✅ Onayla</button>
+        <button class="btn btn-outline" onclick="closeUtsSifreModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

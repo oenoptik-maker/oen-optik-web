@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OEN OPTİK - Sipariş Listesi</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="glasses-container">
+        <div class="glasses-orbit">
+          <div class="glasses-item glasses-classic" style="top:10%;left:50%;">
+            <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
+              <path d="M15 4C11 4 8 7 8 11C8 15 11 18 15 18H17L18 12L15 10" stroke="#60a5fa" stroke-width="2" fill="rgba(96,165,250,0.15)"/>
+              <path d="M45 4C49 4 52 7 52 11C52 15 49 18 45 18H43L42 12L45 10" stroke="#60a5fa" stroke-width="2" fill="rgba(96,165,250,0.15)"/>
+              <path d="M18 12C18 10 20 9 22 9H38C40 9 42 10 42 12" stroke="#60a5fa" stroke-width="2" fill="none"/>
+              <line x1="8" y1="10" x2="2" y2="8" stroke="#60a5fa" stroke-width="2"/>
+              <line x1="52" y1="10" x2="58" y2="8" stroke="#60a5fa" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="glasses-orbit">
+          <div class="glasses-item glasses-sun" style="top:50%;left:90%;">
+            <svg width="56" height="22" viewBox="0 0 56 22" fill="none">
+              <path d="M14 3C10 3 7 6 7 11C7 16 10 19 14 19H16L17 11L14 9" stroke="#f59e0b" stroke-width="2" fill="rgba(245,158,11,0.2)"/>
+              <path d="M42 3C46 3 49 6 49 11C49 16 46 19 42 19H40L39 11L42 9" stroke="#f59e0b" stroke-width="2" fill="rgba(245,158,11,0.2)"/>
+              <path d="M17 11C17 9.5 19 8.5 21 8.5H35C37 8.5 39 9.5 39 11" stroke="#f59e0b" stroke-width="2" fill="none"/>
+              <line x1="7" y1="9" x2="1" y2="7" stroke="#f59e0b" stroke-width="2"/>
+              <line x1="49" y1="9" x2="55" y2="7" stroke="#f59e0b" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="glasses-orbit">
+          <div class="glasses-item glasses-sport" style="top:85%;left:50%;">
+            <svg width="64" height="20" viewBox="0 0 64 20" fill="none">
+              <path d="M12 2C8 2 5 5 5 10C5 15 8 18 12 18H14L16 10L12 7" stroke="#22c55e" stroke-width="2" fill="rgba(34,197,94,0.15)"/>
+              <path d="M52 2C56 2 59 5 59 10C59 15 56 18 52 18H50L48 10L52 7" stroke="#22c55e" stroke-width="2" fill="rgba(34,197,94,0.15)"/>
+              <path d="M16 10L22 8H42L48 10" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <line x1="5" y1="7" x2="0" y2="5" stroke="#22c55e" stroke-width="2"/>
+              <line x1="59" y1="7" x2="64" y2="5" stroke="#22c55e" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="loading-logo-center"><span>OEN</span></div>
+      </div>
+      <div class="loading-text">OEN OPTİK</div>
+      <div class="loading-subtext">Siparişler Yükleniyor...</div>
+      <div class="loading-bar-container"><div class="loading-bar"></div></div>
+    </div>
+  </div>
+  <header class="header">
+    <div class="header-left">
+      <img src="assets/oen.jpg" alt="OEN OPTİK" class="logo">
+      <div class="brand">
+        <span class="brand-name">OEN OPTİK</span>
+        <span class="brand-sub">Eyewear</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <nav class="nav">
+        <button class="nav-btn" onclick="navigate('index.html')">📋 Sipariş Kaydı</button>
+        <button class="nav-btn active" onclick="navigate('list.html')">📑 Sipariş Listesi</button>
+        <button class="nav-btn" onclick="navigate('admin.html')">🏷️ Ürün Yönetimi</button>
+        <button class="nav-btn" onclick="navigate('kasa.html')">💰 Kasa</button>
+        <button class="nav-btn" onclick="openBackupModal()">💾 Yedekler</button>
+        <button class="nav-btn" onclick="location.reload()" title="Sayfayı Yenile">🔄</button>
+      </nav>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir"></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🔍 Arama ve Filtreleme</h2>
+      </div>
+      <div class="search-panel">
+        <div class="form-group" style="flex: 2;">
+          <label>Genel Arama</label>
+          <input type="text" id="searchInput" placeholder="İsim, telefon, e-mail veya TC ile ara..." oninput="filterOrders()">
+        </div>
+        <div class="form-group">
+          <label>Başlangıç Tarihi</label>
+          <input type="date" id="dateFrom" onchange="filterOrders()">
+        </div>
+        <div class="form-group">
+          <label>Bitiş Tarihi</label>
+          <input type="date" id="dateTo" onchange="filterOrders()">
+        </div>
+        <div class="form-group">
+          <label>Ödeme Tipi</label>
+          <select id="filterOdeme" onchange="filterOrders()">
+            <option value="">Tümü</option>
+            <option value="Nakit">Nakit</option>
+            <option value="Kredi Kartı">Kredi Kartı</option>
+            <option value="KK Taksitli">KK Taksitli</option>
+            <option value="Mail Order">Mail Order</option>
+            <option value="Havale">Havale</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" onclick="filterOrders()">🔍 Ara</button>
+            <button class="btn btn-outline btn-sm" onclick="clearFilters()">✕ Temizle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">📑 Siparişler</h2>
+        <div class="btn-group">
+          <button id="selectionToggleBtn" class="btn btn-outline btn-sm" onclick="toggleSelectionMode()">☑️ Seçim</button>
+          <button class="btn btn-outline btn-sm" onclick="exportFilteredToExcel()">📊 Excel'e Aktar</button>
+          <button class="btn btn-outline btn-sm" onclick="loadOrders()">🔄 Yenile</button>
+        </div>
+      </div>
+      <div class="table-container" style="max-height: 600px; overflow-y: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th id="checkboxHeader" style="display: none; width: 40px;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleAllSelections(this.checked)"></th>
+              <th>Sıra No</th>
+              <th>Adı Soyadı</th>
+              <th>TC Kimlik</th>
+              <th>Telefon</th>
+              <th>Sipariş Tarihi</th>
+              <th>Teslim Tarihi</th>
+              <th>Ödeme</th>
+              <th>Toplam</th>
+              <th>Kalan</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="orderTableBody">
+          </tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-text">Henüz sipariş kaydı bulunmuyor.</div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <div id="recordCount" style="color: var(--text-secondary); font-size: 0.85rem;">
+          Toplam 0 kayıt
+        </div>
+        <div class="btn-group">
+          <button id="printSelectedBtn" class="btn btn-primary btn-sm" style="display: none;" onclick="printSelectedPreview()">🖨️ Yazdır</button>
+          <button id="deleteSelectedBtn" class="btn btn-danger btn-sm" style="display: none;" onclick="deleteSelected()">🗑️ Seçilenleri Sil</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Detay Modal -->
+  <div id="detailModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 Sipariş Detayı</h3>
+        <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+      </div>
+      <div id="detailContent"></div>
+      <div class="action-bar">
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" onclick="printDetail()">🖨️ Yazdır</button>
+          <button class="btn btn-outline btn-sm" onclick="editOrderFromDetail()">✏️ Düzenle</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteOrderFromDetail()">🗑️ Sil</button>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="closeDetailModal()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yedek Modal -->
+  <div id="backupModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">💾 Yedek Yönetimi</h3>
+        <button class="modal-close" onclick="closeBackupModal()">&times;</button>
+      </div>
+      <div class="btn-group" style="margin-bottom: 16px;">
+        <button class="btn btn-primary btn-sm" onclick="createBackup()">+ Yeni Yedek Al</button>
+        <button class="btn btn-outline btn-sm" onclick="openBackupFolder()">📁 Klasörü Aç</button>
+      </div>
+      <div id="backupList" class="table-container"></div>
+    </div>
+  </div>
+
+  <!-- Yazdırma Önizleme Modal -->
+  <div id="printPreviewModal" class="modal-overlay">
+    <div class="modal" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🖨️ Yazdırma Önizleme</h3>
+        <button class="modal-close" onclick="closePrintPreview()">&times;</button>
+      </div>
+      <div id="printPreviewContent" style="max-height: 500px; overflow-y: auto; margin-bottom: 16px;"></div>
+      <div class="action-bar">
+        <div class="btn-group">
+          <button class="btn btn-success btn-sm" onclick="confirmPrint()">✅ Yazdır</button>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="closePrintPreview()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirmModalTitle">Onay</h3>
+        <button class="modal-close" onclick="resolveConfirm(false)">&times;</button>
+      </div>
+      <div id="confirmModalBody" style="padding: 0 0 16px 0; line-height: 1.6; white-space: pre-line;"></div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-danger" id="confirmModalOk" onclick="resolveConfirm(true)">✅ Evet</button>
+        <button class="btn btn-outline" onclick="resolveConfirm(false)">İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
