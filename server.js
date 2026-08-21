@@ -9,6 +9,7 @@ const { getDb, closeDb } = require('./db/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const IS_VERCEL = !!process.env.VERCEL;
 
 // Middleware
 app.use(helmet({
@@ -25,12 +26,11 @@ app.use(session({
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000
-});
-app.use('/api/', limiter);
+// Rate limiting (sadece yerelde)
+if (!IS_VERCEL) {
+  const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 });
+  app.use('/api/', limiter);
+}
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -73,27 +73,19 @@ app.get('/', (req, res) => {
   }
 });
 
-// Init DB and start server
-async function start() {
-  await getDb();
-  console.log('Veritabani baslatildi');
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`OEN OPTIK Web Sunucusu baslatildi!`);
-    console.log(`http://localhost:${PORT}`);
-    console.log(`Tum ag erisimi: http://0.0.0.0:${PORT}`);
-  });
+// Yerel sunucu baslat
+if (!IS_VERCEL) {
+  async function start() {
+    await getDb();
+    console.log('Veritabani baslatildi');
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`OEN OPTIK Web Sunucusu baslatildi!`);
+      console.log(`http://localhost:${PORT}`);
+    });
+  }
+  start();
+  process.on('SIGINT', () => { closeDb(); process.exit(0); });
+  process.on('SIGTERM', () => { closeDb(); process.exit(0); });
 }
 
-start();
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  closeDb();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  closeDb();
-  process.exit(0);
-});
+module.exports = app;

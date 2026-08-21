@@ -3,11 +3,12 @@
 
 async function apiFetch(url, options = {}) {
   try {
-    const response = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      ...options
-    });
+    const token = localStorage.getItem('oken_token');
+    const headers = { 'Content-Type': 'application/json', ...options.headers };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
+      localStorage.removeItem('oken_token');
       window.location.href = '/login.html';
       return null;
     }
@@ -44,6 +45,18 @@ window.api = {
   // ===== STOK İŞLEMLERİ =====
   topluStokRead: () => apiFetch('/api/stok/toplu'),
   topluStokOnayla: (veriler) => apiFetch('/api/stok/toplu-onayla', { method: 'POST', body: JSON.stringify(veriler) }),
+  topluStokYukle: (dosya) => {
+    const formData = new FormData();
+    formData.append('file', dosya);
+    const headers = {};
+    const token = localStorage.getItem('oken_token');
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return fetch('/api/stok/toplu-yukle', { method: 'POST', headers, body: formData })
+      .then(async r => {
+        if (r.status === 401) { localStorage.removeItem('oken_token'); window.location.href = '/login.html'; return null; }
+        return await r.json();
+      });
+  },
   stokGuncelle: (urunler) => apiFetch('/api/urunler/stok-guncelle', { method: 'PUT', body: JSON.stringify(urunler) }),
   stokAyarla: (urunler) => apiFetch('/api/urunler/stok-ayarla', { method: 'PUT', body: JSON.stringify(urunler) }),
 

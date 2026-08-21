@@ -17,7 +17,7 @@ const ORDER_COLUMNS = [
 router.get('/', async (req, res) => {
   try {
     await getDb();
-    const rows = dbAll('SELECT * FROM siparisler ORDER BY SIRA_NO DESC');
+    const rows = await dbAll('SELECT * FROM siparisler ORDER BY SIRA_NO DESC');
     res.json(rows);
   } catch (err) {
     console.error('Siparis okuma hatasi:', err);
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
 router.get('/sonraki-no', async (req, res) => {
   try {
     await getDb();
-    const row = dbGet('SELECT MAX(SIRA_NO) as maxNo FROM siparisler');
+    const row = await dbGet('SELECT MAX(SIRA_NO) as maxNo FROM siparisler');
     res.json(row && row.maxNo ? row.maxNo + 1 : 1);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -55,7 +55,7 @@ router.get('/ara', async (req, res) => {
       params.push(adSoyad.trim());
     }
 
-    const rows = dbAll(query, params);
+    const rows = await dbAll(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -67,17 +67,17 @@ router.post('/', async (req, res) => {
     await getDb();
     const orderData = req.body;
 
-    const existing = dbGet('SELECT SIRA_NO FROM siparisler WHERE SIRA_NO = ?', [orderData.SIRA_NO]);
+    const existing = await dbGet('SELECT SIRA_NO FROM siparisler WHERE SIRA_NO = ?', [orderData.SIRA_NO]);
 
     if (existing) {
       const setClauses = ORDER_COLUMNS.filter(c => c !== 'SIRA_NO').map(c => `${c} = ?`);
       const values = ORDER_COLUMNS.filter(c => c !== 'SIRA_NO').map(c => orderData[c] || '');
       values.push(orderData.SIRA_NO);
-      dbRun(`UPDATE siparisler SET ${setClauses.join(', ')} WHERE SIRA_NO = ?`, values);
+      await dbRun(`UPDATE siparisler SET ${setClauses.join(', ')} WHERE SIRA_NO = ?`, values);
     } else {
       const placeholders = ORDER_COLUMNS.map(() => '?').join(', ');
       const values = ORDER_COLUMNS.map(c => orderData[c] || '');
-      dbRun(`INSERT INTO siparisler (${ORDER_COLUMNS.join(', ')}) VALUES (${placeholders})`, values);
+      await dbRun(`INSERT INTO siparisler (${ORDER_COLUMNS.join(', ')}) VALUES (${placeholders})`, values);
     }
 
     res.json({ success: true });
@@ -90,7 +90,7 @@ router.post('/', async (req, res) => {
 router.delete('/:siraNo', async (req, res) => {
   try {
     await getDb();
-    dbRun('DELETE FROM siparisler WHERE SIRA_NO = ?', [parseInt(req.params.siraNo)]);
+    await dbRun('DELETE FROM siparisler WHERE SIRA_NO = ?', [parseInt(req.params.siraNo)]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -144,10 +144,14 @@
   </div>
 
   <script>
-    // Redirect if already logged in
-    fetch('/api/auth/durum').then(r => r.json()).then(data => {
-      if (data.loggedIn) window.location.href = '/index.html';
-    });
+    (function() {
+      var token = localStorage.getItem('oken_token');
+      var headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      fetch('/api/auth/durum', { headers: headers }).then(r => r.json()).then(data => {
+        if (data.loggedIn) window.location.href = '/index.html';
+      });
+    })();
 
     async function handleLogin(e) {
       e.preventDefault();
@@ -176,6 +180,7 @@
         const data = await response.json();
 
         if (data.success) {
+          if (data.token) localStorage.setItem('oken_token', data.token);
           window.location.href = '/index.html';
         } else {
           errorDiv.textContent = data.message || 'Giriş başarısız';

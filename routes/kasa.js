@@ -5,7 +5,7 @@ const { getDb, dbAll } = require('../db/database');
 router.get('/ozet', async (req, res) => {
   try {
     await getDb();
-    const rows = dbAll('SELECT * FROM siparisler');
+    const rows = await dbAll('SELECT * FROM siparisler');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -16,7 +16,7 @@ router.get('/filtrele', async (req, res) => {
   try {
     await getDb();
     const { baslangic, bitis } = req.query;
-    let rows = dbAll('SELECT * FROM siparisler');
+    let rows = await dbAll('SELECT * FROM siparisler');
 
     if (baslangic || bitis) {
       rows = rows.filter(s => {

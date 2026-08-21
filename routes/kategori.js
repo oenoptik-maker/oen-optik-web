@@ -5,7 +5,7 @@ const { getDb, dbAll, dbGet, dbRun } = require('../db/database');
 router.get('/', async (req, res) => {
   try {
     await getDb();
-    const rows = dbAll('SELECT * FROM kategoriler ORDER BY KATEGORI_ID');
+    const rows = await dbAll('SELECT * FROM kategoriler ORDER BY KATEGORI_ID');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 router.get('/sonraki-id', async (req, res) => {
   try {
     await getDb();
-    const row = dbGet('SELECT MAX(KATEGORI_ID) as maxId FROM kategoriler');
+    const row = await dbGet('SELECT MAX(KATEGORI_ID) as maxId FROM kategoriler');
     res.json(row && row.maxId ? row.maxId + 1 : 1);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -26,11 +26,11 @@ router.post('/', async (req, res) => {
   try {
     await getDb();
     const { KATEGORI_ID, KATEGORI_ADI } = req.body;
-    const existing = dbGet('SELECT KATEGORI_ID FROM kategoriler WHERE KATEGORI_ID = ?', [KATEGORI_ID]);
+    const existing = await dbGet('SELECT KATEGORI_ID FROM kategoriler WHERE KATEGORI_ID = ?', [KATEGORI_ID]);
     if (existing) {
-      dbRun('UPDATE kategoriler SET KATEGORI_ADI = ? WHERE KATEGORI_ID = ?', [KATEGORI_ADI, KATEGORI_ID]);
+      await dbRun('UPDATE kategoriler SET KATEGORI_ADI = ? WHERE KATEGORI_ID = ?', [KATEGORI_ADI, KATEGORI_ID]);
     } else {
-      dbRun('INSERT INTO kategoriler (KATEGORI_ID, KATEGORI_ADI) VALUES (?, ?)', [KATEGORI_ID, KATEGORI_ADI]);
+      await dbRun('INSERT INTO kategoriler (KATEGORI_ID, KATEGORI_ADI) VALUES (?, ?)', [KATEGORI_ID, KATEGORI_ADI]);
     }
     res.json({ success: true });
   } catch (err) {
@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await getDb();
-    dbRun('DELETE FROM kategoriler WHERE KATEGORI_ID = ?', [parseInt(req.params.id)]);
+    await dbRun('DELETE FROM kategoriler WHERE KATEGORI_ID = ?', [parseInt(req.params.id)]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

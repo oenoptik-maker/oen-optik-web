@@ -12,5 +12,5 @@
       "dest": "server.js"
     }
   ],
-  "installCommand": "npm install --ignore-optional && npm install better-sqlite3"
+  "installCommand": "npm install --ignore-optional"
 }
