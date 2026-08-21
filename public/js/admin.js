@@ -568,29 +568,116 @@ function adminTabAc(tab) {
 async function loadTopluStok() {
   topluStokVerileri = await window.api.topluStokRead();
   renderTopluStok();
+  initTopluStokDragDrop();
+}
+
+function initTopluStokDragDrop() {
+  const dz = document.getElementById('topluStokDropZone');
+  if (!dz || dz._initialized) return;
+  dz._initialized = true;
+
+  ['dragenter','dragover'].forEach(e => {
+    dz.addEventListener(e, (ev) => { ev.preventDefault(); ev.stopPropagation(); dz.style.borderColor = 'var(--color-primary)'; dz.style.background = 'var(--bg-secondary)'; });
+  });
+  ['dragleave','drop'].forEach(e => {
+    dz.addEventListener(e, (ev) => { ev.preventDefault(); ev.stopPropagation(); dz.style.borderColor = 'var(--border)'; dz.style.background = 'var(--bg-card)'; });
+  });
+  dz.addEventListener('drop', (ev) => {
+    const dosya = ev.dataTransfer.files[0];
+    if (dosya && (dosya.name.endsWith('.xlsx') || dosya.name.endsWith('.xls'))) {
+      topluStokDosyaYukle(dosya);
+    } else {
+      showToast('Lütfen .xlsx veya .xls dosyası seçin.', 'error');
+    }
+  });
+}
+
+function topluStokDosyaSec(input) {
+  if (input.files && input.files[0]) {
+    topluStokDosyaYukle(input.files[0]);
+  }
+}
+
+async function topluStokDosyaYukle(dosya) {
+  const durumDiv = document.getElementById('topluStokYuklemeDurum');
+  const durumText = document.getElementById('topluStokDurumText');
+  const durumBar = document.getElementById('topluStokDurumBar');
+  const durumProgress = document.getElementById('topluStokDurumProgress');
+  const dz = document.getElementById('topluStokDropZone');
+
+  durumDiv.style.display = 'block';
+  durumBar.style.display = 'block';
+  durumText.innerHTML = '⏳ <strong>' + dosya.name + '</strong> yükleniyor...';
+  durumProgress.style.width = '30%';
+  dz.style.borderColor = 'var(--color-primary)';
+
+  try {
+    const result = await window.api.topluStokYukle(dosya);
+    if (result && result.success) {
+      durumProgress.style.width = '100%';
+      durumText.innerHTML = '✅ <strong>' + dosya.name + '</strong> başarıyla yüklendi. <span style="color:var(--color-primary);font-weight:600;">' + result.count + ' kayıt</span> bulundu.';
+      dz.style.borderColor = '#22c55e';
+      await loadTopluStok();
+      setTimeout(() => {
+        durumDiv.style.display = 'none';
+        durumBar.style.display = 'none';
+        durumProgress.style.width = '0%';
+        dz.style.borderColor = 'var(--border)';
+        document.getElementById('topluStokDosyaInput').value = '';
+      }, 3000);
+    } else {
+      throw new Error(result ? result.message : 'Yükleme başarısız');
+    }
+  } catch (err) {
+    durumProgress.style.width = '100%';
+    durumProgress.style.background = '#ef4444';
+    durumText.innerHTML = '❌ Yükleme hatası: ' + err.message;
+    dz.style.borderColor = '#ef4444';
+    setTimeout(() => {
+      durumDiv.style.display = 'none';
+      durumBar.style.display = 'none';
+      durumProgress.style.width = '0%';
+      durumProgress.style.background = 'var(--color-primary)';
+      dz.style.borderColor = 'var(--border)';
+    }, 4000);
+  }
+}
+
+function topluStokTemizle() {
+  topluStokVerileri = [];
+  renderTopluStok();
+  showToast('Tablo temizlendi.', 'info');
 }
 
 function renderTopluStok() {
   const container = document.getElementById('topluStokListesi');
+  const onayBolumu = document.getElementById('topluStokOnayBolumu');
   if (topluStokVerileri.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Toplu stok dosyasında veri bulunamadı.</div></div>';
+    container.innerHTML = '';
+    if (onayBolumu) onayBolumu.style.display = 'none';
     return;
   }
+
+  if (onayBolumu) onayBolumu.style.display = 'flex';
 
   const rows = topluStokVerileri.map((u, i) => `
     <tr>
       <td>${u.ID || ''}</td>
       <td><span class="badge badge-pending">${u.Kategori || ''}</span></td>
       <td><input type="text" value="${u.KAREKOD || ''}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="topluStokKarekodKaydet(${i}, this.value)"></td>
-      <td><strong>${u['Ürün Adı'] || ''}</strong></td>
-      <td>₺${parseFloat(u['Alış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-      <td>₺${parseFloat(u['Satış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-      <td>${u['Menşei'] || '-'}</td>
+      <td><strong>${u['Urun Adi'] || u['Ürün Adı'] || ''}</strong></td>
+      <td>₺${parseFloat(u['Alis Fiyati'] || u['Alış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+      <td>₺${parseFloat(u['Satis Fiyati'] || u['Satış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+      <td>${u['Mensei'] || u['Menşei'] || '-'}</td>
       <td><input type="number" min="0" step="1" value="${u.Adet || 0}" style="width:70px;padding:4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);" onchange="topluStokAdetGuncelle(${i}, this.value)"></td>
     </tr>
   `).join('');
 
   container.innerHTML = `
+    <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;">
+      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi</span>
+      <span>Toplam adet: <strong>${topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0)}</strong></span>
+    </div>
     <table class="data-table">
       <thead><tr><th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı</th><th>Satış Fiyatı</th><th>Menşei</th><th>Adet</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -614,6 +701,8 @@ async function topluStokOnayla() {
   const result = await window.api.topluStokOnayla(girilenler);
   if (result.success) {
     showToast(`Toplu stok girişi tamamlandı: ${result.eklenen} yeni ürün eklendi, ${result.guncellenen} ürün güncellendi.`, 'success');
+    topluStokVerileri = [];
+    renderTopluStok();
     await loadUrunler();
     adminTabAc('urunler');
   } else {

@@ -6,6 +6,25 @@ const XLSX = require('xlsx');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+function getVal(item, ...keys) {
+  for (const k of keys) {
+    if (item[k] !== undefined && item[k] !== '') return item[k];
+  }
+  return '';
+}
+
+function normalizeItem(item) {
+  return {
+    Kategori: getVal(item, 'Kategori', 'KATEGORI', 'kategori', 'Category'),
+    KAREKOD: getVal(item, 'KAREKOD', 'karekod', 'Barkod', 'barkod', 'Kod'),
+    UrunAdi: getVal(item, 'Urun Adi', 'Ürün Adı', 'URUN_ADI', 'urun_adi', 'UrunAdi', 'ÜrünAdı', 'Product'),
+    AlisFiyati: parseFloat(getVal(item, 'Alis Fiyati', 'Alış Fiyatı', 'ALIS_FIYATI', 'alis_fiyati', 'AlisFiyati', 'AlışFiyatı', 'Cost')) || 0,
+    SatisFiyati: parseFloat(getVal(item, 'Satis Fiyati', 'Satış Fiyatı', 'SATIS_FIYATI', 'satis_fiyati', 'SatisFiyati', 'SatışFiyatı', 'Price')) || 0,
+    Mensei: getVal(item, 'Mensei', 'Menşei', 'MENSEI', 'mensei', 'Origin'),
+    Adet: parseInt(getVal(item, 'Adet', 'ADET', 'adet', 'Quantity')) || 0,
+  };
+}
+
 router.get('/toplu', async (req, res) => {
   try {
     await getDb();
@@ -25,18 +44,18 @@ router.post('/toplu-onayla', async (req, res) => {
     let guncellenen = 0;
     let eklenen = 0;
 
-    for (const item of stokVerileri) {
-      const adet = parseInt(item.Adet) || 0;
-      if (adet <= 0) continue;
+    for (const raw of stokVerileri) {
+      const item = normalizeItem(raw);
+      if (item.Adet <= 0) continue;
 
-      const mevcut = allProducts.find(p => p.URUN_ADI === item['Urun Adi'] && p.KATEGORI_ADI === item.Kategori);
+      const mevcut = allProducts.find(p => p.URUN_ADI === item.UrunAdi && p.KATEGORI_ADI === item.Kategori);
       if (mevcut) {
         await dbRun('UPDATE urunler SET ADET = ADET + ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
-          [adet, item.KAREKOD || '', item['Mensei'] || '', item['Urun Adi'], item.Kategori]);
+          [item.Adet, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]);
         guncellenen++;
       } else {
         await dbRun('INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          [nextId++, item.Kategori, item['Urun Adi'], parseFloat(item['Alis Fiyati']) || 0, parseFloat(item['Satis Fiyati']) || 0, adet, item.KAREKOD || '', item['Mensei'] || '']);
+          [nextId++, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]);
         eklenen++;
       }
     }
@@ -57,10 +76,11 @@ router.post('/toplu-yukle', upload.single('file'), async (req, res) => {
 
     await dbRun('DELETE FROM toplu_stok');
 
-    for (const item of data) {
+    for (const raw of data) {
+      const item = normalizeItem(raw);
       await dbRun(
         'INSERT INTO toplu_stok (KATEGORI, KAREKOD, URUN_ADI, ALIS_FIYATI, SATIS_FIYATI, MENSEI, ADET) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [item.Kategori || '', item.KAREKOD || '', item['Urun Adi'] || '', parseFloat(item['Alis Fiyati']) || 0, parseFloat(item['Satis Fiyati']) || 0, item['Mensei'] || '', parseInt(item.Adet) || 0]
+        [item.Kategori, item.KAREKOD, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Mensei, item.Adet]
       );
     }
 

@@ -143,10 +143,28 @@
 
           <!-- Toplu Stok Girişi Sekmesi -->
           <div id="panelTopluStok" style="display: none;">
+            <div id="topluStokYukleAlani" style="padding:20px;">
+              <div id="topluStokDropZone" onclick="document.getElementById('topluStokDosyaInput').click()" style="border:2px dashed var(--border);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.3s;background:var(--bg-card);">
+                <div id="dropZoneIkon" style="font-size:3rem;margin-bottom:12px;">📂</div>
+                <div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Excel dosyasını buraya sürükleyin</div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">veya tıklayarak dosya seçin</div>
+                <div style="font-size:0.75rem;color:var(--text-secondary);">.xlsx, .xls formatında</div>
+                <input type="file" id="topluStokDosyaInput" accept=".xlsx,.xls" style="display:none" onchange="topluStokDosyaSec(this)">
+              </div>
+              <div id="topluStokYuklemeDurum" style="display:none;margin-top:12px;padding:12px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);">
+                <div id="topluStokDurumText" style="font-size:0.85rem;color:var(--text-primary);"></div>
+                <div id="topluStokDurumBar" style="height:4px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;display:none;">
+                  <div id="topluStokDurumProgress" style="height:100%;background:var(--color-primary);width:0%;transition:width 0.3s;border-radius:2px;"></div>
+                </div>
+              </div>
+            </div>
             <div id="topluStokListesi" class="table-container"></div>
-            <div style="padding: 16px; text-align: right; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <div id="topluStokOnayBolumu" style="padding: 16px; text-align: right; border-top: 1px solid var(--border); display: none; justify-content: space-between; align-items: center;">
               <button class="btn btn-success btn-sm" onclick="tumunuYazdir('toplustok')"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Tümünü Yazdır</button>
-              <button class="btn btn-primary" onclick="topluStokOnayla()">✅ Toplu Stok Girişini Onayla</button>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-outline btn-sm" onclick="topluStokTemizle()">🗑️ Tabloyu Temizle</button>
+                <button class="btn btn-primary" onclick="topluStokOnayla()">✅ Toplu Stok Girişini Onayla</button>
+              </div>
             </div>
           </div>
 
