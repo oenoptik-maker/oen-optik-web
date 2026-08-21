@@ -104,7 +104,7 @@ async function initTables() {
     for (const stmt of tables) {
       db.client.run(stmt);
     }
-    saveDb();
+    if (!IS_VERCEL) saveDb();
   }
 
   // Ilk acilis: admin kullanici olustur
@@ -144,6 +144,7 @@ async function dbRun(sql, params = []) {
 }
 
 function saveDb() {
+  if (IS_VERCEL) return;
   if (dbType === 'sqljs' && db && db.client) {
     const data = db.client.export();
     const buffer = Buffer.from(data);
