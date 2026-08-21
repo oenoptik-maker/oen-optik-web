@@ -19,11 +19,11 @@ function authMiddleware(req, res, next) {
   }
 
   // 2. JWT - Cookie
-  const cookies = (req.headers.cookie || '').split(';').reduce((acc, c) => {
-    const [k, v] = c.trim().split('=');
-    acc[k] = v;
-    return acc;
-  }, {});
+  const cookies = {};
+  (req.headers.cookie || '').split(';').forEach(c => {
+    const idx = c.trim().indexOf('=');
+    if (idx > 0) cookies[c.trim().substring(0, idx)] = c.trim().substring(idx + 1);
+  });
   if (cookies.oken_token) {
     try {
       const decoded = jwt.verify(cookies.oken_token, JWT_SECRET);

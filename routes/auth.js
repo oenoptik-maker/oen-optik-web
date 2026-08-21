@@ -72,6 +72,7 @@ router.post('/cikis', (req, res) => {
 
 router.get('/durum', async (req, res) => {
   try {
+    // 1. JWT - Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
@@ -84,6 +85,24 @@ router.get('/durum', async (req, res) => {
       } catch(e) {}
     }
 
+    // 2. JWT - Cookie
+    const cookies = {};
+    (req.headers.cookie || '').split(';').forEach(c => {
+      const idx = c.trim().indexOf('=');
+      if (idx > 0) cookies[c.trim().substring(0, idx)] = c.trim().substring(idx + 1);
+    });
+    if (cookies.oken_token) {
+      try {
+        const decoded = jwt.verify(cookies.oken_token, JWT_SECRET);
+        await getDb();
+        const user = await dbGet('SELECT id, username, fullname FROM users WHERE id = ?', [decoded.id]);
+        if (user) {
+          return res.json({ loggedIn: true, user });
+        }
+      } catch(e) {}
+    }
+
+    // 3. Session
     if (req.session && req.session.userId) {
       await getDb();
       const user = await dbGet('SELECT id, username, fullname FROM users WHERE id = ?', [req.session.userId]);
