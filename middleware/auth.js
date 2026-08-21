@@ -18,7 +18,21 @@ function authMiddleware(req, res, next) {
     } catch(e) {}
   }
 
-  // 2. Session (yerel sunucu icin)
+  // 2. JWT - Cookie
+  const cookies = (req.headers.cookie || '').split(';').reduce((acc, c) => {
+    const [k, v] = c.trim().split('=');
+    acc[k] = v;
+    return acc;
+  }, {});
+  if (cookies.oken_token) {
+    try {
+      const decoded = jwt.verify(cookies.oken_token, JWT_SECRET);
+      req.user = decoded;
+      return next();
+    } catch(e) {}
+  }
+
+  // 3. Session (yerel sunucu icin)
   if (req.session && req.session.userId) {
     return next();
   }
