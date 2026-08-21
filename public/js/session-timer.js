@@ -20,7 +20,7 @@
     if (document.getElementById('session-timer')) return;
     var el = document.createElement('div');
     el.id = 'session-timer';
-    el.style.cssText = 'position:fixed;top:8px;right:8px;z-index:99999;font-family:monospace;font-size:12px;padding:4px 10px;border-radius:6px;background:rgba(30,41,59,0.85);color:#94a3b8;display:flex;align-items:center;gap:6px;user-select:none;pointer-events:none;transition:opacity 0.3s;';
+    el.style.cssText = 'position:fixed;top:8px;right:8px;z-index:99999;font-family:monospace;font-size:13px;padding:5px 12px;border-radius:8px;background:#1e293b;color:#e2e8f0;border:1px solid #475569;display:flex;align-items:center;gap:6px;user-select:none;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
     el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="session-timer-text">30:00</span>';
     document.body.appendChild(el);
   }

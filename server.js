@@ -27,11 +27,14 @@ app.use(session({
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Rate limiting (sadece yerelde)
+// Rate limiting
 if (!IS_VERCEL) {
   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 });
   app.use('/api/', limiter);
 }
+
+// Auth middleware
+const authMiddleware = require('./middleware/auth');
 
 // Health check (auth-free)
 app.get('/api/health', async (req, res) => {
@@ -39,29 +42,19 @@ app.get('/api/health', async (req, res) => {
     const { getDb, dbAll } = require('./db/database');
     await getDb();
     const users = await dbAll('SELECT id, username FROM users');
-    const dbType = process.env.TURSO_DATABASE_URL ? 'turso-configured' : 'no-turso-url';
-    const hasToken = !!process.env.TURSO_AUTH_TOKEN;
     res.json({
       status: 'ok',
       isVercel: !!process.env.VERCEL,
-      tursoUrl: process.env.TURSO_DATABASE_URL ? process.env.TURSO_DATABASE_URL.substring(0, 20) + '...' : 'NOT SET',
-      hasToken,
       userCount: users.length,
       users: users.map(u => u.username)
     });
   } catch (err) {
-    res.status(500).json({ status: 'error', message: err.message, stack: err.stack });
+    res.status(500).json({ status: 'error', message: err.message });
   }
 });
 
-// Auth middleware
-const authMiddleware = require('./middleware/auth');
-
 // Auth routes (no auth required)
 app.use('/api/auth', require('./routes/auth'));
-
-// Korunmayan sayfalar
-const PUBLIC_PAGES = ['/login.html', '/register.html', '/favicon.ico'];
 
 // Root redirect
 app.get('/', (req, res) => {
@@ -70,6 +63,28 @@ app.get('/', (req, res) => {
   } else {
     res.redirect('/login.html');
   }
+});
+
+// Public pages (no auth)
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.get('/register.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Protected pages (auth required)
+app.get('/index.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.get('/list.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'list.html'));
+});
+app.get('/admin.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+app.get('/kasa.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'kasa.html'));
 });
 
 // Protected API routes
@@ -83,28 +98,15 @@ app.use('/api/etiket', authMiddleware, require('./routes/etiket'));
 app.use('/api/qr', authMiddleware, require('./routes/qr'));
 app.use('/api/kasa', authMiddleware, require('./routes/kasa'));
 
-// Static files - HTML dosyalari auth ile korunur
-app.use((req, res, next) => {
-  if (req.path.endsWith('.html') && !PUBLIC_PAGES.includes(req.path)) {
-    return authMiddleware(req, res, next);
+// Static files (CSS, JS, images only - no HTML, no index redirect)
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'no-store');
+    }
   }
-  next();
-});
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Static'ten sonra gelen HTML istekleri icin (fallback)
-app.get('/index.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-app.get('/list.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'list.html'));
-});
-app.get('/admin.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-app.get('/kasa.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'kasa.html'));
-});
+}));
 
 // Yerel sunucu baslat
 if (!IS_VERCEL) {
