@@ -59,6 +59,8 @@ window.api = {
   },
   stokGuncelle: (urunler) => apiFetch('/api/urunler/stok-guncelle', { method: 'PUT', body: JSON.stringify(urunler) }),
   stokAyarla: (urunler) => apiFetch('/api/urunler/stok-ayarla', { method: 'PUT', body: JSON.stringify(urunler) }),
+  fiyatGuncelle: (urunler) => apiFetch('/api/urunler/fiyat-guncelle', { method: 'PUT', body: JSON.stringify(urunler) }),
+  fiyatTekli: (veri) => apiFetch('/api/urunler/fiyat-tekli', { method: 'PUT', body: JSON.stringify(veri) }),
 
   // ===== DOSYA İŞLEMLERİ =====
   openFileDialog: () => {

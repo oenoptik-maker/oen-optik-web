@@ -180,17 +180,19 @@ function renderUrunler() {
   const bitis = Math.min(baslangic + sayfaBoyutu, toplamUrun);
   const sayfaUrunleri = filtrelenmis.slice(baslangic, bitis);
 
-  const alisFiyatHeader = urunDetayGoster ? '<th>Alış Fiyatı</th>' : '';
   const checkboxAll = `<th style="width:30px;text-align:center;"><input type="checkbox" id="tumuSecCheck" onchange="tumuSecKaldir(this.checked)" title="Tümünü Se/Kaldır"></th>`;
-  const rows = sayfaUrunleri.map(u => `
+  const rows = sayfaUrunleri.map(u => {
+    const fiyatInput = `<input type="number" min="0" step="1" value="${parseFloat(u.FIYAT) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;font-weight:600;" data-field="FIYAT" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">`;
+    const alisInput = `<input type="number" min="0" step="1" value="${parseFloat(u.ALIS_FIYATI) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;" data-field="ALIS_FIYATI" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">`;
+    return `
     <tr>
       <td style="text-align:center;"><input type="checkbox" class="urun-sec-check" data-id="${u.URUN_ID}" ${seciliUrunler.has(u.URUN_ID) ? 'checked' : ''} onchange="urunSecKaldir(${u.URUN_ID}, this.checked)"></td>
       <td>${u.URUN_ID}</td>
       <td><span class="badge badge-pending">${u.KATEGORI_ADI}</span></td>
       <td><input type="text" value="${u.KAREKOD || ''}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="karekodKaydet(${u.URUN_ID}, this.value)"></td>
       <td><strong>${u.URUN_ADI}</strong></td>
-      ${urunDetayGoster ? `<td>₺${parseFloat(u.ALIS_FIYATI || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>` : ''}
-      <td>₺${parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+      <td>${alisInput}</td>
+      <td>${fiyatInput}</td>
       <td>${u.MENSEI || '-'}</td>
       <td><input type="number" min="0" step="1" value="${parseInt(u.ADET) || 0}" style="width:60px;padding:4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);" onchange="urunAdetKaydet(${u.URUN_ID}, this.value)"></td>
       <td>
@@ -199,11 +201,11 @@ function renderUrunler() {
         <button class="btn btn-danger btn-sm" onclick="deleteUrun(${u.URUN_ID})">🗑️</button>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 
   container.innerHTML = `
     <table class="data-table">
-      <thead><tr>${checkboxAll}<th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th>${alisFiyatHeader}<th>Satış Fiyatı</th><th>Menşei</th><th>Adet</th><th>İşlem</th></tr></thead>
+      <thead><tr>${checkboxAll}<th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı (₺)</th><th>Satış Fiyatı (₺)</th><th>Menşei</th><th>Adet</th><th>İşlem</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -517,8 +519,78 @@ async function karekodKaydet(urunId, karekod) {
   await window.api.urunSave(urun);
 }
 
-function topluStokKarekodKaydet(index, karekod) {
-  topluStokVerileri[index].KAREKOD = karekod.trim();
+async function urunFiyatKaydet(urunId, inputEl) {
+  const urun = tumUrunlerAdmin.find(u => String(u.URUN_ID) === String(urunId));
+  if (!urun) return;
+  const field = inputEl.dataset.field;
+  const yeniDeger = parseFloat(inputEl.value) || 0;
+  urun[field] = yeniDeger;
+  await window.api.fiyatTekli({ URUN_ID: urunId, ALIS_FIYATI: urun.ALIS_FIYATI, FIYAT: urun.FIYAT });
+}
+
+async function filtrelenmisFiyatGuncelle() {
+  const filtrelenmis = filtrelenmisUrunleriAl();
+  if (filtrelenmis.length === 0) { showToast('Filtrelenmis urun bulunamadi', 'warning'); return; }
+
+  const miktar = prompt(`Filtrelenmis ${filtrelenmis.length} urunun fiyatini guncelle.\n\nYeni Alis Fiyati bos birakilabilir.\nYeni Satis Fiyati bos birakilabilir.\n\nOrnek: Alis=100, Satis=150`, '');
+  if (miktar === null) return;
+
+  const islem = prompt('Islem secin:\n1 = Yeni deger gir\n2 = Yuzde artir (orn: 20 = %%20 artir)\n3 = Yuzde azalt\n4 = Sabit tutar ekle\n5 = Sabit tutar cikar', '1');
+  if (!islem) return;
+
+  const alisStr = prompt('Yeni Alis Fiyati (atlamak icin bos birakin):', '');
+  const satisStr = prompt('Yeni Satis Fiyati (atlamak icin bos birakin):', '');
+  const alisDeger = alisStr !== '' ? parseFloat(alisStr) : null;
+  const satisDeger = satisStr !== '' ? parseFloat(satisStr) : null;
+
+  if (alisDeger === null && satisDeger === null) { showToast('En az bir fiyat girmelisiniz', 'warning'); return; }
+
+  let guncellenen = [];
+  for (const u of filtrelenmis) {
+    let yeniAlis = u.ALIS_FIYATI || 0;
+    let yeniSatis = u.FIYAT || 0;
+
+    if (Number(islem) === 1) {
+      if (alisDeger !== null) yeniAlis = alisDeger;
+      if (satisDeger !== null) yeniSatis = satisDeger;
+    } else if (Number(islem) === 2) {
+      if (alisDeger !== null) yeniAlis = Math.round(yeniAlis * (1 + alisDeger / 100));
+      if (satisDeger !== null) yeniSatis = Math.round(yeniSatis * (1 + satisDeger / 100));
+    } else if (Number(islem) === 3) {
+      if (alisDeger !== null) yeniAlis = Math.round(yeniAlis * (1 - alisDeger / 100));
+      if (satisDeger !== null) yeniSatis = Math.round(yeniSatis * (1 - satisDeger / 100));
+    } else if (Number(islem) === 4) {
+      if (alisDeger !== null) yeniAlis = Math.round(yeniAlis + alisDeger);
+      if (satisDeger !== null) yeniSatis = Math.round(yeniSatis + satisDeger);
+    } else if (Number(islem) === 5) {
+      if (alisDeger !== null) yeniAlis = Math.max(0, Math.round(yeniAlis - alisDeger));
+      if (satisDeger !== null) yeniSatis = Math.max(0, Math.round(yeniSatis - satisDeger));
+    }
+
+    guncellenen.push({ URUN_ID: u.URUN_ID, ALIS_FIYATI: yeniAlis, FIYAT: yeniSatis });
+  }
+
+  if (guncellenen.length === 0) return;
+
+  const onay = confirm(`${guncellenen.length} urunun fiyati guncellenecek. Onayliyor musunuz?`);
+  if (!onay) return;
+
+  const result = await window.api.fiyatGuncelle(guncellenen);
+  if (result.success) {
+    showToast(`${guncellenen.length} urunun fiyati guncellendi`, 'success');
+    await loadUrunler();
+  } else {
+    showToast('Guncelleme basarisiz: ' + (result.message || ''), 'error');
+  }
+}
+
+function filtrelenmisUrunleriAl() {
+  const kategoriFiltre = document.getElementById('kategoriFiltre') ? document.getElementById('kategoriFiltre').value : '';
+  const arama = document.getElementById('urunArama') ? document.getElementById('urunArama').value.toLowerCase() : '';
+  let filtrelenmis = tumUrunlerAdmin;
+  if (kategoriFiltre) filtrelenmis = filtrelenmis.filter(u => u.KATEGORI_ADI === kategoriFiltre);
+  if (arama) filtrelenmis = filtrelenmis.filter(u => u.URUN_ADI && u.URUN_ADI.toLowerCase().includes(arama));
+  return filtrelenmis;
 }
 
 // ===== ADMİN TAB =====

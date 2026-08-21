@@ -80,6 +80,34 @@ router.put('/stok-guncelle', async (req, res) => {
   }
 });
 
+router.put('/fiyat-guncelle', async (req, res) => {
+  try {
+    await getDb();
+    const urunler = req.body;
+    let guncellenen = 0;
+    for (const item of urunler) {
+      await dbRun('UPDATE urunler SET ALIS_FIYATI = ?, FIYAT = ? WHERE URUN_ID = ?',
+        [Number(item.ALIS_FIYATI) || 0, Number(item.FIYAT) || 0, item.URUN_ID]);
+      guncellenen++;
+    }
+    res.json({ success: true, guncellenen });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/fiyat-tekli', async (req, res) => {
+  try {
+    await getDb();
+    const { URUN_ID, ALIS_FIYATI, FIYAT } = req.body;
+    await dbRun('UPDATE urunler SET ALIS_FIYATI = ?, FIYAT = ? WHERE URUN_ID = ?',
+      [Number(ALIS_FIYATI) || 0, Number(FIYAT) || 0, URUN_ID]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.put('/stok-ayarla', async (req, res) => {
   try {
     await getDb();
