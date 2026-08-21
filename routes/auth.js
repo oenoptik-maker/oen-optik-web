@@ -75,20 +75,32 @@ router.post('/cikis', (req, res) => {
   res.json({ success: true });
 });
 
-router.get('/durum', (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    try {
-      const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
-      return res.json({ loggedIn: true, user: { id: decoded.id, username: decoded.username } });
-    } catch(e) {}
-  }
+router.get('/durum', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
+        await getDb();
+        const user = await dbGet('SELECT id, username, fullname FROM users WHERE id = ?', [decoded.id]);
+        if (user) {
+          return res.json({ loggedIn: true, user });
+        }
+      } catch(e) {}
+    }
 
-  if (req.session && req.session.userId) {
-    return res.json({ loggedIn: true, user: { id: req.session.userId, username: req.session.username, fullname: req.session.fullname } });
-  }
+    if (req.session && req.session.userId) {
+      await getDb();
+      const user = await dbGet('SELECT id, username, fullname FROM users WHERE id = ?', [req.session.userId]);
+      if (user) {
+        return res.json({ loggedIn: true, user });
+      }
+    }
 
-  res.json({ loggedIn: false });
+    res.json({ loggedIn: false });
+  } catch (err) {
+    res.json({ loggedIn: false });
+  }
 });
 
 module.exports = router;
