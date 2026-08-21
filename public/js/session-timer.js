@@ -1,13 +1,12 @@
 // session-timer.js - 30 dakika hareketsizlik zamanlayici
 (function() {
-  var TIMEOUT_MS = 30 * 60 * 1000; // 30 dakika
-  var WARNING_MS = 5 * 60 * 1000; // 5 dakika kala uyar
-  var TICK_MS = 1000; // her saniye guncelle
+  var TIMEOUT_MS = 30 * 60 * 1000;
+  var WARNING_MS = 5 * 60 * 1000;
+  var TICK_MS = 1000;
   var lastActivity = Date.now();
   var timerInterval = null;
   var warningShown = false;
 
-  // Kalan sureyi formatla: "25:30"
   function formatTime(ms) {
     var totalSec = Math.max(0, Math.floor(ms / 1000));
     var min = Math.floor(totalSec / 60);
@@ -15,17 +14,25 @@
     return min + ':' + (sec < 10 ? '0' : '') + sec;
   }
 
-  // Timer gorunelini olustur
   function createTimerElement() {
     if (document.getElementById('session-timer')) return;
+
+    var headerRight = document.querySelector('.header-right');
+    var themeToggle = document.querySelector('.theme-toggle');
+    if (!headerRight) return;
+
     var el = document.createElement('div');
     el.id = 'session-timer';
-    el.style.cssText = 'position:fixed;top:56px;right:12px;z-index:99999;font-family:monospace;font-size:14px;padding:6px 14px;border-radius:10px;background:#0f172a;color:#38bdf8;border:2px solid #0ea5e9;display:flex;align-items:center;gap:6px;user-select:none;pointer-events:none;box-shadow:0 2px 12px rgba(14,165,233,0.4);';
-    el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="session-timer-text">30:00</span>';
-    document.body.appendChild(el);
+    el.style.cssText = 'display:flex;align-items:center;gap:5px;font-family:monospace;font-size:13px;padding:4px 10px;border-radius:6px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;margin-left:8px;white-space:nowrap;';
+    el.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="session-timer-text">30:00</span>';
+
+    if (themeToggle) {
+      headerRight.insertBefore(el, themeToggle);
+    } else {
+      headerRight.appendChild(el);
+    }
   }
 
-  // Timer'i guncelle
   function updateTimer() {
     var elapsed = Date.now() - lastActivity;
     var remaining = TIMEOUT_MS - elapsed;
@@ -42,7 +49,6 @@
 
     textEl.textContent = formatTime(remaining);
 
-    // Son 5 dakika: sari
     if (remaining <= WARNING_MS) {
       timerEl.style.background = '#7c2d12';
       timerEl.style.color = '#fef3c7';
@@ -56,16 +62,15 @@
         document.body.appendChild(banner);
       }
     } else {
-      timerEl.style.background = '#0f172a';
-      timerEl.style.color = '#38bdf8';
-      timerEl.style.borderColor = '#0ea5e9';
+      timerEl.style.background = '#1e293b';
+      timerEl.style.color = '#e2e8f0';
+      timerEl.style.borderColor = '#334155';
       warningShown = false;
       var old = document.getElementById('session-warning-banner');
       if (old) old.remove();
     }
   }
 
-  // Aktivite tespit et ve zamanlayiciyi sifirla
   function resetTimer() {
     lastActivity = Date.now();
     warningShown = false;
@@ -74,33 +79,26 @@
     updateTimer();
   }
 
-  // Sadece 401 geldiginde
   window.addEventListener('session-expired', function() {
     clearInterval(timerInterval);
     localStorage.removeItem('oken_token');
     window.location.href = '/login.html';
   });
 
-  // Baslat
   function init() {
     createTimerElement();
     updateTimer();
     timerInterval = setInterval(updateTimer, TICK_MS);
 
-    // Aktivite dinleyicileri
     var events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
     events.forEach(function(evt) {
       document.addEventListener(evt, resetTimer, { passive: true });
     });
 
-    // Sayfa gorunurluk degisimi - arka planda da calissin
     document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) {
-        resetTimer();
-      }
+      if (!document.hidden) resetTimer();
     });
 
-    // Pencere odak degisimi
     window.addEventListener('focus', resetTimer);
   }
 
