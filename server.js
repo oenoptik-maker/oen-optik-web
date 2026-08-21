@@ -33,9 +33,6 @@ if (!IS_VERCEL) {
   app.use('/api/', limiter);
 }
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Health check (auth-free)
 app.get('/api/health', async (req, res) => {
   try {
@@ -60,19 +57,19 @@ app.get('/api/health', async (req, res) => {
 // Auth middleware
 const authMiddleware = require('./middleware/auth');
 
-// Routes
+// Auth routes (no auth required)
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/siparisler', authMiddleware, require('./routes/siparis'));
-app.use('/api/kategoriler', authMiddleware, require('./routes/kategori'));
-app.use('/api/urunler', authMiddleware, require('./routes/urun'));
-app.use('/api/stok', authMiddleware, require('./routes/stok'));
-app.use('/api/backup', authMiddleware, require('./routes/backup'));
-app.use('/api/uts', authMiddleware, require('./routes/uts'));
-app.use('/api/etiket', authMiddleware, require('./routes/etiket'));
-app.use('/api/qr', authMiddleware, require('./routes/qr'));
-app.use('/api/kasa', authMiddleware, require('./routes/kasa'));
 
-// Protected pages
+// Root redirect (before static!)
+app.get('/', (req, res) => {
+  if (req.session && req.session.userId) {
+    res.redirect('/index.html');
+  } else {
+    res.redirect('/login.html');
+  }
+});
+
+// Protected pages (before static!)
 app.get('/index.html', authMiddleware, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -86,14 +83,19 @@ app.get('/kasa.html', authMiddleware, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'kasa.html'));
 });
 
-// Root redirect
-app.get('/', (req, res) => {
-  if (req.session && req.session.userId) {
-    res.redirect('/index.html');
-  } else {
-    res.redirect('/login.html');
-  }
-});
+// Protected API routes
+app.use('/api/siparisler', authMiddleware, require('./routes/siparis'));
+app.use('/api/kategoriler', authMiddleware, require('./routes/kategori'));
+app.use('/api/urunler', authMiddleware, require('./routes/urun'));
+app.use('/api/stok', authMiddleware, require('./routes/stok'));
+app.use('/api/backup', authMiddleware, require('./routes/backup'));
+app.use('/api/uts', authMiddleware, require('./routes/uts'));
+app.use('/api/etiket', authMiddleware, require('./routes/etiket'));
+app.use('/api/qr', authMiddleware, require('./routes/qr'));
+app.use('/api/kasa', authMiddleware, require('./routes/kasa'));
+
+// Static files (AFTER auth-protected routes)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Yerel sunucu baslat
 if (!IS_VERCEL) {
