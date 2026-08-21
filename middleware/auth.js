@@ -2,7 +2,9 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'oen-optik-jwt-secret-2024';
 
 function authMiddleware(req, res, next) {
-  if (req.path.startsWith('/api/auth/')) {
+  const url = req.originalUrl || req.url;
+
+  if (url.startsWith('/api/auth/')) {
     return next();
   }
 
@@ -21,7 +23,7 @@ function authMiddleware(req, res, next) {
     return next();
   }
 
-  if (req.path.startsWith('/api/')) {
+  if (url.startsWith('/api/')) {
     return res.status(401).json({ error: 'Oturum acilmamis' });
   }
 
