@@ -14,7 +14,8 @@ const IS_VERCEL = !!process.env.VERCEL;
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  frameguard: false
 }));
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
