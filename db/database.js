@@ -11,14 +11,23 @@ async function getDb() {
   if (db) return db;
 
   if (IS_VERCEL && process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.startsWith('libsql://')) {
-    const { createClient } = require('@libsql/client');
-    const client = createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-    db = { type: 'turso', client };
-    dbType = 'turso';
-  } else {
+    try {
+      const { createClient } = require('@libsql/client');
+      const client = createClient({
+        url: process.env.TURSO_DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      });
+      await client.execute('SELECT 1');
+      db = { type: 'turso', client };
+      dbType = 'turso';
+    } catch (err) {
+      console.error('Turso baglanti hatasi, sql.js\'e donuluyor:', err.message);
+      db = null;
+      dbType = null;
+    }
+  }
+
+  if (!db) {
     const initSqlJs = require('sql.js');
     const SQL = await initSqlJs();
     if (fs.existsSync(DB_PATH)) {
@@ -96,6 +105,15 @@ async function initTables() {
       db.client.run(stmt);
     }
     saveDb();
+  }
+
+  // Ilk acilis: admin kullanici olustur
+  const existingUser = await dbAll('SELECT id FROM users LIMIT 1');
+  if (existingUser.length === 0) {
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash('admin123', 10);
+    await dbRun('INSERT INTO users (username, password, fullname, role) VALUES (?, ?, ?, ?)', ['admin', hash, 'Admin', 'admin']);
+    console.log('Varsayilan admin kullanici olusturuldu: admin / admin123');
   }
 }
 
