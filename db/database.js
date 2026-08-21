@@ -21,7 +21,7 @@ async function getDb() {
       db = { type: 'turso', client };
       dbType = 'turso';
     } catch (err) {
-      console.error('Turso baglanti hatasi, sql.js\'e donuluyor:', err.message);
+      console.error('Turso baglanti hatasi, sql.js\'e donuluyor:', err.message, err.stack);
       db = null;
       dbType = null;
     }

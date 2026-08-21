@@ -36,6 +36,27 @@ if (!IS_VERCEL) {
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Health check (auth-free)
+app.get('/api/health', async (req, res) => {
+  try {
+    const { getDb, dbAll } = require('./db/database');
+    await getDb();
+    const users = await dbAll('SELECT id, username FROM users');
+    const dbType = process.env.TURSO_DATABASE_URL ? 'turso-configured' : 'no-turso-url';
+    const hasToken = !!process.env.TURSO_AUTH_TOKEN;
+    res.json({
+      status: 'ok',
+      isVercel: !!process.env.VERCEL,
+      tursoUrl: process.env.TURSO_DATABASE_URL ? process.env.TURSO_DATABASE_URL.substring(0, 20) + '...' : 'NOT SET',
+      hasToken,
+      userCount: users.length,
+      users: users.map(u => u.username)
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message, stack: err.stack });
+  }
+});
+
 // Auth middleware
 const authMiddleware = require('./middleware/auth');
 

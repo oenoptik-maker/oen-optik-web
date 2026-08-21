@@ -32,8 +32,8 @@ router.post('/kayit', async (req, res) => {
 
     res.json({ success: true, userId: user.id, token });
   } catch (err) {
-    console.error('Kayit hatasi:', err);
-    res.status(500).json({ success: false, message: 'Kayit hatasi olustu' });
+    console.error('Kayit hatasi:', err.message, err.stack);
+    res.status(500).json({ success: false, message: 'Kayit hatasi: ' + err.message });
   }
 });
 
@@ -65,8 +65,8 @@ router.post('/giris', async (req, res) => {
 
     res.json({ success: true, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
   } catch (err) {
-    console.error('Giris hatasi:', err);
-    res.status(500).json({ success: false, message: 'Giris hatasi olustu' });
+    console.error('Giris hatasi:', err.message, err.stack);
+    res.status(500).json({ success: false, message: 'Giris hatasi: ' + err.message });
   }
 });
 
