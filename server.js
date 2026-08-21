@@ -60,27 +60,16 @@ const authMiddleware = require('./middleware/auth');
 // Auth routes (no auth required)
 app.use('/api/auth', require('./routes/auth'));
 
-// Root redirect (before static!)
+// Korunmayan sayfalar
+const PUBLIC_PAGES = ['/login.html', '/register.html', '/favicon.ico'];
+
+// Root redirect
 app.get('/', (req, res) => {
   if (req.session && req.session.userId) {
     res.redirect('/index.html');
   } else {
     res.redirect('/login.html');
   }
-});
-
-// Protected pages (before static!)
-app.get('/index.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-app.get('/list.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'list.html'));
-});
-app.get('/admin.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-app.get('/kasa.html', authMiddleware, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'kasa.html'));
 });
 
 // Protected API routes
@@ -94,8 +83,28 @@ app.use('/api/etiket', authMiddleware, require('./routes/etiket'));
 app.use('/api/qr', authMiddleware, require('./routes/qr'));
 app.use('/api/kasa', authMiddleware, require('./routes/kasa'));
 
-// Static files (AFTER auth-protected routes)
+// Static files - HTML dosyalari auth ile korunur
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') && !PUBLIC_PAGES.includes(req.path)) {
+    return authMiddleware(req, res, next);
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Static'ten sonra gelen HTML istekleri icin (fallback)
+app.get('/index.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.get('/list.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'list.html'));
+});
+app.get('/admin.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+app.get('/kasa.html', authMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'kasa.html'));
+});
 
 // Yerel sunucu baslat
 if (!IS_VERCEL) {

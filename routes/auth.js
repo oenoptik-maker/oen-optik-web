@@ -23,7 +23,7 @@ router.post('/kayit', async (req, res) => {
     await dbRun('INSERT INTO users (username, password, fullname) VALUES (?, ?, ?)', [username, hashedPassword, fullname || username]);
 
     const user = await dbGet('SELECT id FROM users WHERE username = ?', [username]);
-    const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '30m' });
 
     if (req.session) {
       req.session.userId = user.id;
@@ -55,17 +55,18 @@ router.post('/giris', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Gecersiz kullanici adi veya sifre' });
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30m' });
 
     if (req.session) {
       req.session.userId = user.id;
       req.session.username = user.username;
       req.session.fullname = user.fullname;
+      req.session.lastActivity = Date.now();
     }
 
     res.json({ success: true, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
   } catch (err) {
-    console.error('Giris hatasi:', err.message, err.stack);
+    console.error('Giris hatasi:', err.message);
     res.status(500).json({ success: false, message: 'Giris hatasi: ' + err.message });
   }
 });
