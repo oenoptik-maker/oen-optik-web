@@ -33,7 +33,7 @@ router.post('/kayit', async (req, res) => {
     res.json({ success: true, userId: user.id, token });
   } catch (err) {
     console.error('Kayit hatasi:', err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: 'Kayit hatasi olustu' });
   }
 });
 
@@ -66,7 +66,7 @@ router.post('/giris', async (req, res) => {
     res.json({ success: true, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
   } catch (err) {
     console.error('Giris hatasi:', err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: 'Giris hatasi olustu' });
   }
 });
 

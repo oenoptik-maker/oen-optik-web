@@ -123,7 +123,7 @@
       <h1 class="login-title">OEN OPTİK</h1>
       <p class="login-subtitle">Sipariş Kayıt Sistemi</p>
 
-      <div id="errorMessage" class="error-message"></div>
+      <div id="errorMessage" class="error-message" style="display:none;"></div>
 
       <form id="loginForm" onsubmit="return handleLogin(event)">
         <div class="form-group">
@@ -148,9 +148,12 @@
       var token = localStorage.getItem('oken_token');
       var headers = {};
       if (token) headers['Authorization'] = 'Bearer ' + token;
-      fetch('/api/auth/durum', { headers: headers }).then(r => r.json()).then(data => {
+      fetch('/api/auth/durum', { headers: headers }).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function(data) {
         if (data.loggedIn) window.location.href = '/index.html';
-      });
+      }).catch(function() {});
     })();
 
     async function handleLogin(e) {

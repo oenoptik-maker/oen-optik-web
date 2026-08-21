@@ -10,7 +10,7 @@ let dbType = null;
 async function getDb() {
   if (db) return db;
 
-  if (IS_VERCEL && process.env.TURSO_DATABASE_URL) {
+  if (IS_VERCEL && process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.startsWith('libsql://')) {
     const { createClient } = require('@libsql/client');
     const client = createClient({
       url: process.env.TURSO_DATABASE_URL,
