@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const IS_VERCEL = !!process.env.VERCEL;
 
 // Middleware
+app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
@@ -29,7 +30,13 @@ app.use(session({
 
 // Rate limiting
 if (!IS_VERCEL) {
-  const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 });
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 2000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.url === '/api/health'
+  });
   app.use('/api/', limiter);
 }
 
