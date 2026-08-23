@@ -16,6 +16,10 @@ async function getDb() {
   // Vercel env variable'larinda bazen fazladan karakter olabiliyor - temizle
   const libsqlIdx = tursoUrl.indexOf('libsql://');
   if (libsqlIdx > 0) tursoUrl = tursoUrl.substring(libsqlIdx);
+  
+  // Token'da da ayni sorun olabiliyor - JWT baslangicina kadar temizle
+  const jwtIdx = tursoToken.indexOf('eyJ');
+  if (jwtIdx > 0) tursoToken = tursoToken.substring(jwtIdx);
 
   if (IS_VERCEL && tursoUrl && tursoUrl.startsWith('libsql://')) {
     try {

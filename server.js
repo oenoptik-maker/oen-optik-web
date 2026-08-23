@@ -60,6 +60,8 @@ app.get('/api/health', async (req, res) => {
         // Fazladan on ek temizle
         const libsqlIdx = url.indexOf('libsql://');
         if (libsqlIdx > 0) url = url.substring(libsqlIdx);
+        const jwtIdx = token.indexOf('eyJ');
+        if (jwtIdx > 0) token = token.substring(jwtIdx);
         tursoDebug = {
           urlPresent: !!url,
           urlStartsWith: url ? url.substring(0, 10) : null,
