@@ -46,12 +46,15 @@ const authMiddleware = require('./middleware/auth');
 // Health check (auth-free)
 app.get('/api/health', async (req, res) => {
   try {
-    const { getDb, dbAll } = require('./db/database');
+    const { getDb, dbAll, getDbType } = require('./db/database');
     await getDb();
     const users = await dbAll('SELECT id, username FROM users');
     res.json({
       status: 'ok',
+      dbType: getDbType(),
       isVercel: !!process.env.VERCEL,
+      hasTursoUrl: !!process.env.TURSO_DATABASE_URL,
+      hasTursoToken: !!process.env.TURSO_AUTH_TOKEN,
       userCount: users.length,
       users: users.map(u => u.username)
     });

@@ -26,14 +26,19 @@ router.post('/', async (req, res) => {
   try {
     await getDb();
     const { KATEGORI_ID, KATEGORI_ADI } = req.body;
-    const existing = await dbGet('SELECT KATEGORI_ID FROM kategoriler WHERE KATEGORI_ID = ?', [KATEGORI_ID]);
-    if (existing) {
-      await dbRun('UPDATE kategoriler SET KATEGORI_ADI = ? WHERE KATEGORI_ID = ?', [KATEGORI_ADI, KATEGORI_ID]);
+    if (KATEGORI_ID) {
+      const existing = await dbGet('SELECT KATEGORI_ID FROM kategoriler WHERE KATEGORI_ID = ?', [KATEGORI_ID]);
+      if (existing) {
+        await dbRun('UPDATE kategoriler SET KATEGORI_ADI = ? WHERE KATEGORI_ID = ?', [KATEGORI_ADI, KATEGORI_ID]);
+      } else {
+        await dbRun('INSERT INTO kategoriler (KATEGORI_ID, KATEGORI_ADI) VALUES (?, ?)', [KATEGORI_ID, KATEGORI_ADI]);
+      }
     } else {
-      await dbRun('INSERT INTO kategoriler (KATEGORI_ID, KATEGORI_ADI) VALUES (?, ?)', [KATEGORI_ID, KATEGORI_ADI]);
+      await dbRun('INSERT INTO kategoriler (KATEGORI_ADI) VALUES (?)', [KATEGORI_ADI]);
     }
     res.json({ success: true });
   } catch (err) {
+    console.error('Kategori POST hatasi:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });

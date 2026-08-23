@@ -119,12 +119,13 @@ async function initTables() {
 }
 
 async function dbAll(sql, params = []) {
+  const cleanParams = params.map(p => p === undefined ? null : p);
   if (dbType === 'turso') {
-    const result = await db.client.execute({ sql, args: params });
+    const result = await db.client.execute({ sql, args: cleanParams });
     return result.rows || [];
   }
   const stmt = db.client.prepare(sql);
-  if (params.length) stmt.bind(params);
+  if (cleanParams.length) stmt.bind(cleanParams);
   const results = [];
   while (stmt.step()) results.push(stmt.getAsObject());
   stmt.free();
@@ -137,11 +138,12 @@ async function dbGet(sql, params = []) {
 }
 
 async function dbRun(sql, params = []) {
+  const cleanParams = params.map(p => p === undefined ? null : p);
   if (dbType === 'turso') {
-    await db.client.execute({ sql, args: params });
+    await db.client.execute({ sql, args: cleanParams });
     return;
   }
-  db.client.run(sql, params);
+  db.client.run(sql, cleanParams);
 }
 
 function saveDb() {
@@ -167,4 +169,6 @@ if (!IS_VERCEL) {
 process.on('SIGINT', () => { closeDb(); process.exit(0); });
 process.on('SIGTERM', () => { closeDb(); process.exit(0); });
 
-module.exports = { getDb, closeDb, saveDb, dbAll, dbGet, dbRun };
+function getDbType() { return dbType; }
+
+module.exports = { getDb, closeDb, saveDb, dbAll, dbGet, dbRun, getDbType };

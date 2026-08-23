@@ -26,16 +26,22 @@ router.post('/', async (req, res) => {
   try {
     await getDb();
     const u = req.body;
-    const existing = await dbGet('SELECT URUN_ID FROM urunler WHERE URUN_ID = ?', [u.URUN_ID]);
-    if (existing) {
-      await dbRun('UPDATE urunler SET KATEGORI_ADI=?, URUN_ADI=?, ALIS_FIYATI=?, FIYAT=?, ADET=?, KAREKOD=?, MENSEI=? WHERE URUN_ID=?',
-        [u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI || 0, u.FIYAT || 0, u.ADET || 0, u.KAREKOD || '', u.MENSEI || '', u.URUN_ID]);
+    if (u.URUN_ID) {
+      const existing = await dbGet('SELECT URUN_ID FROM urunler WHERE URUN_ID = ?', [u.URUN_ID]);
+      if (existing) {
+        await dbRun('UPDATE urunler SET KATEGORI_ADI=?, URUN_ADI=?, ALIS_FIYATI=?, FIYAT=?, ADET=?, KAREKOD=?, MENSEI=? WHERE URUN_ID=?',
+          [u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI || 0, u.FIYAT || 0, u.ADET || 0, u.KAREKOD || '', u.MENSEI || '', u.URUN_ID]);
+      } else {
+        await dbRun('INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [u.URUN_ID, u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI || 0, u.FIYAT || 0, u.ADET || 0, u.KAREKOD || '', u.MENSEI || '']);
+      }
     } else {
-      await dbRun('INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [u.URUN_ID, u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI || 0, u.FIYAT || 0, u.ADET || 0, u.KAREKOD || '', u.MENSEI || '']);
+      await dbRun('INSERT INTO urunler (KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI || 0, u.FIYAT || 0, u.ADET || 0, u.KAREKOD || '', u.MENSEI || '']);
     }
     res.json({ success: true });
   } catch (err) {
+    console.error('Urun POST hatasi:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });
