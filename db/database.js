@@ -17,12 +17,15 @@ async function getDb() {
         url: process.env.TURSO_DATABASE_URL,
         authToken: process.env.TURSO_AUTH_TOKEN,
       });
-      await client.execute('SELECT 1');
+      const testResult = await client.execute('SELECT 1 as ok');
+      console.log('Turso test result:', JSON.stringify(testResult));
       db = { type: 'turso', client };
       dbType = 'turso';
       console.log('Turso veritabanina baglanildi');
     } catch (err) {
       console.error('Turso baglanti hatasi:', err.message);
+      console.error('Turso URL:', process.env.TURSO_DATABASE_URL ? 'mevcut' : 'yok');
+      console.error('Turso TOKEN:', process.env.TURSO_AUTH_TOKEN ? 'mevcut' : 'yok');
       db = null;
       dbType = null;
     }
