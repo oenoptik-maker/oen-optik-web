@@ -10,12 +10,15 @@ let dbType = null;
 async function getDb() {
   if (db) return db;
 
-  if (IS_VERCEL && process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.startsWith('libsql://')) {
+  const tursoUrl = (process.env.TURSO_DATABASE_URL || '').trim();
+  const tursoToken = (process.env.TURSO_AUTH_TOKEN || '').trim();
+
+  if (IS_VERCEL && tursoUrl && tursoUrl.startsWith('libsql://')) {
     try {
       const { createClient } = require('@libsql/client');
       const client = createClient({
-        url: process.env.TURSO_DATABASE_URL,
-        authToken: process.env.TURSO_AUTH_TOKEN,
+        url: tursoUrl,
+        authToken: tursoToken,
       });
       const testResult = await client.execute('SELECT 1 as ok');
       console.log('Turso test result:', JSON.stringify(testResult));

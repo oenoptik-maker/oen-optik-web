@@ -55,8 +55,8 @@ app.get('/api/health', async (req, res) => {
     if (dbType !== 'turso') {
       // Turso neden baglanamadi? Debug et
       try {
-        const url = process.env.TURSO_DATABASE_URL;
-        const token = process.env.TURSO_AUTH_TOKEN;
+        const url = (process.env.TURSO_DATABASE_URL || '').trim();
+        const token = (process.env.TURSO_AUTH_TOKEN || '').trim();
         tursoDebug = {
           urlPresent: !!url,
           urlStartsWith: url ? url.substring(0, 10) : null,
