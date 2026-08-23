@@ -30,9 +30,7 @@ async function getDb() {
 
   if (!db) {
     const initSqlJs = require('sql.js');
-    const SQL = await initSqlJs(IS_VERCEL ? {
-      locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
-    } : undefined);
+    const SQL = await initSqlJs();
     if (!IS_VERCEL && fs.existsSync(DB_PATH)) {
       const fileBuffer = fs.readFileSync(DB_PATH);
       db = { type: 'sqljs', client: new SQL.Database(fileBuffer) };
