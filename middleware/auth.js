@@ -18,6 +18,29 @@ function verifyToken(token) {
   }
 }
 
+function getTokenFromUrl(url) {
+  try {
+    const qIdx = url.indexOf('?');
+    if (qIdx === -1) return null;
+    const qs = url.substring(qIdx + 1);
+    const params = qs.split('&');
+    for (const p of params) {
+      const [key, val] = p.split('=');
+      if (key === 'token' && val) return decodeURIComponent(val);
+    }
+  } catch(e) {}
+  return null;
+}
+
+function cleanUrlFromToken(url) {
+  const qIdx = url.indexOf('?');
+  if (qIdx === -1) return url;
+  const path = url.substring(0, qIdx);
+  const qs = url.substring(qIdx + 1);
+  const params = qs.split('&').filter(p => !p.startsWith('token='));
+  return params.length > 0 ? path + '?' + params.join('&') : path;
+}
+
 function authMiddleware(req, res, next) {
   const url = req.originalUrl || req.url;
 
@@ -26,16 +49,13 @@ function authMiddleware(req, res, next) {
   }
 
   // 1. JWT - URL query parameter (?token=xxx)
-  const parsedUrl = new URL(req.originalUrl, `https://${req.headers.host || 'localhost'}`);
-  const urlToken = parsedUrl.searchParams.get('token');
+  const urlToken = getTokenFromUrl(url);
   if (urlToken) {
     const decoded = verifyToken(urlToken);
     if (decoded) {
       req.user = decoded;
-      // Cookie'yi de ayarla (sonraki istekler için)
       res.cookie('oken_token', urlToken, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'none', secure: true, path: '/' });
-      // URL'den token'ı temizle (redirect ile)
-      const cleanUrl = parsedUrl.pathname;
+      const cleanUrl = cleanUrlFromToken(url);
       return res.redirect(cleanUrl);
     }
   }
