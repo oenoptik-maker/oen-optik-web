@@ -10,14 +10,14 @@ let dbType = null;
 async function getDb() {
   if (db) return db;
 
-  let tursoUrl = (process.env.TURSO_DATABASE_URL || '').trim();
-  let tursoToken = (process.env.TURSO_AUTH_TOKEN || '').trim();
+  let tursoUrl = (process.env.TURSO_DATABASE_URL || '').replace(/[\r\n]/g, '').trim();
+  let tursoToken = (process.env.TURSO_AUTH_TOKEN || '').replace(/[\r\n]/g, '').trim();
   
-  // Vercel env variable'larinda bazen fazladan karakter olabiliyor - temizle
+  // Vercel env variable'larinda bazen fazladan on ek olabiliyor - temizle
   const libsqlIdx = tursoUrl.indexOf('libsql://');
   if (libsqlIdx > 0) tursoUrl = tursoUrl.substring(libsqlIdx);
   
-  // Token'da da ayni sorun olabiliyor - JWT baslangicina kadar temizle
+  // Token'da da ayni sorun olabiliyor - JWT (eyJ...) baslangicina kadar temizle
   const jwtIdx = tursoToken.indexOf('eyJ');
   if (jwtIdx > 0) tursoToken = tursoToken.substring(jwtIdx);
 
