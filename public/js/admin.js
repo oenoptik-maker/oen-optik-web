@@ -842,15 +842,30 @@ function topluStokTemizle() {
 function renderTopluStok() {
   const container = document.getElementById('topluStokListesi');
   const onayBolumu = document.getElementById('topluStokOnayBolumu');
+  const filtreAlani = document.getElementById('topluStokFiltreAlani');
   if (topluStokVerileri.length === 0) {
     container.innerHTML = '';
     if (onayBolumu) onayBolumu.style.display = 'none';
+    if (filtreAlani) filtreAlani.style.display = 'none';
     return;
   }
 
   if (onayBolumu) onayBolumu.style.display = 'flex';
+  if (filtreAlani) filtreAlani.style.display = 'flex';
 
-  const rows = topluStokVerileri.map((u, i) => `
+  // Kategori filtresini doldur
+  const kategoriSelect = document.getElementById('topluStokKategoriFiltre');
+  if (kategoriSelect && kategoriSelect.options.length <= 1) {
+    const kategoriler = [...new Set(topluStokVerileri.map(u => u.Kategori).filter(Boolean))];
+    kategoriSelect.innerHTML = '<option value="">Tüm Kategoriler</option>' + kategoriler.map(k => `<option value="${k}">${k}</option>`).join('');
+  }
+
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+
+  const rows = filtrelenmis.map((item) => {
+    const i = item._index;
+    const u = item;
+    return `
     <tr>
       <td>${u.ID || ''}</td>
       <td><span class="badge badge-pending">${u.Kategori || ''}</span></td>
@@ -860,12 +875,21 @@ function renderTopluStok() {
       <td>₺${parseFloat(u['Satis Fiyati'] || u['Satış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
       <td>${u['Mensei'] || u['Menşei'] || '-'}</td>
       <td><input type="number" min="0" step="1" value="${u.Adet || 0}" style="width:70px;padding:4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);" onchange="topluStokAdetGuncelle(${i}, this.value)"></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
+
+  const filtreSayac = document.getElementById('topluStokFiltreSayac');
+  if (filtreSayac) {
+    if (filtrelenmis.length < topluStokVerileri.length) {
+      filtreSayac.textContent = `${filtrelenmis.length} / ${topluStokVerileri.length} ürün`;
+    } else {
+      filtreSayac.textContent = '';
+    }
+  }
 
   container.innerHTML = `
     <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;">
-      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi</span>
+      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi${filtrelenmis.length < topluStokVerileri.length ? ` (filtre: <strong>${filtrelenmis.length}</strong>)` : ''}</span>
       <span>Toplam adet: <strong>${topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0)}</strong></span>
     </div>
     <table class="data-table">
@@ -2665,4 +2689,188 @@ async function stokSayimiEsitle() {
   } catch (err) {
     showToast('Hata: ' + err.message, 'error');
   }
+}
+
+// ===== TOPLU STOK FİLTRELEME =====
+function topluStokFiltrele() {
+  renderTopluStok();
+}
+
+function topluStokFiltrelenmisUrunleriAl() {
+  const arama = (document.getElementById('topluStokArama') ? document.getElementById('topluStokArama').value : '').toLowerCase();
+  const kategoriFiltre = document.getElementById('topluStokKategoriFiltre') ? document.getElementById('topluStokKategoriFiltre').value : '';
+
+  return topluStokVerileri.map((u, i) => ({ ...u, _index: i })).filter(u => {
+    if (kategoriFiltre && u.Kategori !== kategoriFiltre) return false;
+    if (arama) {
+      const adi = (u['Urun Adi'] || u['Ürün Adı'] || '').toLowerCase();
+      const karekod = (u.KAREKOD || '').toLowerCase();
+      if (!adi.includes(arama) && !karekod.includes(arama)) return false;
+    }
+    return true;
+  });
+}
+
+// ===== TOPLU STOK FİYAT GÜNCELLEME =====
+function topluStokFiyatGuncelleAc() {
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  if (filtrelenmis.length === 0) {
+    showToast('Filtrelenmiş ürün bulunamadı', 'warning');
+    return;
+  }
+
+  document.getElementById('tsAlisFiyat').value = '';
+  document.getElementById('tsSatisFiyat').value = '';
+  document.querySelector('input[name="tsFiyatIslem"][value="1"]').checked = true;
+  tsFiyatIslemDegisti();
+
+  document.getElementById('topluStokFiyatAdet').innerHTML =
+    `<strong>${filtrelenmis.length}</strong> ürün filtrelendi. Bu ürünlerin fiyatları güncellenecek.`;
+  document.getElementById('topluStokFiyatModal').classList.add('active');
+  tsFiyatOnizleme();
+}
+
+function topluStokFiyatModalKapat() {
+  document.getElementById('topluStokFiyatModal').classList.remove('active');
+}
+
+function tsFiyatIslemDegisti() {
+  const islem = document.querySelector('input[name="tsFiyatIslem"]:checked').value;
+  const alisLabel = document.getElementById('tsAlisLabel');
+  const satisLabel = document.getElementById('tsSatisLabel');
+  const alisInput = document.getElementById('tsAlisFiyat');
+  const satisInput = document.getElementById('tsSatisFiyat');
+
+  if (islem === '1') {
+    alisLabel.textContent = 'Yeni Alış Fiyatı (₺)';
+    satisLabel.textContent = 'Yeni Satış Fiyatı (₺)';
+    alisInput.placeholder = 'ör: 100';
+    satisInput.placeholder = 'ör: 150';
+  } else if (islem === '2') {
+    alisLabel.textContent = 'Alış Yüzde Artış (%)';
+    satisLabel.textContent = 'Satış Yüzde Artış (%)';
+    alisInput.placeholder = 'ör: 20';
+    satisInput.placeholder = 'ör: 20';
+  } else if (islem === '3') {
+    alisLabel.textContent = 'Alış Yüzde İndirim (%)';
+    satisLabel.textContent = 'Satış Yüzde İndirim (%)';
+    alisInput.placeholder = 'ör: 10';
+    satisInput.placeholder = 'ör: 10';
+  } else if (islem === '4') {
+    alisLabel.textContent = 'Alış +₺ Tutar';
+    satisLabel.textContent = 'Satış +₺ Tutar';
+    alisInput.placeholder = 'ör: 50';
+    satisInput.placeholder = 'ör: 50';
+  } else if (islem === '5') {
+    alisLabel.textContent = 'Alış -₺ Tutar';
+    satisLabel.textContent = 'Satış -₺ Tutar';
+    alisInput.placeholder = 'ör: 25';
+    satisInput.placeholder = 'ör: 25';
+  }
+
+  document.querySelectorAll('.ts-fiyat-islem-radio').forEach(r => {
+    const radio = r.querySelector('input[type="radio"]');
+    if (radio.checked) {
+      r.style.borderColor = 'var(--color-primary)';
+      r.style.background = 'var(--bg-secondary)';
+      r.style.fontWeight = '600';
+    } else {
+      r.style.borderColor = 'var(--border)';
+      r.style.background = 'var(--bg-card)';
+      r.style.fontWeight = 'normal';
+    }
+  });
+
+  tsFiyatOnizleme();
+}
+
+function tsFiyatHesapla(eskiFiyat, deger, islem) {
+  if (!deger || deger === '') return eskiFiyat;
+  const d = parseFloat(deger);
+  if (isNaN(d)) return eskiFiyat;
+  if (islem === '1') return d;
+  if (islem === '2') return Math.round(eskiFiyat * (1 + d / 100));
+  if (islem === '3') return Math.max(0, Math.round(eskiFiyat * (1 - d / 100)));
+  if (islem === '4') return Math.round(eskiFiyat + d);
+  if (islem === '5') return Math.max(0, Math.round(eskiFiyat - d));
+  return eskiFiyat;
+}
+
+function tsFiyatOnizleme() {
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  const islem = document.querySelector('input[name="tsFiyatIslem"]:checked').value;
+  const alisDeger = document.getElementById('tsAlisFiyat').value;
+  const satisDeger = document.getElementById('tsSatisFiyat').value;
+  const sayac = document.getElementById('tsOnizlemeSayac');
+  const tablo = document.getElementById('tsOnizlemeTablosu');
+
+  if (filtrelenmis.length === 0) {
+    tablo.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Ürün bulunamadı</div>';
+    sayac.textContent = '';
+    return;
+  }
+
+  const eskiAlis = (u) => parseFloat(u['Alis Fiyati'] || u['Alış Fiyatı'] || 0);
+  const eskiSatis = (u) => parseFloat(u['Satis Fiyati'] || u['Satış Fiyatı'] || 0);
+
+  const rows = filtrelenmis.slice(0, 200).map(u => {
+    const yeniAlis = alisDeger !== '' ? tsFiyatHesapla(eskiAlis(u), alisDeger, islem) : null;
+    const yeniSatis = satisDeger !== '' ? tsFiyatHesapla(eskiSatis(u), satisDeger, islem) : null;
+
+    const alisHtml = yeniAlis !== null
+      ? `<span style="color:var(--text-muted);text-decoration:line-through;">₺${eskiAlis(u)}</span> → <strong style="color:var(--color-primary);">₺${yeniAlis}</strong>`
+      : `<span>₺${eskiAlis(u)}</span>`;
+    const satisHtml = yeniSatis !== null
+      ? `<span style="color:var(--text-muted);text-decoration:line-through;">₺${eskiSatis(u)}</span> → <strong style="color:#22c55e;">₺${yeniSatis}</strong>`
+      : `<span>₺${eskiSatis(u)}</span>`;
+
+    return `<tr>
+      <td style="padding:4px 8px;font-size:0.75rem;">${u.ID || ''}</td>
+      <td style="padding:4px 8px;font-size:0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${u['Urun Adi'] || u['Ürün Adı'] || ''}</strong></td>
+      <td style="padding:4px 8px;font-size:0.75rem;text-align:right;">${alisHtml}</td>
+      <td style="padding:4px 8px;font-size:0.75rem;text-align:right;">${satisHtml}</td>
+    </tr>`;
+  }).join('');
+
+  const geriKalan = filtrelenmis.length > 200 ? `<tr><td colspan="4" style="padding:4px 8px;font-size:0.75rem;color:var(--text-secondary);text-align:center;">... ve ${filtrelenmis.length - 200} ürün daha</td></tr>` : '';
+
+  tablo.innerHTML = `<table class="data-table" style="margin:0;">
+    <thead><tr><th>ID</th><th>Ürün Adı</th><th>Alış (₺)</th><th>Satış (₺)</th></tr></thead>
+    <tbody>${rows}${geriKalan}</tbody>
+  </table>`;
+
+  sayac.textContent = `${filtrelenmis.length} ürün`;
+}
+
+async function topluStokFiyatOnayla() {
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  const islem = document.querySelector('input[name="tsFiyatIslem"]:checked').value;
+  const alisDeger = document.getElementById('tsAlisFiyat').value;
+  const satisDeger = document.getElementById('tsSatisFiyat').value;
+
+  if (alisDeger === '' && satisDeger === '') {
+    showToast('En az bir fiyat girmelisiniz', 'warning');
+    return;
+  }
+
+  const eskiAlis = (u) => parseFloat(u['Alis Fiyati'] || u['Alış Fiyatı'] || 0);
+  const eskiSatis = (u) => parseFloat(u['Satis Fiyati'] || u['Satış Fiyatı'] || 0);
+
+  for (const item of filtrelenmis) {
+    const i = item._index;
+    if (alisDeger !== '') {
+      const yeniAlis = tsFiyatHesapla(eskiAlis(item), alisDeger, islem);
+      topluStokVerileri[i]['Alis Fiyati'] = yeniAlis;
+      topluStokVerileri[i]['Alış Fiyatı'] = yeniAlis;
+    }
+    if (satisDeger !== '') {
+      const yeniSatis = tsFiyatHesapla(eskiSatis(item), satisDeger, islem);
+      topluStokVerileri[i]['Satis Fiyati'] = yeniSatis;
+      topluStokVerileri[i]['Satış Fiyatı'] = yeniSatis;
+    }
+  }
+
+  showToast(`${filtrelenmis.length} ürünün fiyatı güncellendi`, 'success');
+  topluStokFiyatModalKapat();
+  renderTopluStok();
 }
