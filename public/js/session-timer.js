@@ -21,15 +21,32 @@
     var themeToggle = document.querySelector('.theme-toggle');
     if (!headerRight) return;
 
+    // Cikis butonu
+    var logoutBtn = document.createElement('button');
+    logoutBtn.id = 'logout-btn';
+    logoutBtn.title = 'Cikis Yap';
+    logoutBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:4px;font-family:monospace;font-size:12px;padding:4px 10px;border-radius:6px;background:#991b1b;color:#fecaca;border:1px solid #dc2626;cursor:pointer;white-space:nowrap;transition:all 0.2s;';
+    logoutBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cikis';
+    logoutBtn.onmouseenter = function() { logoutBtn.style.background = '#dc2626'; };
+    logoutBtn.onmouseleave = function() { logoutBtn.style.background = '#991b1b'; };
+    logoutBtn.onclick = function() {
+      if (typeof clearAuthToken === 'function') clearAuthToken();
+      else { try { localStorage.removeItem('oken_token'); } catch(e) {} }
+      window.location.href = '/login.html';
+    };
+
+    // Timer
     var el = document.createElement('div');
     el.id = 'session-timer';
-    el.style.cssText = 'display:flex;align-items:center;gap:5px;font-family:monospace;font-size:13px;padding:4px 10px;border-radius:6px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;margin-left:8px;white-space:nowrap;';
+    el.style.cssText = 'display:flex;align-items:center;gap:5px;font-family:monospace;font-size:13px;padding:4px 10px;border-radius:6px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;white-space:nowrap;';
     el.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="session-timer-text">30:00</span>';
 
     if (themeToggle) {
-      headerRight.insertBefore(el, themeToggle);
+      headerRight.insertBefore(logoutBtn, themeToggle);
+      headerRight.insertBefore(el, logoutBtn);
     } else {
       headerRight.appendChild(el);
+      headerRight.appendChild(logoutBtn);
     }
   }
 
