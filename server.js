@@ -55,8 +55,11 @@ app.get('/api/health', async (req, res) => {
     if (dbType !== 'turso') {
       // Turso neden baglanamadi? Debug et
       try {
-        const url = (process.env.TURSO_DATABASE_URL || '').trim();
-        const token = (process.env.TURSO_AUTH_TOKEN || '').trim();
+        let url = (process.env.TURSO_DATABASE_URL || '').trim();
+        let token = (process.env.TURSO_AUTH_TOKEN || '').trim();
+        // Fazladan on ek temizle
+        const libsqlIdx = url.indexOf('libsql://');
+        if (libsqlIdx > 0) url = url.substring(libsqlIdx);
         tursoDebug = {
           urlPresent: !!url,
           urlStartsWith: url ? url.substring(0, 10) : null,

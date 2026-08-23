@@ -10,8 +10,12 @@ let dbType = null;
 async function getDb() {
   if (db) return db;
 
-  const tursoUrl = (process.env.TURSO_DATABASE_URL || '').trim();
-  const tursoToken = (process.env.TURSO_AUTH_TOKEN || '').trim();
+  let tursoUrl = (process.env.TURSO_DATABASE_URL || '').trim();
+  let tursoToken = (process.env.TURSO_AUTH_TOKEN || '').trim();
+  
+  // Vercel env variable'larinda bazen fazladan karakter olabiliyor - temizle
+  const libsqlIdx = tursoUrl.indexOf('libsql://');
+  if (libsqlIdx > 0) tursoUrl = tursoUrl.substring(libsqlIdx);
 
   if (IS_VERCEL && tursoUrl && tursoUrl.startsWith('libsql://')) {
     try {
