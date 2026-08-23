@@ -57,7 +57,7 @@ router.post('/giris', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30m' });
 
-    res.cookie('oken_token', token, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'lax' });
+    res.cookie('oken_token', token, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'none', secure: true, path: '/' });
     res.json({ success: true, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
   } catch (err) {
     console.error('Giris hatasi:', err.message);
