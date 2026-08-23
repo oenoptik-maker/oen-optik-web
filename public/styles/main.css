@@ -57,9 +57,13 @@ body {
   background: var(--bg-secondary);
   color: var(--text-primary);
   line-height: 1.4;
-  overflow: hidden;
   font-size: 12px;
   height: 100vh;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Header */
@@ -1161,4 +1165,217 @@ body {
 @keyframes loadingBar {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(350%); }
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+    font-size: 14px;
+    height: auto;
+    min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .header {
+    flex-direction: column;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .header-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header-right {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1;
+    gap: 4px;
+    padding: 2px 0;
+  }
+
+  .nav::-webkit-scrollbar { display: none; }
+
+  .nav-btn {
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    min-height: 36px;
+    flex-shrink: 0;
+  }
+
+  .container {
+    padding: 6px 8px;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .card-title {
+    font-size: 0.9rem;
+  }
+
+  /* Tablolar */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .eye-table {
+    font-size: 0.8rem;
+    min-width: 600px;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-height: 38px;
+    min-width: 44px;
+  }
+
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: 34px;
+  }
+
+  /* Input / Select */
+  .form-group input,
+  .form-group select {
+    font-size: 1rem;
+    padding: 8px 10px;
+    min-height: 44px;
+  }
+
+  /* Action bar */
+  .action-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .action-bar .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* Navigation grid (siparis formu) */
+  .nav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Eye form */
+  .eye-section {
+    grid-template-columns: 1fr;
+  }
+
+  .eye-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Category filter */
+  .category-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-filter select,
+  .category-filter input {
+    width: 100%;
+  }
+
+  /* Product filter */
+  .product-filter {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .product-filter select,
+  .product-filter input {
+    width: 100%;
+  }
+
+  /* Admin tab content */
+  .admin-tab-content {
+    padding: 6px 0;
+  }
+
+  /* Modal */
+  .modal-content {
+    width: 95% !important;
+    max-width: 95vw !important;
+    margin: 5vh auto !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Loading overlay */
+  .loading-overlay {
+    font-size: 1rem;
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    width: 40px;
+    height: 22px;
+  }
+
+  .theme-toggle::after {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+
+  [data-theme="dark"] .theme-toggle::after {
+    left: 19px;
+  }
+
+  /* Actions column */
+  .actions-cell {
+    white-space: nowrap;
+  }
+
+  /* Badge */
+  .badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  /* Table responsive wrapper */
+  .card table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
