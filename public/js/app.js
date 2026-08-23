@@ -1590,7 +1590,7 @@ function telefonInputDuzenle(input) {
 }
 
 function navigate(page) {
-  const token = localStorage.getItem('oken_token');
+  const token = (typeof getAuthToken === 'function') ? getAuthToken() : localStorage.getItem('oken_token');
   window.location.href = page + (token ? '?token=' + encodeURIComponent(token) : '');
 }
 

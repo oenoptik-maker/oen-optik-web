@@ -627,16 +627,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <script>
-    (function() {
-      var params = new URLSearchParams(window.location.search);
-      var token = params.get('token');
-      if (token) {
-        localStorage.setItem('oken_token', token);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    })();
-  </script>
   <script src="js/api.js"></script>
 </body>
 </html>

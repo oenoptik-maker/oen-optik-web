@@ -1,14 +1,56 @@
 // api.js - window.api objesi (Electron IPC → fetch wrapper)
 // Mevcut tüm window.api.xxx() çağrılarını karşılar
 
+// iOS Safari third-party iframe'de localStorage calismayabilir.
+// Token'i global degiskende tutalim, localStorage'i best-effort olarak kullanalim.
+window._okenToken = null;
+
+// Sayfa yuklenirken URL'den token al (ilk yuklemede)
+(function() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var urlToken = params.get('token');
+    if (urlToken) {
+      window._okenToken = urlToken;
+      try { localStorage.setItem('oken_token', urlToken); } catch(e) {}
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+  } catch(e) {}
+  // URL'de token yoksa localStorage'dan al
+  try {
+    var t = localStorage.getItem('oken_token');
+    if (t) window._okenToken = t;
+  } catch(e) {}
+})();
+
+function getAuthToken() {
+  if (window._okenToken) return window._okenToken;
+  try {
+    var t = localStorage.getItem('oken_token');
+    if (t) { window._okenToken = t; return t; }
+  } catch(e) {}
+  return null;
+}
+
+function setAuthToken(token) {
+  window._okenToken = token;
+  try { localStorage.setItem('oken_token', token); } catch(e) {}
+}
+
+function clearAuthToken() {
+  window._okenToken = null;
+  try { localStorage.removeItem('oken_token'); } catch(e) {}
+}
+
 async function apiFetch(url, options = {}) {
   try {
-    const token = localStorage.getItem('oken_token');
+    const token = getAuthToken();
     const headers = { 'Content-Type': 'application/json', ...options.headers };
     if (token) headers['Authorization'] = 'Bearer ' + token;
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
-      localStorage.removeItem('oken_token');
+      clearAuthToken();
       window.location.href = '/login.html';
       return null;
     }
@@ -49,11 +91,11 @@ window.api = {
     const formData = new FormData();
     formData.append('file', dosya);
     const headers = {};
-    const token = localStorage.getItem('oken_token');
+    const token = getAuthToken();
     if (token) headers['Authorization'] = 'Bearer ' + token;
     return fetch('/api/stok/toplu-yukle', { method: 'POST', headers, body: formData })
       .then(async r => {
-        if (r.status === 401) { localStorage.removeItem('oken_token'); window.location.href = '/login.html'; return null; }
+        if (r.status === 401) { clearAuthToken(); window.location.href = '/login.html'; return null; }
         return await r.json();
       });
   },

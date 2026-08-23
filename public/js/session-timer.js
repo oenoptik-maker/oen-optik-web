@@ -42,7 +42,8 @@
 
     if (remaining <= 0) {
       clearInterval(timerInterval);
-      localStorage.removeItem('oken_token');
+      if (typeof clearAuthToken === 'function') clearAuthToken();
+      else localStorage.removeItem('oken_token');
       window.location.href = '/login.html';
       return;
     }
@@ -81,7 +82,8 @@
 
   window.addEventListener('session-expired', function() {
     clearInterval(timerInterval);
-    localStorage.removeItem('oken_token');
+    if (typeof clearAuthToken === 'function') clearAuthToken();
+    else localStorage.removeItem('oken_token');
     window.location.href = '/login.html';
   });
 
