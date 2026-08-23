@@ -1589,7 +1589,10 @@ function telefonInputDuzenle(input) {
   input.value = val;
 }
 
-function navigate(page) { window.location.href = page; }
+function navigate(page) {
+  const token = localStorage.getItem('oken_token');
+  window.location.href = page + (token ? '?token=' + encodeURIComponent(token) : '');
+}
 
 function showToast(message, type = 'info') {
   const toast = document.getElementById('toast');
