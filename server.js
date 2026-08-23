@@ -49,41 +49,11 @@ app.get('/api/health', async (req, res) => {
     const { getDb, dbAll, getDbType } = require('./db/database');
     await getDb();
     const users = await dbAll('SELECT id, username FROM users');
-    const dbType = getDbType();
-    
-    let tursoDebug = null;
-    if (dbType !== 'turso') {
-      // Turso neden baglanamadi? Debug et
-      try {
-        let url = (process.env.TURSO_DATABASE_URL || '').replace(/[\r\n]/g, '').trim();
-        let token = (process.env.TURSO_AUTH_TOKEN || '').replace(/[\r\n]/g, '').trim();
-        // Fazladan on ek temizle
-        const libsqlIdx = url.indexOf('libsql://');
-        if (libsqlIdx > 0) url = url.substring(libsqlIdx);
-        const jwtIdx = token.indexOf('eyJ');
-        if (jwtIdx > 0) token = token.substring(jwtIdx);
-        tursoDebug = {
-          urlPresent: !!url,
-          urlStartsWith: url ? url.substring(0, 10) : null,
-          tokenPresent: !!token,
-          tokenLength: token ? token.length : 0,
-        };
-        const { createClient } = require('@libsql/client');
-        const client = createClient({ url, authToken: token });
-        const result = await client.execute('SELECT 1 as ok');
-        tursoDebug.testResult = JSON.stringify(result);
-      } catch (tursoErr) {
-        tursoDebug.error = tursoErr.message;
-        tursoDebug.errorCode = tursoErr.code;
-      }
-    }
-    
     res.json({
       status: 'ok',
-      dbType,
+      dbType: getDbType(),
       isVercel: !!process.env.VERCEL,
       userCount: users.length,
-      tursoDebug
     });
   } catch (err) {
     res.status(500).json({ status: 'error', message: err.message });
