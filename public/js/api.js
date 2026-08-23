@@ -46,9 +46,15 @@ function clearAuthToken() {
 async function apiFetch(url, options = {}) {
   try {
     const token = getAuthToken();
+    // Token'i hem header'a hem URL query'ye ekle (iOS/cross-origin guvenlikli)
+    let finalUrl = url;
+    if (token && !url.includes('token=')) {
+      const sep = url.includes('?') ? '&' : '?';
+      finalUrl = url + sep + 'token=' + encodeURIComponent(token);
+    }
     const headers = { 'Content-Type': 'application/json', ...options.headers };
     if (token) headers['Authorization'] = 'Bearer ' + token;
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(finalUrl, { ...options, headers });
     if (response.status === 401) {
       clearAuthToken();
       window.location.href = '/login.html';
@@ -90,10 +96,11 @@ window.api = {
   topluStokYukle: (dosya) => {
     const formData = new FormData();
     formData.append('file', dosya);
-    const headers = {};
     const token = getAuthToken();
+    const url = '/api/stok/toplu-yukle' + (token ? '?token=' + encodeURIComponent(token) : '');
+    const headers = {};
     if (token) headers['Authorization'] = 'Bearer ' + token;
-    return fetch('/api/stok/toplu-yukle', { method: 'POST', headers, body: formData })
+    return fetch(url, { method: 'POST', headers, body: formData })
       .then(async r => {
         if (r.status === 401) { clearAuthToken(); window.location.href = '/login.html'; return null; }
         return await r.json();
