@@ -55,8 +55,7 @@ function authMiddleware(req, res, next) {
     if (decoded) {
       req.user = decoded;
       res.cookie('oken_token', urlToken, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'none', secure: true, path: '/' });
-      const cleanUrl = cleanUrlFromToken(url);
-      return res.redirect(cleanUrl);
+      return next();
     }
   }
 
