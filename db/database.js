@@ -157,6 +157,21 @@ async function dbRun(sql, params = []) {
   db.client.run(sql, cleanParams);
 }
 
+async function dbBatch(statements) {
+  if (dbType === 'turso') {
+    const stmts = statements.map(s => ({
+      sql: s.sql,
+      args: (s.params || []).map(p => p === undefined ? null : p)
+    }));
+    await db.client.batch(stmts);
+    return;
+  }
+  for (const s of statements) {
+    const cleanParams = (s.params || []).map(p => p === undefined ? null : p);
+    db.client.run(s.sql, cleanParams);
+  }
+}
+
 function saveDb() {
   if (IS_VERCEL) return;
   if (dbType === 'sqljs' && db && db.client) {
@@ -182,4 +197,4 @@ process.on('SIGTERM', () => { closeDb(); process.exit(0); });
 
 function getDbType() { return dbType; }
 
-module.exports = { getDb, closeDb, saveDb, dbAll, dbGet, dbRun, getDbType };
+module.exports = { getDb, closeDb, saveDb, dbAll, dbGet, dbRun, dbBatch, getDbType };

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getDb, dbAll, dbGet, dbRun } = require('../db/database');
+const { getDb, dbAll, dbGet, dbRun, dbBatch } = require('../db/database');
 const multer = require('multer');
 const XLSX = require('xlsx');
 
@@ -44,20 +44,29 @@ router.post('/toplu-onayla', async (req, res) => {
     let guncellenen = 0;
     let eklenen = 0;
 
+    const statements = [];
     for (const raw of stokVerileri) {
       const item = normalizeItem(raw);
       if (item.Adet <= 0) continue;
 
       const mevcut = allProducts.find(p => p.URUN_ADI === item.UrunAdi && p.KATEGORI_ADI === item.Kategori);
       if (mevcut) {
-        await dbRun('UPDATE urunler SET ADET = ADET + ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
-          [item.Adet, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]);
+        statements.push({
+          sql: 'UPDATE urunler SET ADET = ADET + ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
+          params: [item.Adet, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
+        });
         guncellenen++;
       } else {
-        await dbRun('INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          [nextId++, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]);
+        statements.push({
+          sql: 'INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          params: [nextId++, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]
+        });
         eklenen++;
       }
+    }
+
+    if (statements.length > 0) {
+      await dbBatch(statements);
     }
     res.json({ success: true, guncellenen, eklenen });
   } catch (err) {
@@ -74,16 +83,18 @@ router.post('/toplu-yukle', upload.single('file'), async (req, res) => {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
-    await dbRun('DELETE FROM toplu_stok');
-
+    const statements = [
+      { sql: 'DELETE FROM toplu_stok', params: [] }
+    ];
     for (const raw of data) {
       const item = normalizeItem(raw);
-      await dbRun(
-        'INSERT INTO toplu_stok (KATEGORI, KAREKOD, URUN_ADI, ALIS_FIYATI, SATIS_FIYATI, MENSEI, ADET) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [item.Kategori, item.KAREKOD, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Mensei, item.Adet]
-      );
+      statements.push({
+        sql: 'INSERT INTO toplu_stok (KATEGORI, KAREKOD, URUN_ADI, ALIS_FIYATI, SATIS_FIYATI, MENSEI, ADET) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        params: [item.Kategori, item.KAREKOD, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Mensei, item.Adet]
+      });
     }
 
+    await dbBatch(statements);
     res.json({ success: true, count: data.length });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
