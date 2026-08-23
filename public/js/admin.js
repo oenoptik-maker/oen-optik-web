@@ -530,57 +530,175 @@ async function urunFiyatKaydet(urunId, inputEl) {
 
 async function filtrelenmisFiyatGuncelle() {
   const filtrelenmis = filtrelenmisUrunleriAl();
-  if (filtrelenmis.length === 0) { showToast('Filtrelenmis urun bulunamadi', 'warning'); return; }
+  if (filtrelenmis.length === 0) { showToast('Filtrelenmiş ürün bulunamadı', 'warning'); return; }
 
-  const miktar = prompt(`Filtrelenmis ${filtrelenmis.length} urunun fiyatini guncelle.\n\nYeni Alis Fiyati bos birakilabilir.\nYeni Satis Fiyati bos birakilabilir.\n\nOrnek: Alis=100, Satis=150`, '');
-  if (miktar === null) return;
+  // Modal'ı aç
+  document.getElementById('topluAlisFiyat').value = '';
+  document.getElementById('topluSatisFiyat').value = '';
+  document.querySelector('input[name="fiyatIslem"][value="1"]').checked = true;
+  fiyatIslemDegisti();
 
-  const islem = prompt('Islem secin:\n1 = Yeni deger gir\n2 = Yuzde artir (orn: 20 = %%20 artir)\n3 = Yuzde azalt\n4 = Sabit tutar ekle\n5 = Sabit tutar cikar', '1');
-  if (!islem) return;
+  document.getElementById('fiyatGuncelleUrunAdet').innerHTML =
+    `<strong>${filtrelenmis.length}</strong> ürün filtrelendi. Bu ürünlerin fiyatları güncellenecek.`;
+  document.getElementById('fiyatGuncelleModal').classList.add('active');
 
-  const alisStr = prompt('Yeni Alis Fiyati (atlamak icin bos birakin):', '');
-  const satisStr = prompt('Yeni Satis Fiyati (atlamak icin bos birakin):', '');
-  const alisDeger = alisStr !== '' ? parseFloat(alisStr) : null;
-  const satisDeger = satisStr !== '' ? parseFloat(satisStr) : null;
+  fiyatOnizlemeGuncelle();
+}
 
-  if (alisDeger === null && satisDeger === null) { showToast('En az bir fiyat girmelisiniz', 'warning'); return; }
+function closeFiyatGuncelleModal() {
+  document.getElementById('fiyatGuncelleModal').classList.remove('active');
+}
+
+function fiyatIslemDegisti() {
+  const islem = document.querySelector('input[name="fiyatIslem"]:checked').value;
+  const alisLabel = document.getElementById('alisFiyatLabel');
+  const satisLabel = document.getElementById('satisFiyatLabel');
+  const alisInput = document.getElementById('topluAlisFiyat');
+  const satisInput = document.getElementById('topluSatisFiyat');
+
+  if (islem === '1') {
+    alisLabel.textContent = 'Yeni Alış Fiyatı (₺)';
+    satisLabel.textContent = 'Yeni Satış Fiyatı (₺)';
+    alisInput.placeholder = 'ör: 100';
+    satisInput.placeholder = 'ör: 150';
+    alisInput.step = '0.01';
+    satisInput.step = '0.01';
+  } else if (islem === '2') {
+    alisLabel.textContent = 'Alış Yüzde Artış (%)';
+    satisLabel.textContent = 'Satış Yüzde Artış (%)';
+    alisInput.placeholder = 'ör: 20';
+    satisInput.placeholder = 'ör: 20';
+    alisInput.step = '0.1';
+    satisInput.step = '0.1';
+  } else if (islem === '3') {
+    alisLabel.textContent = 'Alış Yüzde İndirim (%)';
+    satisLabel.textContent = 'Satış Yüzde İndirim (%)';
+    alisInput.placeholder = 'ör: 10';
+    satisInput.placeholder = 'ör: 10';
+    alisInput.step = '0.1';
+    satisInput.step = '0.1';
+  } else if (islem === '4') {
+    alisLabel.textContent = 'Alış Tutar Ekleme (₺)';
+    satisLabel.textContent = 'Satış Tutar Ekleme (₺)';
+    alisInput.placeholder = 'ör: 50';
+    satisInput.placeholder = 'ör: 50';
+    alisInput.step = '0.01';
+    satisInput.step = '0.01';
+  } else if (islem === '5') {
+    alisLabel.textContent = 'Alış Tutar Çıkarma (₺)';
+    satisLabel.textContent = 'Satış Tutar Çıkarma (₺)';
+    alisInput.placeholder = 'ör: 25';
+    satisInput.placeholder = 'ör: 25';
+    alisInput.step = '0.01';
+    satisInput.step = '0.01';
+  }
+
+  // Radio butonlarını görsel olarak güncelle
+  document.querySelectorAll('.fiyat-islem-radio').forEach(r => {
+    const radio = r.querySelector('input[type="radio"]');
+    if (radio.checked) {
+      r.style.borderColor = 'var(--color-primary)';
+      r.style.background = 'var(--bg-secondary)';
+      r.style.fontWeight = '600';
+    } else {
+      r.style.borderColor = 'var(--border)';
+      r.style.background = 'var(--bg-card)';
+      r.style.fontWeight = 'normal';
+    }
+  });
+
+  fiyatOnizlemeGuncelle();
+}
+
+function fiyatHesapla(eskiFiyat, deger, islem) {
+  if (!deger || deger === '') return eskiFiyat;
+  const d = parseFloat(deger);
+  if (isNaN(d)) return eskiFiyat;
+
+  if (islem === '1') return d;
+  if (islem === '2') return Math.round(eskiFiyat * (1 + d / 100));
+  if (islem === '3') return Math.max(0, Math.round(eskiFiyat * (1 - d / 100)));
+  if (islem === '4') return Math.round(eskiFiyat + d);
+  if (islem === '5') return Math.max(0, Math.round(eskiFiyat - d));
+  return eskiFiyat;
+}
+
+function fiyatOnizlemeGuncelle() {
+  const filtrelenmis = filtrelenmisUrunleriAl();
+  const islem = document.querySelector('input[name="fiyatIslem"]:checked').value;
+  const alisDeger = document.getElementById('topluAlisFiyat').value;
+  const satisDeger = document.getElementById('topluSatisFiyat').value;
+  const sayac = document.getElementById('fiyatOnizlemeSayac');
+  const tablo = document.getElementById('fiyatOnizlemeTablosu');
+
+  if (filtrelenmis.length === 0) {
+    tablo.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Ürün bulunamadı</div>';
+    sayac.textContent = '';
+    return;
+  }
+
+  const rows = filtrelenmis.slice(0, 200).map(u => {
+    const yeniAlis = alisDeger !== '' ? fiyatHesapla(parseFloat(u.ALIS_FIYATI) || 0, alisDeger, islem) : null;
+    const yeniSatis = satisDeger !== '' ? fiyatHesapla(parseFloat(u.FIYAT) || 0, satisDeger, islem) : null;
+
+    const alisHtml = yeniAlis !== null
+      ? `<span style="color:var(--text-muted);text-decoration:line-through;">${parseFloat(u.ALIS_FIYATI) || 0}</span> → <strong style="color:var(--color-primary);">${yeniAlis}</strong>`
+      : `<span>${parseFloat(u.ALIS_FIYATI) || 0}</span>`;
+    const satisHtml = yeniSatis !== null
+      ? `<span style="color:var(--text-muted);text-decoration:line-through;">${parseFloat(u.FIYAT) || 0}</span> → <strong style="color:#22c55e;">${yeniSatis}</strong>`
+      : `<span>${parseFloat(u.FIYAT) || 0}</span>`;
+
+    return `<tr>
+      <td style="padding:4px 8px;font-size:0.75rem;">${u.URUN_ID}</td>
+      <td style="padding:4px 8px;font-size:0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${u.URUN_ADI}</strong></td>
+      <td style="padding:4px 8px;font-size:0.75rem;text-align:right;">${alisHtml}</td>
+      <td style="padding:4px 8px;font-size:0.75rem;text-align:right;">${satisHtml}</td>
+    </tr>`;
+  }).join('');
+
+  const geriKalan = filtrelenmis.length > 200 ? `<tr><td colspan="4" style="padding:4px 8px;font-size:0.75rem;color:var(--text-secondary);text-align:center;">... ve ${filtrelenmis.length - 200} ürün daha</td></tr>` : '';
+
+  tablo.innerHTML = `<table class="data-table" style="margin:0;">
+    <thead><tr><th>ID</th><th>Ürün Adı</th><th>Alış (₺)</th><th>Satış (₺)</th></tr></thead>
+    <tbody>${rows}${geriKalan}</tbody>
+  </table>`;
+
+  sayac.textContent = `${filtrelenmis.length} ürün`;
+}
+
+async function fiyatGuncelleOnayla() {
+  const filtrelenmis = filtrelenmisUrunleriAl();
+  const islem = document.querySelector('input[name="fiyatIslem"]:checked').value;
+  const alisDeger = document.getElementById('topluAlisFiyat').value;
+  const satisDeger = document.getElementById('topluSatisFiyat').value;
+
+  if (alisDeger === '' && satisDeger === '') {
+    showToast('En az bir fiyat girmelisiniz', 'warning');
+    return;
+  }
 
   let guncellenen = [];
   for (const u of filtrelenmis) {
     let yeniAlis = u.ALIS_FIYATI || 0;
     let yeniSatis = u.FIYAT || 0;
 
-    if (Number(islem) === 1) {
-      if (alisDeger !== null) yeniAlis = alisDeger;
-      if (satisDeger !== null) yeniSatis = satisDeger;
-    } else if (Number(islem) === 2) {
-      if (alisDeger !== null) yeniAlis = Math.round(yeniAlis * (1 + alisDeger / 100));
-      if (satisDeger !== null) yeniSatis = Math.round(yeniSatis * (1 + satisDeger / 100));
-    } else if (Number(islem) === 3) {
-      if (alisDeger !== null) yeniAlis = Math.round(yeniAlis * (1 - alisDeger / 100));
-      if (satisDeger !== null) yeniSatis = Math.round(yeniSatis * (1 - satisDeger / 100));
-    } else if (Number(islem) === 4) {
-      if (alisDeger !== null) yeniAlis = Math.round(yeniAlis + alisDeger);
-      if (satisDeger !== null) yeniSatis = Math.round(yeniSatis + satisDeger);
-    } else if (Number(islem) === 5) {
-      if (alisDeger !== null) yeniAlis = Math.max(0, Math.round(yeniAlis - alisDeger));
-      if (satisDeger !== null) yeniSatis = Math.max(0, Math.round(yeniSatis - satisDeger));
-    }
+    if (alisDeger !== '') yeniAlis = fiyatHesapla(yeniAlis, alisDeger, islem);
+    if (satisDeger !== '') yeniSatis = fiyatHesapla(yeniSatis, satisDeger, islem);
 
     guncellenen.push({ URUN_ID: u.URUN_ID, ALIS_FIYATI: yeniAlis, FIYAT: yeniSatis });
   }
 
   if (guncellenen.length === 0) return;
 
-  const onay = confirm(`${guncellenen.length} urunun fiyati guncellenecek. Onayliyor musunuz?`);
-  if (!onay) return;
+  if (!(await showConfirm(`${guncellenen.length} ürünün fiyatı güncellenecek. Onaylıyor musunuz?`, 'Fiyat Güncelleme'))) return;
 
   const result = await window.api.fiyatGuncelle(guncellenen);
   if (result.success) {
-    showToast(`${guncellenen.length} urunun fiyati guncellendi`, 'success');
+    showToast(`${guncellenen.length} ürünün fiyatı güncellendi`, 'success');
+    closeFiyatGuncelleModal();
     await loadUrunler();
   } else {
-    showToast('Guncelleme basarisiz: ' + (result.message || ''), 'error');
+    showToast('Güncelleme başarısız: ' + (result.message || ''), 'error');
   }
 }
 

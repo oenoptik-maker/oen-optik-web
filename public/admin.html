@@ -496,6 +496,66 @@
     </div>
   </div>
 
+  <!-- Fiyat Güncelleme Modal -->
+  <div id="fiyatGuncelleModal" class="modal-overlay">
+    <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Filtrelenen Ürünlerin Fiyatını Güncelle</h3>
+        <button class="modal-close" onclick="closeFiyatGuncelleModal()">&times;</button>
+      </div>
+      <div id="fiyatGuncelleUrunAdet" style="padding: 0 0 12px 0; font-size: 0.85rem; color: var(--text-secondary);"></div>
+
+      <!-- İşlem Tipi -->
+      <div style="margin-bottom: 16px;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 8px;">İşlem Tipi</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.8rem; background: var(--bg-card); transition: all 0.2s;" class="fiyat-islem-radio">
+            <input type="radio" name="fiyatIslem" value="1" checked onchange="fiyatIslemDegisti()"> Yeni Değer Gir
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.8rem; background: var(--bg-card); transition: all 0.2s;" class="fiyat-islem-radio">
+            <input type="radio" name="fiyatIslem" value="2" onchange="fiyatIslemDegisti()"> Yüzde Artır
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.8rem; background: var(--bg-card); transition: all 0.2s;" class="fiyat-islem-radio">
+            <input type="radio" name="fiyatIslem" value="3" onchange="fiyatIslemDegisti()"> Yüzde Azalt
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.8rem; background: var(--bg-card); transition: all 0.2s;" class="fiyat-islem-radio">
+            <input type="radio" name="fiyatIslem" value="4" onchange="fiyatIslemDegisti()"> Sabit Tutar Ekle
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 0.8rem; background: var(--bg-card); transition: all 0.2s;" class="fiyat-islem-radio">
+            <input type="radio" name="fiyatIslem" value="5" onchange="fiyatIslemDegisti()"> Sabit Tutar Çıkar
+          </label>
+        </div>
+      </div>
+
+      <!-- Fiyat Girişleri -->
+      <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+        <div class="form-group" style="flex: 1;">
+          <label id="alisFiyatLabel">Alış Fiyatı</label>
+          <input type="number" id="topluAlisFiyat" step="0.01" min="0" placeholder="0" oninput="fiyatOnizlemeGuncelle()">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label id="satisFiyatLabel">Satış Fiyatı</label>
+          <input type="number" id="topluSatisFiyat" step="0.01" min="0" placeholder="0" oninput="fiyatOnizlemeGuncelle()">
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 16px;">Birini boş bırakabilirsiniz. Boş bırakılan alan güncellenmez.</div>
+
+      <!-- Önizleme Tablosu -->
+      <div style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary);">Önizleme</label>
+          <span id="fiyatOnizlemeSayac" style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;"></span>
+        </div>
+        <div id="fiyatOnizlemeTablosu" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;"></div>
+      </div>
+
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-primary" onclick="fiyatGuncelleOnayla()">✅ Güncelle</button>
+        <button class="btn btn-outline" onclick="closeFiyatGuncelleModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="js/api.js"></script>
