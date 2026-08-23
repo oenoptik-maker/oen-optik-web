@@ -146,11 +146,21 @@
   <script>
     (function() {
       var token = localStorage.getItem('oken_token');
-      if (token) {
-        // Token varsa direkt URL ile yönlendir (iOS cookie sorunu için)
-        window.location.href = '/index.html?token=' + encodeURIComponent(token);
-        return;
-      }
+      if (!token) return;
+      // Token'i dogrula, gecerliyse yonlendir
+      fetch('/api/auth/durum', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.loggedIn) {
+          window.location.href = '/index.html?token=' + encodeURIComponent(token);
+        } else {
+          // Token gecersiz, temizle
+          try { localStorage.removeItem('oken_token'); } catch(e) {}
+        }
+      }).catch(function() {
+        // Hata olursa da temizle, kullanici giris yapsin
+        try { localStorage.removeItem('oken_token'); } catch(e) {}
+      });
     })();
 
     async function handleLogin(e) {
