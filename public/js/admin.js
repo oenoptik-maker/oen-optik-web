@@ -753,8 +753,6 @@ function adminTabAc(tab) {
   } else if (tab === 'uts') {
     tabUTS.classList.add('active');
     panelUTS.style.display = '';
-    var utsAcBtn = document.getElementById('utsAcBtn');
-    if (utsAcBtn) utsAcBtn.disabled = false;
     utsAlimListesiniYukle();
   }
 }

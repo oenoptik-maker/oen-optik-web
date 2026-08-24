@@ -382,6 +382,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  text-decoration: none;
+}
+
+a.btn {
+  text-decoration: none;
+  color: inherit;
 }
 
 .btn-primary {
