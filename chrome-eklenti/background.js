@@ -10,4 +10,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   }
+
+  if (msg.type === 'UTS_BEKLEYENLERI_CEK') {
+    const token = msg.token;
+    const gkk = msg.gkk;
+    if (!token || !gkk) {
+      sendResponse({ ok: false, error: 'Token veya GKK eksik' });
+      return;
+    }
+
+    fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
+      method: 'POST',
+      headers: { 'utsToken': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ GKK: parseInt(gkk), BNO: '', UNO: '', BID: '', SAN: 1 })
+    })
+    .then(r => r.json())
+    .then(data => {
+      chrome.storage.local.set({
+        utsAktarim: {
+          urunler: data,
+          timestamp: Date.now()
+        }
+      }, () => {
+        sendResponse({ ok: true, data: data });
+      });
+    })
+    .catch(err => {
+      sendResponse({ ok: false, error: err.message });
+    });
+    return true;
+  }
 });

@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "name": "OEN Optik - UTS Aktarim",
-  "version": "7.0",
+  "version": "8.0",
   "description": "UTS sayfasina buton ekler, urunleri OEN Optik'e aktarir",
   "permissions": ["storage"],
+  "host_permissions": ["https://utsuygulama.saglik.gov.tr/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
