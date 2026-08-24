@@ -1,12 +1,19 @@
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'AKTAR_UTS') {
     chrome.tabs.query({}, (tabs) => {
-      const oenTab = tabs.find(t => t.url && (
-        t.url.includes('oenoptik.com') && t.url.includes('yonetici')
-      ) || (t.url && t.url.includes('oen-optik-web.vercel.app')));
+      let oenTab = null;
+      for (const t of tabs) {
+        if (!t.url) continue;
+        const u = t.url.toLowerCase();
+        if (u.includes('oenoptik') || u.includes('oen-optik')) {
+          oenTab = t;
+          break;
+        }
+      }
 
       if (!oenTab) {
-        sendResponse({ ok: false, error: 'OEN Optik sayfasi acik degil' });
+        chrome.storage.local.set({ utsAktarim: { urunler: msg.urunler, timestamp: Date.now() } });
+        sendResponse({ ok: false, error: 'OEN Optik sayfasi acik degil (veri kaydedildi, sayfayi acinca yuklenecek)' });
         return;
       }
 
@@ -16,6 +23,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         func: (urunler) => {
           if (typeof utsVeriAktar === 'function') {
             utsVeriAktar(urunler);
+          } else {
+            window.__pendingUts = urunler;
           }
         },
         args: [msg.urunler]
