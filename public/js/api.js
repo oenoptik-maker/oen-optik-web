@@ -158,6 +158,10 @@ window.api = {
 
   // ===== UTS API (DOĞRUDAN BAĞLANTI) =====
   utsApiSaglikKontrol: () => apiFetch('/api/uts-api/health'),
+  utsApiGetToken: async () => {
+    const r = await apiFetch('/api/uts-api/get-token');
+    return r && r.token ? r.token : null;
+  },
   utsApiBekleyenUrunleriSorgula: (p) => apiFetch('/api/uts-api/bekleyen-urunleri-sorgula', { method: 'POST', body: JSON.stringify(p) }),
   utsApiBekleyenSayisi: (p) => apiFetch('/api/uts-api/bekleyen-sayisi', { method: 'POST', body: JSON.stringify(p) }),
   utsApiAlmaBildirimi: (b) => apiFetch('/api/uts-api/alma-bildirimi', { method: 'POST', body: JSON.stringify(b) }),

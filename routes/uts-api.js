@@ -22,6 +22,10 @@ router.get('/health', async (req, res) => {
   res.json({ hasToken: !!UTS_TOKEN, tokenLength: UTS_TOKEN ? UTS_TOKEN.length : 0 });
 });
 
+router.get('/get-token', async (req, res) => {
+  res.json({ token: UTS_TOKEN || '' });
+});
+
 router.post('/bekleyen-urunleri-sorgula', async (req, res) => {
   try {
     if (!UTS_TOKEN) return res.status(500).json({ success: false, message: 'UTS_TOKEN tanımlı değil' });

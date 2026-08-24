@@ -2097,28 +2097,43 @@ async function utsVerileriCek() {
     return;
   }
 
-  const result = await window.api.utsApiBekleyenUrunleriSorgula({ gkk: gkk, bno: '', uno: '', san: 1 });
-  if (!result || !result.success) {
-    showToast('UTS sorgulama hatası: ' + (result ? result.message : 'Bilinmeyen hata'), 'error');
+  // Token'ı al
+  const token = await window.api.utsApiGetToken();
+  if (!token) {
+    showToast('Token alınamadı.', 'error');
     if (btn) btn.disabled = false;
     return;
   }
 
-  const veri = result.veri;
-  let urunler = [];
-  if (Array.isArray(veri)) urunler = veri;
-  else if (veri && Array.isArray(veri.urunler)) urunler = veri.urunler;
-  else if (veri && veri.data && Array.isArray(veri.data)) urunler = veri.data;
+  // Doğrudan tarayıcıdan UTS API'ye istek at
+  try {
+    const resp = await fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
+      method: 'POST',
+      headers: { 'utsToken': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ GKK: gkk, BNO: '', UNO: '', BID: '', SAN: 1 })
+    });
+    const data = await resp.json();
+    console.log('UTS API Yanıtı:', data);
 
-  if (urunler.length === 0) {
-    showToast('Bekleyen ürün bulunamadı.', 'warning');
-    if (btn) btn.disabled = false;
-    return;
+    let urunler = [];
+    if (Array.isArray(data)) urunler = data;
+    else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
+    else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
+    else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
+
+    if (urunler.length === 0) {
+      showToast('Bekleyen ürün bulunamadı. Yanıt: ' + JSON.stringify(data).substring(0, 300), 'warning');
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    utsBekleyenUrunler = urunler;
+    utsBekleyenUrunleriGoster(urunler);
+    showToast(`${urunler.length} bekleyen ürün bulundu.`, 'success');
+  } catch (err) {
+    showToast('UTS API hatası: ' + err.message, 'error');
+    console.error('UTS API Hatası:', err);
   }
-
-  utsBekleyenUrunler = urunler;
-  utsBekleyenUrunleriGoster(urunler);
-  showToast(`${urunler.length} bekleyen ürün bulundu.`, 'success');
   if (btn) btn.disabled = false;
 }
 
