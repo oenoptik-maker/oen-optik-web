@@ -2140,23 +2140,38 @@ async function utsVerileriCek() {
 let utsBekleyenUrunler = [];
 
 async function utsYapistir() {
+  const textarea = document.getElementById('utsYapistirmaAlani');
+  if (!textarea || !textarea.value.trim()) {
+    showToast('Textarea boş. UTS sayfasında kodu çalıştırıp sonucu buraya yapıştırın.', 'warning');
+    return;
+  }
   try {
-    const text = await navigator.clipboard.readText();
-    if (!text || !text.trim()) {
-      showToast('Clipboard boş. Önce UTS sayfasında kodu çalıştırın.', 'warning');
-      return;
-    }
-    const veriler = JSON.parse(text);
+    const veriler = JSON.parse(textarea.value.trim());
     if (!Array.isArray(veriler) || veriler.length === 0) {
-      showToast('Clipboard\'da geçerli ürün verisi bulunamadı.', 'warning');
+      showToast('Geçerli ürün verisi bulunamadı.', 'warning');
       return;
     }
     utsBekleyenUrunler = veriler;
     utsBekleyenUrunleriGoster(veriler);
-    showToast(`${veriler.length} ürün yapıştırıldı. Fiyatları girip "Stoğa Kaydet" ile kaydedin.`, 'success');
+    textarea.value = '';
+    showToast(`${veriler.length} ürün yüklendi. Fiyatları girip "Stoğa Kaydet" ile kaydedin.`, 'success');
   } catch (err) {
-    showToast('Yapıştırma hatası: ' + err.message, 'error');
+    showToast('JSON parse hatası: ' + err.message, 'error');
   }
+}
+
+function utsYapistirmaIsle() {
+  const textarea = document.getElementById('utsYapistirmaAlani');
+  if (!textarea || !textarea.value.trim()) return;
+  try {
+    const veriler = JSON.parse(textarea.value.trim());
+    if (Array.isArray(veriler) && veriler.length > 0) {
+      utsBekleyenUrunler = veriler;
+      utsBekleyenUrunleriGoster(veriler);
+      textarea.value = '';
+      showToast(`${veriler.length} ürün yüklendi.`, 'success');
+    }
+  } catch {}
 }
 
 async function utsDebug() {

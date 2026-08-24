@@ -219,14 +219,21 @@
                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">
                   1️⃣ UTS sayfasını açın, ürünleri işaretleyin<br>
                   2️⃣ UTS sayfasında F12 → Konsol → kodu çalıştırın<br>
-                  3️⃣ Buraya gelin 📋 Yapıştır'ı tıklayın<br>
+                  3️⃣ Çıkan JSON'ı kopyalayıp aşağıdaki alana yapıştırın<br>
                   4️⃣ Fiyatları girin → 📦 Stoğa Kaydet
                 </p>
+                <details style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:12px;">
+                  <summary style="cursor:pointer;">📝 Konsol Kodu (tıkla)</summary>
+                  <pre style="background:var(--bg-secondary);padding:8px;border-radius:6px;font-size:0.7rem;overflow-x:auto;margin-top:6px;">var rows=document.querySelectorAll('table tbody tr');var s=[];rows.forEach(function(r){var c=r.querySelector('input[type=checkbox]:checked');if(c){var t=r.querySelectorAll('td');s.push({urunNo:t[1]?.innerText?.trim(),kurumKodu:t[2]?.innerText?.trim(),bildirimKodu:t[3]?.innerText?.trim(),lotBatch:t[4]?.innerText?.trim(),seriNo:t[5]?.innerText?.trim(),urunTanimi:t[6]?.innerText?.trim(),gonderenKurum:t[7]?.innerText?.trim(),adet:t[8]?.innerText?.trim()})}});copy(JSON.stringify(s));console.log(JSON.stringify(s));alert(s.length+' ürün kopyalandı!');</pre>
+                </details>
                 <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <a href="https://utsuygulama.saglik.gov.tr/UTS" target="_blank" rel="noopener noreferrer" class="btn btn-outline" id="utsAcBtn">🌐 UTS Sayfasını Aç</a>
                   <button class="btn btn-outline" onclick="openCredentialModal()">⚙️ UTS Ayarları</button>
-                  <button class="btn btn-warning" onclick="utsYapistir()" style="background:#f59e0b;color:#000;font-weight:600;">📋 Yapıştır</button>
+                  <button class="btn btn-warning" onclick="document.getElementById('utsYapistirmaAlani').focus();document.getElementById('utsYapistirmaAlani').click();" style="background:#f59e0b;color:#000;font-weight:600;">📋 Yapıştır</button>
                   <button class="btn btn-primary" onclick="utsStogaKaydet()" id="utsStogaKaydetBtn">📦 Stoğa Kaydet</button>
+                </div>
+                <div style="margin-top:8px;">
+                  <textarea id="utsYapistirmaAlani" rows="2" placeholder="UTS sayfasında kodu çalıştırdıktan sonra buraya Ctrl+V ile yapıştırın..." oninput="utsYapistirmaIsle()" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;font-family:monospace;resize:vertical;"></textarea>
                 </div>
               </div>
               <div id="utsDurum" style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; display: none;">
