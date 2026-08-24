@@ -16,15 +16,18 @@
           return;
         }
 
-        const ta = document.getElementById('utsYapistirmaAlani');
-        if (ta) {
-          ta.value = JSON.stringify(urunler);
-          ta.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+        window.utsVeriAktar = null;
+        const checkFunc = setInterval(() => {
+          if (typeof utsVeriAktar === 'function') {
+            clearInterval(checkFunc);
+            utsVeriAktar(urunler);
+          }
+        }, 200);
+        setTimeout(() => clearInterval(checkFunc), 10000);
       });
     } catch(e) {}
   }
 
-  setTimeout(checkUtsData, 500);
+  setTimeout(checkUtsData, 1000);
   setInterval(checkUtsData, 2000);
 })();
