@@ -81,34 +81,23 @@
       return;
     }
 
+    showDurum(`${secili.length} ürün aktarılıyor...`, '');
+
     try {
-      const tabs = await chrome.tabs.query({});
-      const oenTab = tabs.find(t => t.url && (t.url.includes('oenoptik.com/yonetici') || t.url.includes('oen-optik-web.vercel.app/admin')));
-
-      if (!oenTab) {
-        showDurum('⚠️ OEN Optik yönetici sayfası açık değil!', 'err');
-        return;
-      }
-
-      await chrome.storage.local.set({ utsUrunler: secili });
-
-      await chrome.scripting.executeScript({
-        target: { tabId: oenTab.id },
-        func: (data) => {
-          const iframes = document.querySelectorAll('iframe');
-          for (const iframe of iframes) {
-            try {
-              iframe.contentWindow.postMessage({ type: 'UTS_URUNLER_AKTAR', urunler: data }, '*');
-            } catch(e) {}
-          }
-          window.postMessage({ type: 'UTS_URUNLER_AKTAR', urunler: data }, '*');
-        },
-        args: [secili]
+      const response = await chrome.runtime.sendMessage({
+        type: 'AKTAR_UTS',
+        urunler: secili
       });
 
-      showDurum(`✅ ${secili.length} ürün aktarıldı!`, 'ok');
+      if (response && response.ok) {
+        showDurum(`✅ ${secili.length} ürün aktarıldı!`, 'ok');
+      } else {
+        showDurum('⚠️ ' + (response?.error || 'Bilinmeyen hata') + ' Yeni sekme açılıyor...', '');
+        const json = encodeURIComponent(JSON.stringify(secili));
+        window.open(`https://oen-optik-web.vercel.app/admin.html#uts=${json}`, '_blank');
+      }
     } catch (err) {
-      showDurum('⚠️ Sekme bulunamadı, yeni sekme açılıyor...', '');
+      showDurum('⚠️ Yeni sekme açılıyor...', '');
       const json = encodeURIComponent(JSON.stringify(secili));
       window.open(`https://oen-optik-web.vercel.app/admin.html#uts=${json}`, '_blank');
     }
