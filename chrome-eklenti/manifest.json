@@ -1,20 +1,15 @@
 {
   "manifest_version": 3,
   "name": "OEN Optik - UTS Aktarım",
-  "version": "3.0",
+  "version": "4.0",
   "description": "UTS sayfasına buton ekler, seçili ürünleri OEN Optik'e aktarır",
-  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "permissions": ["storage"],
   "host_permissions": [
-    "*://oenoptik.com/*",
-    "*://www.oenoptik.com/*",
     "*://oen-optik-web.vercel.app/*"
   ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
-  },
-  "background": {
-    "service_worker": "background.js"
   },
   "icons": {
     "16": "icon.png",
@@ -25,6 +20,11 @@
     {
       "matches": ["*://utsuygulama.saglik.gov.tr/*"],
       "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://oen-optik-web.vercel.app/admin.html*"],
+      "js": ["admin-content.js"],
       "run_at": "document_idle"
     }
   ]

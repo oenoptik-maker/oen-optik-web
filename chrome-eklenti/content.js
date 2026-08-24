@@ -81,26 +81,14 @@
       return;
     }
 
-    showDurum(`${secili.length} ürün aktarılıyor...`, '');
-
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'AKTAR_UTS',
-        urunler: secili
-      });
-
-      if (response && response.ok) {
-        showDurum(`✅ ${secili.length} ürün aktarıldı!`, 'ok');
-      } else {
-        showDurum('⚠️ ' + (response?.error || 'Bilinmeyen hata') + ' Yeni sekme açılıyor...', '');
-        const json = encodeURIComponent(JSON.stringify(secili));
-        window.open(`https://oen-optik-web.vercel.app/admin.html#uts=${json}`, '_blank');
+    await chrome.storage.local.set({
+      utsAktarim: {
+        urunler: secili,
+        timestamp: Date.now()
       }
-    } catch (err) {
-      showDurum('⚠️ Yeni sekme açılıyor...', '');
-      const json = encodeURIComponent(JSON.stringify(secili));
-      window.open(`https://oen-optik-web.vercel.app/admin.html#uts=${json}`, '_blank');
-    }
+    });
+
+    showDurum(`✅ ${secili.length} ürün aktarıldı! OEN Optik sayfasında görünecek.`, 'ok');
   });
 
   document.body.appendChild(btn);
