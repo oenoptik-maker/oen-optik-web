@@ -2139,6 +2139,26 @@ async function utsVerileriCek() {
 
 let utsBekleyenUrunler = [];
 
+async function utsYapistir() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text || !text.trim()) {
+      showToast('Clipboard boş. Önce UTS sayfasında kodu çalıştırın.', 'warning');
+      return;
+    }
+    const veriler = JSON.parse(text);
+    if (!Array.isArray(veriler) || veriler.length === 0) {
+      showToast('Clipboard\'da geçerli ürün verisi bulunamadı.', 'warning');
+      return;
+    }
+    utsBekleyenUrunler = veriler;
+    utsBekleyenUrunleriGoster(veriler);
+    showToast(`${veriler.length} ürün yapıştırıldı. Fiyatları girip "Stoğa Kaydet" ile kaydedin.`, 'success');
+  } catch (err) {
+    showToast('Yapıştırma hatası: ' + err.message, 'error');
+  }
+}
+
 async function utsDebug() {
   showToast('Debug: UTS API test ediliyor...', 'info');
   const result = await window.api.utsApiDebug(0);
@@ -2156,51 +2176,43 @@ function utsBekleyenUrunleriGoster(urunler) {
   if (!container) return;
 
   const rows = urunler.map((u, i) => {
-    const keys = Object.keys(u);
-    const val = (kws) => {
-      for (const k of keys) {
-        const kl = k.toLowerCase();
-        if (kws.some(w => kl.includes(w))) return u[k];
-      }
-      return '';
-    };
-    const uno = val(['uno', 'ürün numarası', 'urun numarasi', 'ürün no']);
-    const lno = val(['lno', 'lot', 'batch']);
-    const sno = val(['sno', 'seri', 'sıra']);
-    const tanim = val(['tanim', 'tanım', 'ürün tanımı', 'urun tanimi', 'açıklama', 'aciklama']);
-    const adet = val(['adet', 'miktar', 'adt']);
-    const gonderen = val(['gönderen', 'gonderen', 'firma', 'kurum']);
-    const belge = val(['belge', 'bno', 'bildirim']);
-    const gkk = val(['gkk', 'gönderen kurum kodu', 'gonderen kurum kodu']);
-    const vbi = val(['vbi', 'bildirim id', 'bildirim no']);
+    const uno = u.urunNo || u.UNO || '';
+    const lno = u.lotBatch || u.LNO || '';
+    const sno = u.seriNo || u.SNO || '';
+    const tanim = u.urunTanimi || u.TANIM || '';
+    const adet = u.adet || u.ADET || '1';
+    const gonderen = u.gonderenKurum || '';
+    const kurumKodu = u.kurumKodu || u.GKK || '';
+    const bildirimKodu = u.bildirimKodu || '';
 
     return `
     <tr>
-      <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" data-uno="${uno}" data-lno="${lno}" data-sno="${sno}" data-gkk="${gkk}" data-vbi="${vbi}" onchange="utsApiSeciliGuncelle()"></td>
+      <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" checked onchange="utsApiSeciliGuncelle()"></td>
       <td>${i + 1}</td>
-      <td>${uno || '-'}</td>
-      <td>${lno || '-'}</td>
-      <td>${sno || '-'}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${tanim}">${tanim || '-'}</td>
-      <td>${gonderen || '-'}</td>
-      <td>${adet || '-'}</td>
-      <td>${belge || '-'}</td>
+      <td style="font-size:0.7rem;">${uno}</td>
+      <td style="font-size:0.7rem;">${lno}</td>
+      <td style="font-size:0.7rem;">${sno}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
+      <td style="font-size:0.7rem;">${gonderen}</td>
+      <td>${adet}</td>
+      <td><input type="number" step="0.01" min="0" value="0" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;text-align:right;" class="uts-alis-fiyat"></td>
+      <td><input type="number" step="0.01" min="0" value="0" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;text-align:right;" class="uts-satis-fiyat"></td>
     </tr>`;
   }).join('');
 
   container.innerHTML = `
     <div style="padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <span style="font-size:0.8rem;color:var(--text-secondary);">${urunler.length} bekleyen ürün</span>
+      <span style="font-size:0.8rem;color:var(--text-secondary);">${urunler.length} ürün yüklendi</span>
       <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)"> Tümünü Seç
+        <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked> Tümünü Seç
       </label>
-      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);"></span>
+      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);">${urunler.length} ürün seçili</span>
     </div>
     <table class="data-table">
       <thead><tr>
         <th style="width:30px;text-align:center;">✓</th>
         <th>#</th><th>Ürün No</th><th>Lot/Batch</th><th>Seri/Sıra</th>
-        <th>Ürün Tanımı</th><th>Gönderen</th><th>Adet</th><th>Belge</th>
+        <th>Ürün Tanımı</th><th>Gönderen</th><th>Adet</th><th>Alış ₺</th><th>Satış ₺</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -2225,28 +2237,56 @@ async function utsStogaKaydet() {
     return;
   }
 
-  if (!(await showConfirm(`${seciliCheckboxes.length} seçili UTS ürününü stoğa eklemek istediğinize emin misiniz?\n\nUTS Alma Bildirimi gönderilecek ve ürünler yerel stoğa eklenecek.`, 'UTS Stoğa Kaydet'))) return;
+  if (!(await showConfirm(`${seciliCheckboxes.length} seçili UTS ürününü stoğa eklemek istediğinize emin misiniz?`, 'UTS Stoğa Kaydet'))) return;
 
-  showToast('UTS Alma Bildirimleri gönderiliyor...', 'info');
-  let basarili = 0, basarisiz = 0;
-
-  for (const cb of seciliCheckboxes) {
-    const bildirim = {
-      vbi: parseInt(cb.dataset.vbi) || null,
-      adt: 1,
-      gkk: parseInt(cb.dataset.gkk) || null,
-      uno: cb.dataset.uno || '',
-      lno: cb.dataset.lno || '',
-      sno: cb.dataset.sno || ''
-    };
-    const result = await window.api.utsApiAlmaBildirimi(bildirim);
-    if (result && result.success) basarili++;
-    else basarisiz++;
+  const mevcutKategoriler = await window.api.kategoriRead();
+  const utsKategoriVar = mevcutKategoriler.some(k => k.KATEGORI_ADI === 'UTS Ürünleri');
+  if (!utsKategoriVar) {
+    const nextKatId = await window.api.kategoriGetNextId();
+    await window.api.kategoriSave({ KATEGORI_ID: nextKatId, KATEGORI_ADI: 'UTS Ürünleri' });
   }
 
-  showToast(`${basarili} ürün alındı, ${basarisiz} hatalı.`, basarisiz > 0 ? 'warning' : 'success');
+  const mevcutUrunler = await window.api.urunRead();
+  let nextId = mevcutUrunler.length > 0 ? Math.max(...mevcutUrunler.map(u => parseInt(u.URUN_ID) || 0)) + 1 : 1;
+  let eklenen = 0, atlanan = 0;
+
+  const tbody = document.querySelector('#utsAlimListesi tbody');
+  const satirlar = tbody ? tbody.querySelectorAll('tr') : [];
+
+  for (const cb of seciliCheckboxes) {
+    const idx = parseInt(cb.dataset.index);
+    const satir = satirlar[idx];
+    const alisInput = satir ? satir.querySelector('.uts-alis-fiyat') : null;
+    const satisInput = satir ? satir.querySelector('.uts-satis-fiyat') : null;
+    const alisFiyat = alisInput ? parseFloat(alisInput.value) || 0 : 0;
+    const satisFiyat = satisInput ? parseFloat(satisInput.value) || 0 : 0;
+
+    const veri = utsBekleyenUrunler[idx];
+    if (!veri) { atlanan++; continue; }
+
+    const urunAdi = veri.urunTanimi || veri.TANIM || '';
+    if (!urunAdi) { atlanan++; continue; }
+
+    const ayni = mevcutUrunler.find(u => u.URUN_ADI === urunAdi);
+    if (ayni) { atlanan++; continue; }
+
+    await window.api.urunSave({
+      URUN_ID: nextId++,
+      KATEGORI_ADI: 'UTS Ürünleri',
+      URUN_ADI: urunAdi,
+      ALIS_FIYATI: alisFiyat,
+      FIYAT: satisFiyat,
+      ADET: parseInt(veri.adet) || 1,
+      KAREKOD: veri.urunNo || '',
+      MENSEI: veri.gonderenKurum || ''
+    });
+    eklenen++;
+  }
+
+  showToast(`${eklenen} ürün stoğa eklendi, ${atlanan} ürün atlandı.`, eklenen > 0 ? 'success' : 'warning');
   utsBekleyenUrunler = [];
-  document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Henüz veri çekilmedi</div>';
+  document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Henüz veri yüklenmedi</div>';
+  if (typeof loadUrunler === 'function') await loadUrunler();
 }
 
 let utsAramalar = { urunTanimi: '', alisFiyati: '', satisFiyati: '' };
