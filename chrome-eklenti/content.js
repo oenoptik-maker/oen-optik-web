@@ -1,4 +1,3 @@
-// UTS sayfasınafloating buton ekler
 (function() {
   if (document.getElementById('oen-utss-btn')) return;
 
@@ -31,7 +30,6 @@
     btn.style.boxShadow = '0 4px 20px rgba(0,206,201,0.5)';
   });
 
-  // Durum göstergesi
   const durum = document.createElement('div');
   durum.id = 'oen-utss-durum';
   durum.style.cssText = `
@@ -50,7 +48,14 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   `;
 
-  btn.addEventListener('click', () => {
+  function showDurum(msg, type) {
+    durum.textContent = msg;
+    durum.style.display = 'block';
+    durum.style.background = type === 'ok' ? '#065f46' : type === 'err' ? '#7f1d1d' : '#1a1a2e';
+    if (type) setTimeout(() => durum.style.display = 'none', 4000);
+  }
+
+  btn.addEventListener('click', async () => {
     const rows = document.querySelectorAll('table tbody tr');
     const secili = [];
 
@@ -72,23 +77,41 @@
     });
 
     if (secili.length === 0) {
-      durum.textContent = '⚠️ İşaretli ürün bulunamadı!';
-      durum.style.display = 'block';
-      durum.style.background = '#7f1d1d';
-      setTimeout(() => durum.style.display = 'none', 3000);
+      showDurum('⚠️ İşaretli ürün bulunamadı!', 'err');
       return;
     }
 
-    chrome.storage.local.set({ utsUrunler: secili }, () => {
-      durum.textContent = `✅ ${secili.length} ürün aktarılıyor...`;
-      durum.style.display = 'block';
-      durum.style.background = '#065f46';
+    try {
+      const tabs = await chrome.tabs.query({});
+      const oenTab = tabs.find(t => t.url && (t.url.includes('oenoptik.com/yonetici') || t.url.includes('oen-optik-web.vercel.app/admin')));
 
+      if (!oenTab) {
+        showDurum('⚠️ OEN Optik yönetici sayfası açık değil!', 'err');
+        return;
+      }
+
+      await chrome.storage.local.set({ utsUrunler: secili });
+
+      await chrome.scripting.executeScript({
+        target: { tabId: oenTab.id },
+        func: (data) => {
+          const iframes = document.querySelectorAll('iframe');
+          for (const iframe of iframes) {
+            try {
+              iframe.contentWindow.postMessage({ type: 'UTS_URUNLER_AKTAR', urunler: data }, '*');
+            } catch(e) {}
+          }
+          window.postMessage({ type: 'UTS_URUNLER_AKTAR', urunler: data }, '*');
+        },
+        args: [secili]
+      });
+
+      showDurum(`✅ ${secili.length} ürün aktarıldı!`, 'ok');
+    } catch (err) {
+      showDurum('⚠️ Sekme bulunamadı, yeni sekme açılıyor...', '');
       const json = encodeURIComponent(JSON.stringify(secili));
       window.open(`https://oen-optik-web.vercel.app/admin.html#uts=${json}`, '_blank');
-
-      setTimeout(() => durum.style.display = 'none', 3000);
-    });
+    }
   });
 
   document.body.appendChild(btn);

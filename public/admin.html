@@ -641,6 +641,25 @@
   <script src="js/admin.js"></script>
   <script src="js/session-timer.js"></script>
   <script>
+    function utsVeriAktar(urunler) {
+      if (typeof adminTabAc === 'function') {
+        adminTabAc('uts');
+        setTimeout(function() {
+          if (typeof utsBekleyenUrunleriGoster === 'function') {
+            window.utsBekleyenUrunler = urunler;
+            utsBekleyenUrunleriGoster(urunler);
+            showToast(urunler.length + ' ürün UTS sayfasından aktarıldı!', 'success');
+          }
+        }, 300);
+      }
+    }
+
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'UTS_URUNLER_AKTAR' && Array.isArray(e.data.urunler) && e.data.urunler.length > 0) {
+        utsVeriAktar(e.data.urunler);
+      }
+    });
+
     (function() {
       const hash = window.location.hash;
       if (hash && hash.startsWith('#uts=')) {
@@ -648,23 +667,9 @@
           const json = decodeURIComponent(hash.substring(5));
           const urunler = JSON.parse(json);
           if (Array.isArray(urunler) && urunler.length > 0) {
-            window._pendingUtsData = urunler;
-            setTimeout(function() {
-              if (typeof adminTabAc === 'function') {
-                adminTabAc('uts');
-                setTimeout(function() {
-                  if (window._pendingUtsData && typeof utsBekleyenUrunleriGoster === 'function') {
-                    window.utsBekleyenUrunler = window._pendingUtsData;
-                    utsBekleyenUrunleriGoster(window._pendingUtsData);
-                    showToast(window._pendingUtsData.length + ' ürün Chrome eklentisinden aktarıldı!', 'success');
-                    window._pendingUtsData = null;
-                    window.location.hash = '';
-                  }
-                }, 500);
-              }
-            }, 800);
+            setTimeout(function() { utsVeriAktar(urunler); window.location.hash = ''; }, 800);
           }
-        } catch(e) { console.error('UTS hash parse error:', e); }
+        } catch(e) {}
       }
     })();
   </script>
