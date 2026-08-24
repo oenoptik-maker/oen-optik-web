@@ -2190,6 +2190,8 @@ function utsBekleyenUrunleriGoster(urunler) {
   const container = document.getElementById('utsAlimListesi');
   if (!container) return;
 
+  window.utsBekleyenUrunler = urunler;
+
   const rows = urunler.map((u, i) => {
     const uno = u.urunNo || u.UNO || '';
     const lno = u.lotBatch || u.LNO || '';
@@ -2201,37 +2203,64 @@ function utsBekleyenUrunleriGoster(urunler) {
     const bildirimKodu = u.bildirimKodu || '';
 
     return `
-    <tr>
+    <tr data-idx="${i}">
       <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" checked onchange="utsApiSeciliGuncelle()"></td>
       <td>${i + 1}</td>
-      <td style="font-size:0.7rem;">${uno}</td>
+      <td style="font-size:0.7rem;white-space:nowrap;">${uno}</td>
       <td style="font-size:0.7rem;">${lno}</td>
       <td style="font-size:0.7rem;">${sno}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
-      <td style="font-size:0.7rem;">${gonderen}</td>
-      <td>${adet}</td>
-      <td><input type="number" step="0.01" min="0" value="0" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;text-align:right;" class="uts-alis-fiyat"></td>
-      <td><input type="number" step="0.01" min="0" value="0" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;text-align:right;" class="uts-satis-fiyat"></td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
+      <td style="font-size:0.65rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${gonderen}">${gonderen}</td>
+      <td style="text-align:center;">${adet}</td>
+      <td><input type="number" step="0.01" min="0" value="0" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-alis-fiyat"></td>
+      <td><input type="number" step="0.01" min="0" value="0" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-satis-fiyat"></td>
     </tr>`;
   }).join('');
 
   container.innerHTML = `
-    <div style="padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <span style="font-size:0.8rem;color:var(--text-secondary);">${urunler.length} ürün yüklendi</span>
+    <div style="padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);">
+      <div style="flex:2;min-width:160px;">
+        <input type="text" id="utsUrunAra" placeholder="🔍 Ürün adı veya numara ara..." oninput="utsGeciciFiltre()" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;">
+      </div>
       <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
         <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked> Tümünü Seç
       </label>
-      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);">${urunler.length} ürün seçili</span>
+      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${urunler.length} ürün seçili</span>
     </div>
-    <table class="data-table">
-      <thead><tr>
-        <th style="width:30px;text-align:center;">✓</th>
-        <th>#</th><th>Ürün No</th><th>Lot/Batch</th><th>Seri/Sıra</th>
-        <th>Ürün Tanımı</th><th>Gönderen</th><th>Adet</th><th>Alış ₺</th><th>Satış ₺</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="utsGeciciTablo">
+        <thead><tr>
+          <th style="width:30px;text-align:center;">✓</th>
+          <th style="width:30px;">#</th>
+          <th>Ürün No</th>
+          <th>Lot/Batch</th>
+          <th>Seri No</th>
+          <th>Ürün Tanımı</th>
+          <th>Gönderen Kurum</th>
+          <th style="width:40px;">Adet</th>
+          <th style="width:90px;">Alış ₺</th>
+          <th style="width:90px;">Satış ₺</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
   `;
+}
+
+function utsGeciciFiltre() {
+  const q = (document.getElementById('utsUrunAra')?.value || '').toLowerCase();
+  const tbody = document.querySelector('#utsGeciciTablo tbody');
+  if (!tbody) return;
+  let goster = 0;
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const text = tr.textContent.toLowerCase();
+    const eslesse = !q || text.includes(q);
+    tr.style.display = eslesse ? '' : 'none';
+    if (eslesse) goster++;
+  });
+  const secili = document.querySelectorAll('.uts-api-sec:checked').length;
+  const label = document.getElementById('utsApiSeciliAdet');
+  if (label) label.textContent = goster + ' ürün' + (q ? ' bulundu' : '');
 }
 
 function utsApiSeciliGuncelle() {

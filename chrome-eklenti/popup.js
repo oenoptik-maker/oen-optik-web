@@ -66,5 +66,5 @@ document.getElementById('oenAcBtn').addEventListener('click', async () => {
   }
 
   const json = encodeURIComponent(JSON.stringify(urunler));
-  chrome.tabs.create({ url: `https://www.oenoptik.com/yonetici#uts=${json}` });
+  chrome.tabs.create({ url: `https://oen-optik-web.vercel.app/admin.html#uts=${json}` });
 });
