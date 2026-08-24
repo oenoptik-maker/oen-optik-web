@@ -1289,18 +1289,7 @@ async function satisTarihiUrunleri() {
 
 // ===== UTS ÜRÜNLERİ EŞİTLE =====
 async function utsPenceresiAc() {
-  const durumDiv = document.getElementById('utsDurum');
-  const durumText = document.getElementById('utsDurumText');
-
-  if (durumDiv) durumDiv.style.display = 'block';
-  if (durumText) durumText.innerHTML = '⏳ UTS sayfası açılıyor... Lütfen e-Devlet ile giriş yapın.';
-
-  const result = await window.api.utsPencereAc();
-  if (result && result.success) {
-    if (durumText) durumText.innerHTML = '✅ UTS sayfası açıldı. E-Devlet ile giriş yapıp ürünleri çekin.';
-  } else {
-    if (durumText) durumText.innerHTML = '❌ UTS sayfası açılamadı.';
-  }
+  window.open('https://utsuygulama.saglik.gov.tr/UTS', '_blank');
 }
 
 // UTS durum güncellemelerini dinle

@@ -140,12 +140,7 @@ window.api = {
 
   // ===== UTS İŞLEMLERİ =====
   utsPencereAc: () => {
-    try {
-      var w = 900, h = 700;
-      var left = (screen.width - w) / 2;
-      var top = (screen.height - h) / 2;
-      window.open('https://utsuygulama.saglik.gov.tr/UTS', 'utsPenceresi', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes');
-    } catch(e) {}
+    window.open('https://utsuygulama.saglik.gov.tr/UTS', '_blank');
     return Promise.resolve({ success: true });
   },
   utsDurumDinle: (callback) => {

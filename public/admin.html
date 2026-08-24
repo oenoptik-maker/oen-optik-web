@@ -221,7 +221,7 @@
                   "UTS Verilerini Çek" ile bekleyen ürünleri görüntüleyin, seçin ve stoğa kaydedin.
                 </p>
                 <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                  <button class="btn btn-outline" onclick="utsPenceresiAc()" id="utsAcBtn">🌐 UTS Sayfasını Aç</button>
+                  <button class="btn btn-outline" onclick="var w=900,h=700,l=(screen.width-w)/2,t=(screen.height-h)/2;window.open('https://utsuygulama.saglik.gov.tr/UTS','_blank','width='+w+',height='+h+',left='+l+',top='+t+',scrollbars=yes,resizable=yes');" id="utsAcBtn">🌐 UTS Sayfasını Aç</button>
                   <button class="btn btn-success" onclick="utsVerileriCek()" id="utsVeriCekBtn">📥 UTS Verilerini Çek</button>
                   <button class="btn btn-primary" onclick="utsStogaKaydet()" id="utsStogaKaydetBtn">📦 Stoğa Kaydet</button>
                 </div>
