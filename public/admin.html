@@ -640,5 +640,27 @@
   <script src="js/app.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/session-timer.js"></script>
+  <script>
+    (function() {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#uts=')) {
+        try {
+          const json = decodeURIComponent(hash.substring(5));
+          const urunler = JSON.parse(json);
+          if (Array.isArray(urunler) && urunler.length > 0) {
+            setTimeout(function() {
+              if (typeof utsBekleyenUrunler !== 'undefined') {
+                window.utsBekleyenUrunler = urunler;
+                utsBekleyenUrunleriGoster(urunler);
+                showToast(urunler.length + ' ürün Chrome eklentisinden aktarıldı!', 'success');
+                adminTabAc('uts');
+                window.location.hash = '';
+              }
+            }, 1000);
+          }
+        } catch(e) {}
+      }
+    })();
+  </script>
 </body>
 </html>
