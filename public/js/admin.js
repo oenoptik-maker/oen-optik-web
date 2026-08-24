@@ -2125,16 +2125,14 @@ async function utsVerileriCek() {
 let utsBekleyenUrunler = [];
 
 async function utsDebug() {
-  const cred = await window.api.credentialOku();
-  const gkk = cred && cred.gkk ? parseInt(cred.gkk) : null;
-  showToast('Debug: GKK=' + gkk, 'info');
-  const result = await window.api.utsApiDebug(gkk);
+  showToast('Debug: UTS API test ediliyor...', 'info');
+  const result = await window.api.utsApiDebug(0);
   console.log('UTS DEBUG:', JSON.stringify(result, null, 2));
-  if (result && result.parsed) {
-    const p = result.parsed;
-    showToast('Debug: HTTP=' + result.httpStatus + ' | Yanıt: ' + JSON.stringify(p).substring(0, 300), 'info');
-  } else {
-    showToast('Debug: Ham yanıt: ' + (result.rawResponse || '').substring(0, 500), 'info');
+  if (result) {
+    const msg = `Token: ${result.tokenLength}karakter (${result.tokenPrefix}...) | ` +
+      `Test1(Durum:${result.test1?.status}): ${(result.test1?.yanit || '').substring(0, 200)} | ` +
+      `Test2(Durum:${result.test2?.status}): ${(result.test2?.yanit || '').substring(0, 200)}`;
+    showToast(msg, 'info');
   }
 }
 

@@ -137,27 +137,46 @@ router.post('/ayrintili-sorgula', async (req, res) => {
 
 router.post('/debug-sorgula', async (req, res) => {
   try {
-    if (!UTS_TOKEN) return res.status(500).json({ success: false, message: 'UTS_TOKEN tanımlı değil', tokenVar: false });
-    const { gkk } = req.body;
-    const url = `${UTS_BASE}/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula`;
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ GKK: gkk || null, BNO: '', UNO: '', BID: '', SAN: 1 })
-    });
-    const rawText = await resp.text();
-    let parsed;
-    try { parsed = JSON.parse(rawText); } catch { parsed = null; }
+    if (!UTS_TOKEN) return res.json({ success: false, message: 'UTS_TOKEN tanımlı değil', tokenVar: false });
+
+    // Test 1: Basit bir UTS sorgulama
+    const url1 = `${UTS_BASE}/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula`;
+    let resp1, raw1;
+    try {
+      resp1 = await fetch(url1, {
+        method: 'POST',
+        headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ GKK: null, BNO: '', UNO: '', BID: '', SAN: 1 })
+      });
+      raw1 = await resp1.text();
+    } catch (e) {
+      raw1 = 'FETCH_HATA: ' + e.message;
+      resp1 = { status: 0 };
+    }
+
+    // Test 2: UTS ürün sorgulama
+    const url2 = `${UTS_BASE}/UTS/rest/tibbiCihaz/urunSorgula`;
+    let resp2, raw2;
+    try {
+      resp2 = await fetch(url2, {
+        method: 'POST',
+        headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ UNO: '8680275853451' })
+      });
+      raw2 = await resp2.text();
+    } catch (e) {
+      raw2 = 'FETCH_HATA: ' + e.message;
+      resp2 = { status: 0 };
+    }
+
     res.json({
-      success: resp.ok,
-      httpStatus: resp.status,
       tokenLength: UTS_TOKEN.length,
-      gkk: gkk,
-      rawResponse: rawText.substring(0, 2000),
-      parsed: parsed
+      tokenPrefix: UTS_TOKEN.substring(0, 10),
+      test1: { url: url1, status: resp1.status || resp1.statusCode, yanit: (raw1 || '').substring(0, 1000) },
+      test2: { url: url2, status: resp2.status || resp2.statusCode, yanit: (raw2 || '').substring(0, 1000) }
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message, stack: err.stack });
+    res.json({ success: false, message: err.message, stack: err.stack });
   }
 });
 
