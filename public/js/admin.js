@@ -181,9 +181,11 @@ function renderUrunler() {
   const sayfaUrunleri = filtrelenmis.slice(baslangic, bitis);
 
   const checkboxAll = `<th style="width:30px;text-align:center;"><input type="checkbox" id="tumuSecCheck" onchange="tumuSecKaldir(this.checked)" title="Tümünü Se/Kaldır"></th>`;
+  const alisHeader = urunDetayGoster ? '<th>Alış Fiyatı (₺)</th>' : '';
   const rows = sayfaUrunleri.map(u => {
     const fiyatInput = `<input type="number" min="0" step="1" value="${parseFloat(u.FIYAT) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;font-weight:600;" data-field="FIYAT" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">`;
-    const alisInput = `<input type="number" min="0" step="1" value="${parseFloat(u.ALIS_FIYATI) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;" data-field="ALIS_FIYATI" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">`;
+    const alisInput = urunDetayGoster ? `<input type="number" min="0" step="1" value="${parseFloat(u.ALIS_FIYATI) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;" data-field="ALIS_FIYATI" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">` : '';
+    const alisCell = urunDetayGoster ? `<td>${alisInput}</td>` : '';
     return `
     <tr>
       <td style="text-align:center;"><input type="checkbox" class="urun-sec-check" data-id="${u.URUN_ID}" ${seciliUrunler.has(u.URUN_ID) ? 'checked' : ''} onchange="urunSecKaldir(${u.URUN_ID}, this.checked)"></td>
@@ -191,7 +193,7 @@ function renderUrunler() {
       <td><span class="badge badge-pending">${u.KATEGORI_ADI}</span></td>
       <td><input type="text" value="${u.KAREKOD || ''}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="karekodKaydet(${u.URUN_ID}, this.value)"></td>
       <td><strong>${u.URUN_ADI}</strong></td>
-      <td>${alisInput}</td>
+      ${alisCell}
       <td>${fiyatInput}</td>
       <td>${u.MENSEI || '-'}</td>
       <td><input type="number" min="0" step="1" value="${parseInt(u.ADET) || 0}" style="width:60px;padding:4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);" onchange="urunAdetKaydet(${u.URUN_ID}, this.value)"></td>
@@ -205,7 +207,7 @@ function renderUrunler() {
 
   container.innerHTML = `
     <table class="data-table">
-      <thead><tr>${checkboxAll}<th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı (₺)</th><th>Satış Fiyatı (₺)</th><th>Menşei</th><th>Adet</th><th>İşlem</th></tr></thead>
+      <thead><tr>${checkboxAll}<th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th>${alisHeader}<th>Satış Fiyatı (₺)</th><th>Menşei</th><th>Adet</th><th>İşlem</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
