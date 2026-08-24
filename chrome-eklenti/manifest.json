@@ -24,7 +24,7 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["*://oen-optik-web.vercel.app/*"],
+      "matches": ["*://oen-optik-web.vercel.app/*", "*://oenoptik.com/*", "*://www.oenoptik.com/*"],
       "js": ["admin-content.js"],
       "run_at": "document_idle"
     }

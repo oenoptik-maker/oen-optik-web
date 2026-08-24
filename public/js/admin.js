@@ -2100,72 +2100,62 @@ async function utsVerileriCek() {
     return;
   }
 
-  let result = null;
-  let usedWorker = false;
-
-  // Yöntem 1: Cloudflare Worker varsa kullan
+  // Yöntem 1: Cloudflare Worker üzerinden dene
   const workerUrl = cred.workerUrl;
   if (workerUrl) {
     try {
+      showToast('Worker üzerinden UTS sorgulanıyor...', 'info');
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
-      const resp = await fetch(`${workerUrl}/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula`, {
+      const resp = await fetch(workerUrl + '/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
         method: 'POST',
         headers: { 'utsToken': token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ GKK: gkk, BNO: '', UNO: '', BID: '', SAN: 1 }),
         signal: controller.signal
       });
       clearTimeout(timeout);
-      result = await resp.json();
-      usedWorker = true;
+      const result = await resp.json();
       console.log('UTS Worker Yanıtı:', result);
-    } catch (e) {
-      console.warn('Worker başarısız, eklentiden deneniyor:', e.message);
-    }
-  }
 
-  // Yöntem 2: Chrome eklentisi üzerinden dene
-  if (!result) {
-    try {
-      const response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          { type: 'UTS_BEKLEYENLERI_CEK', token: token, gkk: gkk },
-          (resp) => {
-            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-            else resolve(resp);
-          }
-        );
-      });
-      if (response && response.ok) {
-        result = response.data;
+      let urunler = [];
+      const data = result && result.veri ? result.veri : result;
+      if (Array.isArray(data)) urunler = data;
+      else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
+      else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
+      else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
+
+      if (urunler.length > 0) {
+        utsBekleyenUrunler = urunler;
+        utsBekleyenUrunleriGoster(urunler);
+        showToast(urunler.length + ' bekleyen ürün bulundu. (Worker)', 'success');
+        if (btn) btn.disabled = false;
+        return;
       }
     } catch (e) {
-      console.warn('Eklenti erişilemedi:', e.message);
+      console.warn('Worker başarısız:', e.message);
     }
   }
 
-  if (!result) {
-    showToast('UTS API\'ye erişilemedi. Worker veya eklenti gerekli.', 'error');
-    if (btn) btn.disabled = false;
-    return;
+  // Yöntem 2: Chrome eklentisi kullan (sayfa içinden Storage oku)
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    try {
+      const data = await new Promise((resolve) => {
+        chrome.storage.local.get('utsAktarim', resolve);
+      });
+      if (data && data.utsAktarim && data.utsAktarim.urunler && data.utsAktarim.urunler.length > 0) {
+        const urunler = data.utsAktarim.urunler;
+        utsBekleyenUrunler = urunler;
+        utsBekleyenUrunleriGoster(urunler);
+        showToast(urunler.length + ' ürün eklentiden yüklendi.', 'success');
+        if (btn) btn.disabled = false;
+        return;
+      }
+    } catch (e) {
+      console.warn('Storage okunamadı:', e.message);
+    }
   }
 
-  let urunler = [];
-  const data = result && result.veri ? result.veri : result;
-  if (Array.isArray(data)) urunler = data;
-  else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
-  else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
-  else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
-
-  if (urunler.length === 0) {
-    showToast('Bekleyen ürün bulunamadı.', 'warning');
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  utsBekleyenUrunler = urunler;
-  utsBekleyenUrunleriGoster(urunler);
-  showToast(`${urunler.length} bekleyen ürün bulundu.${usedWorker ? ' (Worker)' : ' (Eklenti)'}`, 'success');
+  showToast('Ürün çekilemedi. Lütfen UTS sayfasında eklenti butonunu kullanın.', 'warning');
   if (btn) btn.disabled = false;
 }
 
