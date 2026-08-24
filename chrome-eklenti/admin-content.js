@@ -2,22 +2,29 @@
   let sonCheck = 0;
 
   function checkUtsData() {
-    chrome.storage.local.get('utsAktarim', (data) => {
-      if (!data.utsAktarim) return;
-      if (data.utsAktarim.timestamp <= sonCheck) return;
-      sonCheck = data.utsAktarim.timestamp;
+    try {
+      chrome.storage.local.get('utsAktarim', (data) => {
+        if (!data || !data.utsAktarim) return;
+        if (data.utsAktarim.timestamp <= sonCheck) return;
+        sonCheck = data.utsAktarim.timestamp;
 
-      const urunler = data.utsAktarim.urunler;
-      if (!urunler || urunler.length === 0) return;
+        const urunler = data.utsAktarim.urunler;
+        if (!urunler || urunler.length === 0) return;
 
-      const textarea = document.getElementById('utsYapistirmaAlani');
-      if (textarea) {
-        textarea.value = JSON.stringify(urunler);
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    });
+        if (typeof utsVeriAktar === 'function') {
+          utsVeriAktar(urunler);
+          return;
+        }
+
+        const ta = document.getElementById('utsYapistirmaAlani');
+        if (ta) {
+          ta.value = JSON.stringify(urunler);
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    } catch(e) {}
   }
 
-  checkUtsData();
+  setTimeout(checkUtsData, 500);
   setInterval(checkUtsData, 2000);
 })();

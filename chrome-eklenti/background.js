@@ -5,27 +5,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       for (const t of tabs) {
         if (!t.url) continue;
         const u = t.url.toLowerCase();
-        if (u.includes('oenoptik') || u.includes('oen-optik')) {
+        if (u.includes('oenoptik') || u.includes('oen-optik') || u.includes('yonetici')) {
           oenTab = t;
           break;
         }
       }
 
       if (!oenTab) {
-        chrome.storage.local.set({ utsAktarim: { urunler: msg.urunler, timestamp: Date.now() } });
-        sendResponse({ ok: false, error: 'OEN Optik sayfasi acik degil (veri kaydedildi, sayfayi acinca yuklenecek)' });
+        sendResponse({ ok: false, error: 'OEN Optik sayfasi acik degil' });
         return;
       }
 
       chrome.scripting.executeScript({
-        target: { tabId: oenTab.id },
-        allFrames: true,
+        target: { tabId: oenTab.id, allFrames: true },
         func: (urunler) => {
-          if (typeof utsVeriAktar === 'function') {
-            utsVeriAktar(urunler);
-          } else {
-            window.__pendingUts = urunler;
-          }
+          try {
+            if (typeof utsVeriAktar === 'function') {
+              utsVeriAktar(urunler);
+              return;
+            }
+          } catch(e) {}
+          try {
+            const ta = document.getElementById('utsYapistirmaAlani');
+            if (ta) {
+              ta.value = JSON.stringify(urunler);
+              ta.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          } catch(e) {}
         },
         args: [msg.urunler]
       }).then(() => {
