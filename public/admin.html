@@ -463,18 +463,22 @@
   <div id="credentialModal" class="modal-overlay">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">🔐 UTS Giriş Bilgileri</h3>
+        <h3 class="modal-title">🔐 UTS Ayarları</h3>
         <button class="modal-close" onclick="closeCredentialModal()">&times;</button>
       </div>
       <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
-        E-Devlet giriş bilgileriniz güvenli şekilde kaydedilir.
+        UTS API bağlantısı için Kurum Kodunuzu girin. Kurum kodu UTS sayfasından öğrenilebilir.
       </p>
       <div class="form-group" style="margin-bottom: 12px;">
-        <label>TC Kimlik No</label>
+        <label>Kurum Kodu (GKK) *</label>
+        <input type="number" id="credGKK" placeholder="Örn: 2667269061999">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>TC Kimlik No (opsiyonel)</label>
         <input type="text" id="credTc" maxlength="11" placeholder="11 haneli TC Kimlik No">
       </div>
       <div class="form-group" style="margin-bottom: 16px;">
-        <label>E-Devlet Şifresi</label>
+        <label>E-Devlet Şifresi (opsiyonel)</label>
         <input type="password" id="credSifre" placeholder="E-Devlet şifreniz">
       </div>
       <div class="action-bar" style="border: none; padding: 0;">

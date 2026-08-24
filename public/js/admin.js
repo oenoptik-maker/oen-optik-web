@@ -1363,9 +1363,11 @@ async function utsSifreOnayla() {
   document.getElementById('credentialModal').classList.add('active');
   const sonuc = await window.api.credentialOku();
   if (sonuc.success) {
-    document.getElementById('credTc').value = sonuc.tc;
-    document.getElementById('credSifre').value = sonuc.sifre;
+    document.getElementById('credGKK').value = sonuc.gkk || '';
+    document.getElementById('credTc').value = sonuc.tc || '';
+    document.getElementById('credSifre').value = sonuc.sifre || '';
   } else {
+    document.getElementById('credGKK').value = '';
     document.getElementById('credTc').value = '';
     document.getElementById('credSifre').value = '';
   }
@@ -1376,21 +1378,18 @@ function closeCredentialModal() {
 }
 
 async function credentialKaydet() {
+  const gkk = document.getElementById('credGKK').value.trim();
   const tc = document.getElementById('credTc').value.trim();
   const sifre = document.getElementById('credSifre').value.trim();
 
-  if (!tc || tc.length !== 11) {
-    showToast('TC Kimlik No 11 haneli olmalıdır.', 'error');
-    return;
-  }
-  if (!sifre) {
-    showToast('Şifre boş olamaz.', 'error');
+  if (!gkk) {
+    showToast('Kurum Kodu (GKK) zorunludur.', 'error');
     return;
   }
 
-  const sonuc = await window.api.credentialKaydet({ tc, sifre });
+  const sonuc = await window.api.credentialKaydet({ tc, sifre, gkk });
   if (sonuc.success) {
-    showToast('Giriş bilgileri kaydedildi.', 'success');
+    showToast('UTS ayarları kaydedildi.', 'success');
     closeCredentialModal();
   } else {
     showToast('Kaydetme hatası!', 'error');
@@ -2090,7 +2089,15 @@ async function utsVerileriCek() {
     return;
   }
 
-  const result = await window.api.utsApiBekleyenUrunleriSorgula({ gkk: null, bno: '', uno: '', san: 1 });
+  const cred = await window.api.credentialOku();
+  const gkk = cred && cred.gkk ? parseInt(cred.gkk) : null;
+  if (!gkk) {
+    showToast('Kurum Kodu (GKK) tanımlı değil! UTS Ayarlarından girin.', 'error');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  const result = await window.api.utsApiBekleyenUrunleriSorgula({ gkk: gkk, bno: '', uno: '', san: 1 });
   if (!result || !result.success) {
     showToast('UTS sorgulama hatası: ' + (result ? result.message : 'Bilinmeyen hata'), 'error');
     if (btn) btn.disabled = false;

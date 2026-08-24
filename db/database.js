@@ -112,10 +112,12 @@ async function initTables() {
     for (const stmt of tables) {
       await db.client.execute(stmt);
     }
+    try { await db.client.execute('ALTER TABLE credentials ADD COLUMN gkk TEXT'); } catch {}
   } else {
     for (const stmt of tables) {
       db.client.run(stmt);
     }
+    try { db.client.run('ALTER TABLE credentials ADD COLUMN gkk TEXT'); } catch {}
     if (!IS_VERCEL) saveDb();
   }
 

@@ -5,13 +5,13 @@ const { getDb, dbAll, dbGet, dbRun } = require('../db/database');
 router.post('/credential-kaydet', async (req, res) => {
   try {
     await getDb();
-    const { tc, sifre } = req.body;
-    const sifrele = (metin) => Buffer.from(metin).toString('base64');
+    const { tc, sifre, gkk } = req.body;
+    const sifrele = (metin) => Buffer.from(String(metin || '')).toString('base64');
     const existing = await dbGet('SELECT id FROM credentials WHERE id = 1');
     if (existing) {
-      await dbRun('UPDATE credentials SET tc = ?, sifre = ? WHERE id = 1', [sifrele(tc), sifrele(sifre)]);
+      await dbRun('UPDATE credentials SET tc = ?, sifre = ?, gkk = ? WHERE id = 1', [sifrele(tc), sifrele(sifre), sifrele(gkk)]);
     } else {
-      await dbRun('INSERT INTO credentials (id, tc, sifre) VALUES (1, ?, ?)', [sifrele(tc), sifrele(sifre)]);
+      await dbRun('INSERT INTO credentials (id, tc, sifre, gkk) VALUES (1, ?, ?, ?)', [sifrele(tc), sifrele(sifre), sifrele(gkk)]);
     }
     res.json({ success: true });
   } catch (err) {
@@ -23,11 +23,11 @@ router.get('/credential-oku', async (req, res) => {
   try {
     await getDb();
     const row = await dbGet('SELECT * FROM credentials WHERE id = 1');
-    if (!row) return res.json({ success: false, tc: '', sifre: '' });
-    const coz = (sifreli) => Buffer.from(sifreli, 'base64').toString();
-    res.json({ success: true, tc: coz(row.tc), sifre: coz(row.sifre) });
+    if (!row) return res.json({ success: false, tc: '', sifre: '', gkk: '' });
+    const coz = (sifreli) => { try { return Buffer.from(sifreli || '', 'base64').toString(); } catch { return ''; } };
+    res.json({ success: true, tc: coz(row.tc), sifre: coz(row.sifre), gkk: coz(row.gkk) });
   } catch (err) {
-    res.status(500).json({ success: false, tc: '', sifre: '' });
+    res.status(500).json({ success: false, tc: '', sifre: '', gkk: '' });
   }
 });
 
