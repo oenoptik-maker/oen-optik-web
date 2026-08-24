@@ -1,14 +1,9 @@
 {
   "manifest_version": 3,
   "name": "OEN Optik - UTS Aktarim",
-  "version": "6.0",
-  "description": "UTS sayfasina buton ekler, secili urunleri OEN Optik'e aktarir",
-  "permissions": ["activeTab", "scripting", "tabs", "storage"],
-  "host_permissions": [
-    "*://oenoptik.com/*",
-    "*://www.oenoptik.com/*",
-    "*://oen-optik-web.vercel.app/*"
-  ],
+  "version": "7.0",
+  "description": "UTS sayfasina buton ekler, urunleri OEN Optik'e aktarir",
+  "permissions": ["storage"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
