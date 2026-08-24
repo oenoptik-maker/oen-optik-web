@@ -141,16 +141,11 @@ window.api = {
   // ===== UTS İŞLEMLERİ =====
   utsPencereAc: () => {
     try {
-      var link = document.createElement('a');
-      link.href = 'https://utsuygulama.saglik.gov.tr/UTS';
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch(e) {
-      window.open('https://utsuygulama.saglik.gov.tr/UTS', '_blank');
-    }
+      var w = 900, h = 700;
+      var left = (screen.width - w) / 2;
+      var top = (screen.height - h) / 2;
+      window.open('https://utsuygulama.saglik.gov.tr/UTS', 'utsPenceresi', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',scrollbars=yes,resizable=yes');
+    } catch(e) {}
     return Promise.resolve({ success: true });
   },
   utsDurumDinle: (callback) => {
@@ -165,6 +160,15 @@ window.api = {
   utsAlimTemizle: () => apiFetch('/api/uts/alimlar', { method: 'DELETE' }),
   utsAlimFiyatGuncelle: (veri) => apiFetch(`/api/uts/alimlar/${veri.index}/fiyat`, { method: 'PUT', body: JSON.stringify({ alan: veri.alan, deger: veri.deger }) }),
   utsAlimTopluFiyatGuncelle: (veri) => apiFetch('/api/uts/alimlar/toplu-fiyat', { method: 'PUT', body: JSON.stringify(veri) }),
+
+  // ===== UTS API (DOĞRUDAN BAĞLANTI) =====
+  utsApiSaglikKontrol: () => apiFetch('/api/uts-api/health'),
+  utsApiBekleyenUrunleriSorgula: (p) => apiFetch('/api/uts-api/bekleyen-urunleri-sorgula', { method: 'POST', body: JSON.stringify(p) }),
+  utsApiBekleyenSayisi: (p) => apiFetch('/api/uts-api/bekleyen-sayisi', { method: 'POST', body: JSON.stringify(p) }),
+  utsApiAlmaBildirimi: (b) => apiFetch('/api/uts-api/alma-bildirimi', { method: 'POST', body: JSON.stringify(b) }),
+  utsApiTopluAlmaBildirimi: (b) => apiFetch('/api/uts-api/toplu-alma-bildirimi', { method: 'POST', body: JSON.stringify({ bildirimler: b }) }),
+  utsApiUrunSorgula: (p) => apiFetch('/api/uts-api/urun-sorgula', { method: 'POST', body: JSON.stringify(p) }),
+  utsApiAyrintiliSorgula: (p) => apiFetch('/api/uts-api/ayrintili-sorgula', { method: 'POST', body: JSON.stringify(p) }),
 
   // ===== CREDENTIAL =====
   credentialKaydet: (veriler) => apiFetch('/api/uts/credential-kaydet', { method: 'POST', body: JSON.stringify(veriler) }),

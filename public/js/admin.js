@@ -2094,61 +2094,138 @@ async function tumunuYazdir(kaynak) {
 async function utsVerileriCek() {
   const btn = document.getElementById('utsVeriCekBtn');
   if (btn) btn.disabled = true;
+  showToast('UTS API\'den bekleyen ürünler sorgulanıyor...', 'info');
 
-  showToast('UTS sayfasından veriler çekiliyor...', 'info');
+  const health = await window.api.utsApiSaglikKontrol();
+  if (!health || !health.hasToken) {
+    showToast('UTS Token tanımlı değil! Vercel env vars\'a UTS_TOKEN ekleyin.', 'error');
+    if (btn) btn.disabled = false;
+    return;
+  }
 
-  const result = await window.api.utsVeriCek();
-  if (!result.success) {
-    showToast('Veri çekme hatası: ' + result.message, 'error');
+  const result = await window.api.utsApiBekleyenUrunleriSorgula({ gkk: null, bno: '', uno: '', san: 1 });
+  if (!result || !result.success) {
+    showToast('UTS sorgulama hatası: ' + (result ? result.message : 'Bilinmeyen hata'), 'error');
     if (btn) btn.disabled = false;
     return;
   }
 
   const veri = result.veri;
-  if (veri.headers) {
-    console.log('UTS Sütun Başlıkları:', veri.headers);
-    showToast('UTS Sütunları: ' + veri.headers.join(' | '), 'info');
-  }
-  if (!veri.rows || veri.rows.length === 0) {
-    showToast('Seçili (işaretli) ürün bulunamadı. Lütfen UTS sayfasında ürünleri işaretleyin.', 'warning');
+  let urunler = [];
+  if (Array.isArray(veri)) urunler = veri;
+  else if (veri && Array.isArray(veri.urunler)) urunler = veri.urunler;
+  else if (veri && veri.data && Array.isArray(veri.data)) urunler = veri.data;
+
+  if (urunler.length === 0) {
+    showToast('Bekleyen ürün bulunamadı.', 'warning');
     if (btn) btn.disabled = false;
     return;
   }
 
-  showToast(`${veri.rows.length} ürün bulundu, kaydediliyor...`, 'info');
+  utsBekleyenUrunler = urunler;
+  utsBekleyenUrunleriGoster(urunler);
+  showToast(`${urunler.length} bekleyen ürün bulundu.`, 'success');
+  if (btn) btn.disabled = false;
+}
 
-  const kaydedilecek = veri.rows.map(row => {
-    const headers = Object.keys(row);
-    const finds = (keywords) => {
-      for (const h of headers) {
-        const hl = h.toLowerCase();
-        if (keywords.some(k => hl.includes(k))) return row[h];
+let utsBekleyenUrunler = [];
+
+function utsBekleyenUrunleriGoster(urunler) {
+  const container = document.getElementById('utsAlimListesi');
+  if (!container) return;
+
+  const rows = urunler.map((u, i) => {
+    const keys = Object.keys(u);
+    const val = (kws) => {
+      for (const k of keys) {
+        const kl = k.toLowerCase();
+        if (kws.some(w => kl.includes(w))) return u[k];
       }
       return '';
     };
+    const uno = val(['uno', 'ürün numarası', 'urun numarasi', 'ürün no']);
+    const lno = val(['lno', 'lot', 'batch']);
+    const sno = val(['sno', 'seri', 'sıra']);
+    const tanim = val(['tanim', 'tanım', 'ürün tanımı', 'urun tanimi', 'açıklama', 'aciklama']);
+    const adet = val(['adet', 'miktar', 'adt']);
+    const gonderen = val(['gönderen', 'gonderen', 'firma', 'kurum']);
+    const belge = val(['belge', 'bno', 'bildirim']);
+    const gkk = val(['gkk', 'gönderen kurum kodu', 'gonderen kurum kodu']);
+    const vbi = val(['vbi', 'bildirim id', 'bildirim no']);
 
-    const urunNumarasi = finds(['ürün numarası', 'urun numarası', 'barkod', 'ürün no']);
-    const lotBatchNo = finds(['lot', 'batch']);
-    const seriSiraNo = finds(['seri', 'sıra']);
-    return {
-      urunNumarasi: urunNumarasi,
-      lotBatchNo: lotBatchNo,
-      seriSiraNo: seriSiraNo,
-      urunTanimi: finds(['ürün tanımı', 'urun tanimi', 'tanım', 'tanim', 'açıklama']),
-      gonderenKurum: finds(['gönderen kurum', 'gonderen kurum', 'firma']),
-      adet: finds(['adet', 'miktar'])
-    };
-  });
+    return `
+    <tr>
+      <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" data-uno="${uno}" data-lno="${lno}" data-sno="${sno}" data-gkk="${gkk}" data-vbi="${vbi}" onchange="utsApiSeciliGuncelle()"></td>
+      <td>${i + 1}</td>
+      <td>${uno || '-'}</td>
+      <td>${lno || '-'}</td>
+      <td>${sno || '-'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${tanim}">${tanim || '-'}</td>
+      <td>${gonderen || '-'}</td>
+      <td>${adet || '-'}</td>
+      <td>${belge || '-'}</td>
+    </tr>`;
+  }).join('');
 
-  const saveResult = await window.api.utsAlimKaydet(kaydedilecek);
-  if (saveResult.success) {
-    showToast(`${saveResult.kaydedilen} ürün başarıyla kaydedildi.`, 'success');
-    await utsAlimListesiniYukle();
-  } else {
-    showToast('Kaydetme hatası: ' + saveResult.message, 'error');
+  container.innerHTML = `
+    <div style="padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:0.8rem;color:var(--text-secondary);">${urunler.length} bekleyen ürün</span>
+      <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)"> Tümünü Seç
+      </label>
+      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);"></span>
+    </div>
+    <table class="data-table">
+      <thead><tr>
+        <th style="width:30px;text-align:center;">✓</th>
+        <th>#</th><th>Ürün No</th><th>Lot/Batch</th><th>Seri/Sıra</th>
+        <th>Ürün Tanımı</th><th>Gönderen</th><th>Adet</th><th>Belge</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function utsApiSeciliGuncelle() {
+  const secili = document.querySelectorAll('.uts-api-sec:checked');
+  const el = document.getElementById('utsApiSeciliAdet');
+  if (el) el.textContent = secili.length > 0 ? `${secili.length} ürün seçili` : '';
+}
+
+function utsApiTumuSecKaldir(checked) {
+  document.querySelectorAll('.uts-api-sec').forEach(cb => { cb.checked = checked; });
+  utsApiSeciliGuncelle();
+}
+
+async function utsStogaKaydet() {
+  const seciliCheckboxes = document.querySelectorAll('.uts-api-sec:checked');
+  if (seciliCheckboxes.length === 0) {
+    showToast('Stoğa kaydetmek için ürün seçin.', 'warning');
+    return;
   }
 
-  if (btn) btn.disabled = false;
+  if (!(await showConfirm(`${seciliCheckboxes.length} seçili UTS ürününü stoğa eklemek istediğinize emin misiniz?\n\nUTS Alma Bildirimi gönderilecek ve ürünler yerel stoğa eklenecek.`, 'UTS Stoğa Kaydet'))) return;
+
+  showToast('UTS Alma Bildirimleri gönderiliyor...', 'info');
+  let basarili = 0, basarisiz = 0;
+
+  for (const cb of seciliCheckboxes) {
+    const bildirim = {
+      vbi: parseInt(cb.dataset.vbi) || null,
+      adt: 1,
+      gkk: parseInt(cb.dataset.gkk) || null,
+      uno: cb.dataset.uno || '',
+      lno: cb.dataset.lno || '',
+      sno: cb.dataset.sno || ''
+    };
+    const result = await window.api.utsApiAlmaBildirimi(bildirim);
+    if (result && result.success) basarili++;
+    else basarisiz++;
+  }
+
+  showToast(`${basarili} ürün alındı, ${basarisiz} hatalı.`, basarisiz > 0 ? 'warning' : 'success');
+  utsBekleyenUrunler = [];
+  document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Henüz veri çekilmedi</div>';
 }
 
 let utsAramalar = { urunTanimi: '', alisFiyati: '', satisFiyati: '' };
@@ -2359,78 +2436,6 @@ async function utsAlimSil(index) {
   } else {
     showToast('Silme hatası: ' + result.message, 'error');
   }
-}
-
-async function utsStogaKaydet() {
-  if (!utsYuklenenVeriler || utsYuklenenVeriler.length === 0) {
-    showToast('Önce UTS verisini yapıştırın veya Excel yükleyin.', 'warning');
-    return;
-  }
-
-  const seciliCheckboxes = document.querySelectorAll('.uts-sec-check:checked');
-  const seciliIndexler = Array.from(seciliCheckboxes).map(cb => parseInt(cb.dataset.index));
-  if (seciliIndexler.length === 0) {
-    showToast('Stoğa kaydetmek için ürün seçin.', 'warning');
-    return;
-  }
-
-  const seciliVeriler = seciliIndexler.map(i => utsYuklenenVeriler[i]).filter(Boolean);
-
-  if (!(await showConfirm(`${seciliVeriler.length} seçili UTS ürününü stoğa eklemek istediğinize emin misiniz?\n\nMevcut ürünlerle aynı ürün varsa atlanır.`, 'UTS Stoğa Kaydet'))) return;
-
-  const mevcutKategoriler = await window.api.kategoriRead();
-  const utsKategoriVar = mevcutKategoriler.some(k => k.KATEGORI_ADI === 'UTS Ürünleri');
-  if (!utsKategoriVar) {
-    const nextKatId = await window.api.kategoriGetNextId();
-    await window.api.kategoriSave({ KATEGORI_ID: nextKatId, KATEGORI_ADI: 'UTS Ürünleri' });
-  }
-
-  const mevcutUrunler = await window.api.urunRead();
-  const h = utsYuklenenBasliklar;
-  const findCol = (keywords) => {
-    for (const hdr of h) {
-      const hl = hdr.toLowerCase();
-      if (keywords.some(k => hl.includes(k))) return hdr;
-    }
-    return null;
-  };
-
-  const colBarkod = findCol(['barkod', 'ürün numarası', 'urun numarası', 'ürün no', 'karekod']);
-  const colAd = findCol(['ürün adı', 'urun adi', 'ürün tanımı', 'urun tanimi', 'tanım', 'tanim', 'açıklama', 'ad']);
-  const colFirma = findCol(['firma', 'gönderen', 'gonderen', 'kurum']);
-  const colAdet = findCol(['adet', 'miktar']);
-
-  let eklenen = 0, atlanan = 0;
-
-  const statements = [];
-  let nextId = mevcutUrunler.length > 0 ? Math.max(...mevcutUrunler.map(u => parseInt(u.URUN_ID) || 0)) + 1 : 1;
-
-  for (const v of seciliVeriler) {
-    const urunAdi = colAd ? (v[colAd] || '').trim() : '';
-    if (!urunAdi) { atlanan++; continue; }
-
-    const ayni = mevcutUrunler.find(u => u.URUN_ADI === urunAdi);
-    if (ayni) { atlanan++; continue; }
-
-    statements.push({
-      sql: 'INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      params: [nextId++, 'UTS Ürünleri', urunAdi, 0, 0, parseInt(colAdet ? v[colAdet] : 0) || 0, colBarkod ? (v[colBarkod] || '') : '', colFirma ? (v[colFirma] || '') : '']
-    });
-    eklenen++;
-  }
-
-  if (statements.length > 0) {
-    await window.api.dbBatch ? await window.api.dbBatch(statements) : await window.api.utsAlimKaydet([]);
-    for (const s of statements) {
-      await window.api.urunSave({ URUN_ID: s.params[0], KATEGORI_ADI: s.params[1], URUN_ADI: s.params[2], ALIS_FIYATI: s.params[3], FIYAT: s.params[4], ADET: s.params[5], KAREKOD: s.params[6], MENSEI: s.params[7] });
-    }
-  }
-
-  showToast(`${eklenen} ürün stoğa eklendi, ${atlanan} ürün atlandı.`, 'success');
-  utsYuklenenVeriler = [];
-  utsYuklenenBasliklar = [];
-  document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Henüz veri yüklenmedi</div>';
-  document.getElementById('utsDurum').style.display = 'none';
 }
 
 async function utsVerileriTemizle() {
@@ -2888,97 +2893,4 @@ async function topluStokFiyatOnayla() {
   showToast(`${filtrelenmis.length} ürünün fiyatı güncellendi`, 'success');
   topluStokFiyatModalKapat();
   renderTopluStok();
-}
-
-// ===== UTS YAPIŞTIRMA / EXCEL YÜKLEME =====
-function utsYapistir() {
-  const textarea = document.getElementById('utsYapistirmaAlani');
-  if (!textarea || !textarea.value.trim()) {
-    showToast('Lütfen UTS verisini yapıştırın', 'warning');
-    return;
-  }
-
-  const text = textarea.value.trim();
-  const lines = text.split('\n').filter(l => l.trim());
-  if (lines.length < 2) {
-    showToast('En az başlık ve 1 veri satırı gerekli', 'warning');
-    return;
-  }
-
-  const sep = text.includes('\t') ? '\t' : ',';
-  const headers = lines[0].split(sep).map(h => h.trim());
-  const rows = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(sep).map(c => c.trim());
-    const row = {};
-    headers.forEach((h, idx) => { row[h] = cols[idx] || ''; });
-    rows.push(row);
-  }
-
-  utsVerileriGoster(rows, headers);
-  showToast(`${rows.length} satır veri yapıştırıldı`, 'success');
-  textarea.value = '';
-}
-
-function utsExcelYukle(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      if (data.length === 0) {
-        showToast('Excel dosyası boş', 'warning');
-        return;
-      }
-      const headers = Object.keys(data[0]);
-      utsVerileriGoster(data, headers);
-      showToast(`${data.length} satır Excel verisi yüklendi`, 'success');
-    } catch (err) {
-      showToast('Excel okuma hatası: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-  event.target.value = '';
-}
-
-let utsYuklenenVeriler = [];
-let utsYuklenenBasliklar = [];
-
-function utsVerileriGoster(rows, headers) {
-  utsYuklenenVeriler = rows;
-  utsYuklenenBasliklar = headers;
-
-  const container = document.getElementById('utsAlimListesi');
-  if (!container) return;
-
-  if (!rows || rows.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Veri bulunamadı</div>';
-    return;
-  }
-
-  const hdrRow = headers.map(h => `<th>${h}</th>`).join('');
-  const dataRows = rows.map((r, i) => {
-    const cells = headers.map(h => `<td>${r[h] || '-'}</td>`).join('');
-    return `<tr><td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" checked></td><td>${i + 1}</td>${cells}</tr>`;
-  }).join('');
-
-  container.innerHTML = `
-    <div style="padding:8px;font-weight:600;color:var(--text-primary);">${rows.length} ürün bulundu</div>
-    <table class="data-table">
-      <thead><tr><th style="width:30px;"><input type="checkbox" id="utsTumuSec" onchange="utsTumuSecKaldir(this.checked)" checked></th><th>#</th>${hdrRow}</tr></thead>
-      <tbody>${dataRows}</tbody>
-    </table>
-  `;
-
-  document.getElementById('utsDurum').style.display = 'block';
-  document.getElementById('utsDurumText').innerHTML = `✅ ${rows.length} ürün hazır. "Stoğa Kaydet" ile ekleyin.`;
-}
-
-function utsTumuSecKaldir(checked) {
-  document.querySelectorAll('.uts-sec-check').forEach(cb => { cb.checked = checked; });
 }

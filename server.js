@@ -101,6 +101,7 @@ app.use('/api/urunler', authMiddleware, require('./routes/urun'));
 app.use('/api/stok', authMiddleware, require('./routes/stok'));
 app.use('/api/backup', authMiddleware, require('./routes/backup'));
 app.use('/api/uts', authMiddleware, require('./routes/uts'));
+app.use('/api/uts-api', authMiddleware, require('./routes/uts-api'));
 app.use('/api/etiket', authMiddleware, require('./routes/etiket'));
 app.use('/api/qr', authMiddleware, require('./routes/qr'));
 app.use('/api/kasa', authMiddleware, require('./routes/kasa'));
