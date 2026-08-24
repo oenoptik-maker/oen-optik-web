@@ -2124,6 +2124,20 @@ async function utsVerileriCek() {
 
 let utsBekleyenUrunler = [];
 
+async function utsDebug() {
+  const cred = await window.api.credentialOku();
+  const gkk = cred && cred.gkk ? parseInt(cred.gkk) : null;
+  showToast('Debug: GKK=' + gkk, 'info');
+  const result = await window.api.utsApiDebug(gkk);
+  console.log('UTS DEBUG:', JSON.stringify(result, null, 2));
+  if (result && result.parsed) {
+    const p = result.parsed;
+    showToast('Debug: HTTP=' + result.httpStatus + ' | Yanıt: ' + JSON.stringify(p).substring(0, 300), 'info');
+  } else {
+    showToast('Debug: Ham yanıt: ' + (result.rawResponse || '').substring(0, 500), 'info');
+  }
+}
+
 function utsBekleyenUrunleriGoster(urunler) {
   const container = document.getElementById('utsAlimListesi');
   if (!container) return;

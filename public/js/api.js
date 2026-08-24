@@ -164,6 +164,7 @@ window.api = {
   utsApiTopluAlmaBildirimi: (b) => apiFetch('/api/uts-api/toplu-alma-bildirimi', { method: 'POST', body: JSON.stringify({ bildirimler: b }) }),
   utsApiUrunSorgula: (p) => apiFetch('/api/uts-api/urun-sorgula', { method: 'POST', body: JSON.stringify(p) }),
   utsApiAyrintiliSorgula: (p) => apiFetch('/api/uts-api/ayrintili-sorgula', { method: 'POST', body: JSON.stringify(p) }),
+  utsApiDebug: (gkk) => apiFetch('/api/uts-api/debug-sorgula', { method: 'POST', body: JSON.stringify({ gkk }) }),
 
   // ===== CREDENTIAL =====
   credentialKaydet: (veriler) => apiFetch('/api/uts/credential-kaydet', { method: 'POST', body: JSON.stringify(veriler) }),

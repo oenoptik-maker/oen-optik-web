@@ -135,4 +135,30 @@ router.post('/ayrintili-sorgula', async (req, res) => {
   }
 });
 
+router.post('/debug-sorgula', async (req, res) => {
+  try {
+    if (!UTS_TOKEN) return res.status(500).json({ success: false, message: 'UTS_TOKEN tanımlı değil', tokenVar: false });
+    const { gkk } = req.body;
+    const url = `${UTS_BASE}/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ GKK: gkk || null, BNO: '', UNO: '', BID: '', SAN: 1 })
+    });
+    const rawText = await resp.text();
+    let parsed;
+    try { parsed = JSON.parse(rawText); } catch { parsed = null; }
+    res.json({
+      success: resp.ok,
+      httpStatus: resp.status,
+      tokenLength: UTS_TOKEN.length,
+      gkk: gkk,
+      rawResponse: rawText.substring(0, 2000),
+      parsed: parsed
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message, stack: err.stack });
+  }
+});
+
 module.exports = router;
