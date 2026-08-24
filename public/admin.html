@@ -222,10 +222,6 @@
                   3️⃣ Çıkan JSON'ı kopyalayıp aşağıdaki alana yapıştırın<br>
                   4️⃣ Fiyatları girin → 📦 Stoğa Kaydet
                 </p>
-                <details style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:12px;">
-                  <summary style="cursor:pointer;">📝 Konsol Kodu (tıkla)</summary>
-                  <pre style="background:var(--bg-secondary);padding:8px;border-radius:6px;font-size:0.7rem;overflow-x:auto;margin-top:6px;">var rows=document.querySelectorAll('table tbody tr');var s=[];rows.forEach(function(r){var c=r.querySelector('input[type=checkbox]:checked');if(c){var t=r.querySelectorAll('td');s.push({urunNo:t[1]?.innerText?.trim(),kurumKodu:t[2]?.innerText?.trim(),bildirimKodu:t[3]?.innerText?.trim(),lotBatch:t[4]?.innerText?.trim(),seriNo:t[5]?.innerText?.trim(),urunTanimi:t[6]?.innerText?.trim(),gonderenKurum:t[7]?.innerText?.trim(),adet:t[8]?.innerText?.trim()})}});copy(JSON.stringify(s));console.log(JSON.stringify(s));alert(s.length+' ürün kopyalandı!');</pre>
-                </details>
                 <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <button class="btn btn-primary" onclick="utsVerileriCek()" id="utsVeriCekBtn">🔄 Bekleyen Ürünleri Çek</button>
                   <a href="https://utsuygulama.saglik.gov.tr/UTS" target="_blank" rel="noopener noreferrer" class="btn btn-outline" id="utsAcBtn">🌐 UTS Sayfasını Aç</a>
