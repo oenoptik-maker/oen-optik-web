@@ -1,22 +1,37 @@
 (function() {
-  let sonCheck = 0;
+  var sonCheck = 0;
 
   function checkUtsData() {
     try {
       if (!chrome.storage || !chrome.storage.local) return;
-      chrome.storage.local.get('utsAktarim', (data) => {
+      chrome.storage.local.get('utsAktarim', function(data) {
         if (chrome.runtime.lastError) return;
         if (!data || !data.utsAktarim) return;
         if (data.utsAktarim.timestamp <= sonCheck) return;
         sonCheck = data.utsAktarim.timestamp;
 
-        const urunler = data.utsAktarim.urunler;
+        var urunler = data.utsAktarim.urunler;
         if (!urunler || urunler.length === 0) return;
 
-        document.documentElement.setAttribute('data-uts-transfer', JSON.stringify(urunler));
-        document.documentElement.dispatchEvent(new CustomEvent('utsTransfer', { detail: urunler, bubbles: true }));
+        var script = document.createElement('script');
+        script.textContent = '(' + function(urunler) {
+          if (typeof utsVeriAktar === 'function') {
+            utsVeriAktar(urunler);
+          } else if (typeof utsBekleyenUrunleriGoster === 'function' && typeof adminTabAc === 'function') {
+            adminTabAc('uts');
+            setTimeout(function() {
+              window.utsBekleyenUrunler = urunler;
+              utsBekleyenUrunleriGoster(urunler);
+              if (typeof showToast === 'function') showToast(urunler.length + ' ürün aktarıldı!', 'success');
+            }, 300);
+          }
+        }.toString() + ')(' + JSON.stringify(urunler) + ')';
+        document.head.appendChild(script);
+        script.remove();
       });
-    } catch(e) {}
+    } catch(e) {
+      console.error('UTS admin-content hata:', e);
+    }
   }
 
   setTimeout(checkUtsData, 1000);
