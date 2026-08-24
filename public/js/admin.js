@@ -753,6 +753,8 @@ function adminTabAc(tab) {
   } else if (tab === 'uts') {
     tabUTS.classList.add('active');
     panelUTS.style.display = '';
+    var utsAcBtn = document.getElementById('utsAcBtn');
+    if (utsAcBtn) utsAcBtn.disabled = false;
     utsAlimListesiniYukle();
   }
 }
@@ -1289,18 +1291,15 @@ async function satisTarihiUrunleri() {
 async function utsPenceresiAc() {
   const durumDiv = document.getElementById('utsDurum');
   const durumText = document.getElementById('utsDurumText');
-  const acBtn = document.getElementById('utsAcBtn');
 
   if (durumDiv) durumDiv.style.display = 'block';
   if (durumText) durumText.innerHTML = '⏳ UTS sayfası açılıyor... Lütfen e-Devlet ile giriş yapın.';
-  if (acBtn) acBtn.disabled = true;
 
   const result = await window.api.utsPencereAc();
   if (result && result.success) {
     if (durumText) durumText.innerHTML = '✅ UTS sayfası açıldı. E-Devlet ile giriş yapıp ürünleri çekin.';
   } else {
     if (durumText) durumText.innerHTML = '❌ UTS sayfası açılamadı.';
-    if (acBtn) acBtn.disabled = false;
   }
 }
 
