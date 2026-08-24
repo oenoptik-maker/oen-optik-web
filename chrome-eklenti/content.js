@@ -77,18 +77,26 @@
     });
 
     if (secili.length === 0) {
-      showDurum('⚠️ İşaretli ürün bulunamadı!', 'err');
+      showDurum('⚠️ Isaretli urun bulunamadi!', 'err');
       return;
     }
 
-    await chrome.storage.local.set({
-      utsAktarim: {
-        urunler: secili,
-        timestamp: Date.now()
-      }
-    });
+    showDurum(secili.length + ' urun aktariliyor...', '');
 
-    showDurum(`✅ ${secili.length} ürün aktarıldı! OEN Optik sayfasında görünecek.`, 'ok');
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'AKTAR_UTS',
+        urunler: secili
+      });
+
+      if (response && response.ok) {
+        showDurum(secili.length + ' urun aktarildi!', 'ok');
+      } else {
+        showDurum('Hata: ' + (response?.error || 'Bilinmeyen'), 'err');
+      }
+    } catch (err) {
+      showDurum('Hata: ' + err.message, 'err');
+    }
   });
 
   document.body.appendChild(btn);
