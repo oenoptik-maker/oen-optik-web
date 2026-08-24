@@ -213,29 +213,32 @@
 
           <!-- UTS Ürünleri Eşitle Sekmesi -->
           <div id="panelUTS" style="display: none;">
-            <div style="padding: 20px; text-align: center;">
+            <div style="padding: 20px;">
               <div style="margin-bottom: 16px;">
                 <h3 style="color: var(--text-primary); margin-bottom: 8px;">🔬 UTS Ürün Eşitleme</h3>
-                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">
-                  UTS (Ulusal Takip Sistemi) üzerinden ürün listesini çekmek için aşağıdaki butona tıklayın.<br>
-                  E-Devlet şifreniz ile giriş yapmanız gerekecektir.
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">
+                  UTS sayfasından ürün listesini kopyalayıp aşağıdaki alana yapıştırın veya Excel dosyası yükleyin.
                 </p>
-                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                  <button class="btn btn-primary" onclick="utsPenceresiAc()" id="utsAcBtn">
-                    🌐 UTS Sayfasını Aç
-                  </button>
-                  <button class="btn btn-outline" onclick="openCredentialModal()">
-                    ⚙️ Giriş Bilgilerini Kaydet
-                  </button>
-                  <button class="btn btn-success" onclick="utsVerileriCek()" id="utsVeriCekBtn">
-                    📥 UTS Verilerini Çek
-                  </button>
-                  <button class="btn btn-primary" onclick="utsStogaKaydet()" id="utsStogaKaydetBtn">
-                    📦 Stoğa Kaydet
-                  </button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="btn btn-primary" onclick="utsPenceresiAc()" id="utsAcBtn">🌐 UTS Sayfasını Aç</button>
+                  <button class="btn btn-outline" onclick="openCredentialModal()">⚙️ Giriş Bilgileri</button>
                 </div>
               </div>
-              <div id="utsDurum" style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; display: none;">
+
+              <!-- Yapistirma Alani -->
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; display: block;">📋 UTS Verisini Yapıştırın (Tab veya virgül ile ayrılmış)</label>
+                <textarea id="utsYapistirmaAlani" rows="5" placeholder="UTS sayfasından kopyaladığınız tablo verisini buraya yapıştırın...&#10;Örnek: Barkod	Ürün Adı	Firma	Adet&#10;8699001234567	Gözlük Çerçeve	ABC Firma	10" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font-size:0.85rem;font-family:monospace;resize:vertical;"></textarea>
+                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                  <button class="btn btn-success btn-sm" onclick="utsYapistir()">📥 Yapıştır</button>
+                  <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                    📁 Excel Yükle
+                    <input type="file" accept=".xlsx,.xls,.csv" onchange="utsExcelYukle(event)" style="display:none;">
+                  </label>
+                </div>
+              </div>
+
+              <div id="utsDurum" style="margin-top: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; display: none;">
                 <div id="utsDurumText" style="color: var(--text-secondary); font-size: 0.85rem;"></div>
               </div>
               <div id="utsUrunTablosu" style="margin-top: 16px; text-align: left;"></div>
@@ -246,10 +249,13 @@
               <div class="card" style="margin-top: 16px;">
                 <div class="card-header">
                   <h2 class="card-title">📋 Çekilen UTS Alım Verileri</h2>
-                  <button class="btn btn-danger btn-sm" onclick="utsVerileriTemizle()">🗑️ Tümünü Sil</button>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-success btn-sm" onclick="utsStogaKaydet()">📦 Stoğa Kaydet</button>
+                    <button class="btn btn-danger btn-sm" onclick="utsVerileriTemizle()">🗑️ Tümünü Sil</button>
+                  </div>
                 </div>
                 <div id="utsAlimListesi" class="table-container" style="max-height: 400px; overflow-y: auto;">
-                  <div style="text-align: center; color: var(--text-muted); padding: 12px;">Henüz veri çekilmedi</div>
+                  <div style="text-align: center; color: var(--text-muted); padding: 12px;">Henüz veri yüklenmedi</div>
                 </div>
               </div>
             </div>
