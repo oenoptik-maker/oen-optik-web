@@ -1,3 +1,18 @@
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (!tab.url) continue;
+      const u = tab.url.toLowerCase();
+      if (u.includes('oen-optik-web.vercel.app')) {
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['admin-content.js']
+        }).catch(() => {});
+      }
+    }
+  });
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'AKTAR_UTS') {
     chrome.tabs.query({}, (tabs) => {
