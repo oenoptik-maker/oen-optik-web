@@ -3,7 +3,9 @@
 
   function checkUtsData() {
     try {
+      if (!chrome.storage || !chrome.storage.local) return;
       chrome.storage.local.get('utsAktarim', (data) => {
+        if (chrome.runtime.lastError) return;
         if (!data || !data.utsAktarim) return;
         if (data.utsAktarim.timestamp <= sonCheck) return;
         sonCheck = data.utsAktarim.timestamp;
@@ -11,17 +13,18 @@
         const urunler = data.utsAktarim.urunler;
         if (!urunler || urunler.length === 0) return;
 
-        if (typeof utsVeriAktar === 'function') {
-          utsVeriAktar(urunler);
-          return;
+        function tryAktar() {
+          if (typeof utsVeriAktar === 'function') {
+            utsVeriAktar(urunler);
+            return true;
+          }
+          return false;
         }
 
-        window.utsVeriAktar = null;
+        if (tryAktar()) return;
+
         const checkFunc = setInterval(() => {
-          if (typeof utsVeriAktar === 'function') {
-            clearInterval(checkFunc);
-            utsVeriAktar(urunler);
-          }
+          if (tryAktar()) clearInterval(checkFunc);
         }, 200);
         setTimeout(() => clearInterval(checkFunc), 10000);
       });
