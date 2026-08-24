@@ -1,5 +1,6 @@
 (function() {
   var sonCheck = 0;
+  var bekleyenPromiseler = [];
 
   function checkUtsData() {
     try {
@@ -22,17 +23,41 @@
             setTimeout(function() {
               window.utsBekleyenUrunler = urunler;
               utsBekleyenUrunleriGoster(urunler);
-              if (typeof showToast === 'function') showToast(urunler.length + ' ürün aktarıldı!', 'success');
+              if (typeof showToast === 'function') showToast(urunler.length + ' UTS urunu aktarildi!', 'success');
             }, 300);
           }
         }.toString() + ')(' + JSON.stringify(urunler) + ')';
         document.head.appendChild(script);
         script.remove();
       });
-    } catch(e) {
-      console.error('UTS admin-content hata:', e);
-    }
+    } catch(e) {}
   }
+
+  function bekleyenleriCek(gkk) {
+    return new Promise(function(resolve, reject) {
+      chrome.runtime.sendMessage(
+        { type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk },
+        function(resp) {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          resolve(resp);
+        }
+      );
+    });
+  }
+
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'UTS_BEKLEYENLERI_CEK') {
+      var gkk = e.data.gkk;
+      bekleyenleriCek(gkk).then(function(resp) {
+        window.postMessage({ type: 'UTS_BEKLEYENLERI_SONUC', success: true, data: resp }, '*');
+      }).catch(function(err) {
+        window.postMessage({ type: 'UTS_BEKLEYENLERI_SONUC', success: false, error: err.message }, '*');
+      });
+    }
+  });
 
   setTimeout(checkUtsData, 1000);
   setInterval(checkUtsData, 2000);

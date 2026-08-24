@@ -2100,13 +2100,18 @@ async function utsVerileriCek() {
     return;
   }
 
-  // Yöntem 1: Cloudflare Worker üzerinden dene
+  // Token'ı chrome storage'a kaydet (background script erişebilsin diye)
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.set({ utsToken: token });
+  }
+
+  // Yöntem 1: Cloudflare Worker
   const workerUrl = cred.workerUrl;
   if (workerUrl) {
     try {
       showToast('Worker üzerinden UTS sorgulanıyor...', 'info');
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), 12000);
       const resp = await fetch(workerUrl + '/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
         method: 'POST',
         headers: { 'utsToken': token, 'Content-Type': 'application/json' },
@@ -2115,14 +2120,12 @@ async function utsVerileriCek() {
       });
       clearTimeout(timeout);
       const result = await resp.json();
-      console.log('UTS Worker Yanıtı:', result);
 
       let urunler = [];
       const data = result && result.veri ? result.veri : result;
       if (Array.isArray(data)) urunler = data;
       else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
       else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
-      else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
 
       if (urunler.length > 0) {
         utsBekleyenUrunler = urunler;
@@ -2132,30 +2135,43 @@ async function utsVerileriCek() {
         return;
       }
     } catch (e) {
-      console.warn('Worker başarısız:', e.message);
+      console.warn('Worker basarisiz:', e.message);
     }
   }
 
-  // Yöntem 2: Chrome eklentisi kullan (sayfa içinden Storage oku)
-  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    try {
-      const data = await new Promise((resolve) => {
-        chrome.storage.local.get('utsAktarim', resolve);
-      });
-      if (data && data.utsAktarim && data.utsAktarim.urunler && data.utsAktarim.urunler.length > 0) {
-        const urunler = data.utsAktarim.urunler;
-        utsBekleyenUrunler = urunler;
-        utsBekleyenUrunleriGoster(urunler);
-        showToast(urunler.length + ' ürün eklentiden yüklendi.', 'success');
-        if (btn) btn.disabled = false;
-        return;
-      }
-    } catch (e) {
-      console.warn('Storage okunamadı:', e.message);
-    }
-  }
+  // Yöntem 2: Chrome eklentisi background'u勾ragsin (content script uzerinden)
+  try {
+    showToast('Eklenti uzerinden UTS sorgulanıyor...', 'info');
+    const result = await new Promise((resolve, reject) => {
+      const handler = function(e) {
+        if (e.data && e.data.type === 'UTS_BEKLEYENLERI_SONUC') {
+          window.removeEventListener('message', handler);
+          if (e.data.success) resolve(e.data.data);
+          else reject(new Error(e.data.error || 'Bilinmeyen hata'));
+        }
+      };
+      window.addEventListener('message', handler);
+      window.postMessage({ type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk }, '*');
+      setTimeout(() => { window.removeEventListener('message', handler); reject(new Error('Timeout')); }, 20000);
+    });
 
-  showToast('Ürün çekilemedi. Lütfen UTS sayfasında eklenti butonunu kullanın.', 'warning');
+    let urunler = [];
+    const data = result && result.veri ? result.veri : result;
+    if (Array.isArray(data)) urunler = data;
+    else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
+    else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
+
+    if (urunler.length > 0) {
+      utsBekleyenUrunler = urunler;
+      utsBekleyenUrunleriGoster(urunler);
+      showToast(urunler.length + ' bekleyen ürün bulundu. (Eklenti)', 'success');
+    } else {
+      showToast('Bekleyen ürün bulunamadi.', 'warning');
+    }
+  } catch (e) {
+    console.error('UTS cekme hatasi:', e);
+    showToast('UTS verisi cekilemedi: ' + e.message + '. UTS sayfasindan eklenti butonunu kullanin.', 'error');
+  }
   if (btn) btn.disabled = false;
 }
 
