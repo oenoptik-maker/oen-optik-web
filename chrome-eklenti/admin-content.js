@@ -10,7 +10,7 @@
       const urunler = data.utsAktarim.urunler;
       if (!urunler || urunler.length === 0) return;
 
-      window.postMessage({ type: 'UTS_URUNLER_AKTAR', urunler: urunler }, '*');
+      document.dispatchEvent(new CustomEvent('utsDataAktar', { detail: urunler }));
     });
   }
 

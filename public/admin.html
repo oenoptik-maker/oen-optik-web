@@ -654,6 +654,12 @@
       }
     }
 
+    document.addEventListener('utsDataAktar', function(e) {
+      if (e.detail && Array.isArray(e.detail) && e.detail.length > 0) {
+        utsVeriAktar(e.detail);
+      }
+    });
+
     window.addEventListener('message', function(e) {
       if (e.data && e.data.type === 'UTS_URUNLER_AKTAR' && Array.isArray(e.data.urunler) && e.data.urunler.length > 0) {
         utsVeriAktar(e.data.urunler);
