@@ -2082,13 +2082,6 @@ async function utsVerileriCek() {
   if (btn) btn.disabled = true;
   showToast('UTS API\'den bekleyen ürünler sorgulanıyor...', 'info');
 
-  const health = await window.api.utsApiSaglikKontrol();
-  if (!health || !health.hasToken) {
-    showToast('UTS Token tanımlı değil! Vercel env vars\'a UTS_TOKEN ekleyin.', 'error');
-    if (btn) btn.disabled = false;
-    return;
-  }
-
   const cred = await window.api.credentialOku();
   const gkk = cred && cred.gkk ? parseInt(cred.gkk) : null;
   if (!gkk) {
@@ -2097,25 +2090,13 @@ async function utsVerileriCek() {
     return;
   }
 
-  // Token'ı al
-  const token = await window.api.utsApiGetToken();
-  if (!token) {
-    showToast('Token alınamadı.', 'error');
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  // Doğrudan tarayıcıdan UTS API'ye istek at
+  // Backend proxy üzerinden UTS API'ye istek at
   try {
-    const resp = await fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
-      method: 'POST',
-      headers: { 'utsToken': token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ GKK: gkk, BNO: '', UNO: '', BID: '', SAN: 1 })
-    });
-    const data = await resp.json();
-    console.log('UTS API Yanıtı:', data);
+    const result = await window.api.utsApiBekleyenUrunleri(gkk);
+    console.log('UTS API Yanıtı:', result);
 
     let urunler = [];
+    const data = result && result.veri ? result.veri : result;
     if (Array.isArray(data)) urunler = data;
     else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
     else if (data && data.data && Array.isArray(data.data)) urunler = data.data;

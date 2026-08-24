@@ -163,6 +163,7 @@ window.api = {
     return r && r.token ? r.token : null;
   },
   utsApiBekleyenUrunleriSorgula: (p) => apiFetch('/api/uts-api/bekleyen-urunleri-sorgula', { method: 'POST', body: JSON.stringify(p) }),
+  utsApiBekleyenUrunleri: (gkk) => apiFetch('/api/uts-api/bekleyen-urunleri-sorgula', { method: 'POST', body: JSON.stringify({ gkk: gkk, BNO: '', UNO: '', BID: '', SAN: 1 }) }),
   utsApiBekleyenSayisi: (p) => apiFetch('/api/uts-api/bekleyen-sayisi', { method: 'POST', body: JSON.stringify(p) }),
   utsApiAlmaBildirimi: (b) => apiFetch('/api/uts-api/alma-bildirimi', { method: 'POST', body: JSON.stringify(b) }),
   utsApiTopluAlmaBildirimi: (b) => apiFetch('/api/uts-api/toplu-alma-bildirimi', { method: 'POST', body: JSON.stringify({ bildirimler: b }) }),
