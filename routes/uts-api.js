@@ -6,16 +6,28 @@ const UTS_TOKEN = process.env.UTS_TOKEN;
 
 async function utsPost(path, body) {
   const url = `${UTS_BASE}${path}`;
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'utsToken': UTS_TOKEN,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  });
-  const text = await resp.text();
-  try { return JSON.parse(text); } catch { return { raw: text }; }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'utsToken': UTS_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    const text = await resp.text();
+    try { return JSON.parse(text); } catch { return { raw: text }; }
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') {
+      throw new Error('UTS sunucusuna bağlanılamadı (timeout). Türk IP adresi gerekiyor.');
+    }
+    throw err;
+  }
 }
 
 router.get('/health', async (req, res) => {

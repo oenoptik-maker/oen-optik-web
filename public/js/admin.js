@@ -2090,31 +2090,59 @@ async function utsVerileriCek() {
     return;
   }
 
-  // Backend proxy üzerinden UTS API'ye istek at
+  let result = null;
+  let usedDirect = false;
+
+  // Yöntem 1: Doğrudan tarayıcıdan UTS API'ye istek at (Kullanıcının Türk IP'siyle)
   try {
-    const result = await window.api.utsApiBekleyenUrunleri(gkk);
-    console.log('UTS API Yanıtı:', result);
+    const token = await window.api.utsApiGetToken();
+    if (token) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
+        method: 'POST',
+        headers: { 'utsToken': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ GKK: gkk, BNO: '', UNO: '', BID: '', SAN: 1 }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      result = await resp.json();
+      usedDirect = true;
+      console.log('UTS Doğrudan Yanıt:', result);
+    }
+  } catch (e) {
+    console.warn('Doğrudan UTS erişimi başarısız, backend deneniyor:', e.message);
+  }
 
-    let urunler = [];
-    const data = result && result.veri ? result.veri : result;
-    if (Array.isArray(data)) urunler = data;
-    else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
-    else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
-    else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
-
-    if (urunler.length === 0) {
-      showToast('Bekleyen ürün bulunamadı. Yanıt: ' + JSON.stringify(data).substring(0, 300), 'warning');
+  // Yöntem 2: Backend proxy üzerinden dene
+  if (!result) {
+    try {
+      result = await window.api.utsApiBekleyenUrunleri(gkk);
+      console.log('UTS Backend Yanıtı:', result);
+    } catch (err) {
+      showToast('UTS API hatası: ' + err.message, 'error');
+      console.error('UTS API Hatası:', err);
       if (btn) btn.disabled = false;
       return;
     }
-
-    utsBekleyenUrunler = urunler;
-    utsBekleyenUrunleriGoster(urunler);
-    showToast(`${urunler.length} bekleyen ürün bulundu.`, 'success');
-  } catch (err) {
-    showToast('UTS API hatası: ' + err.message, 'error');
-    console.error('UTS API Hatası:', err);
   }
+
+  let urunler = [];
+  const data = result && result.veri ? result.veri : result;
+  if (Array.isArray(data)) urunler = data;
+  else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
+  else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
+  else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
+
+  if (urunler.length === 0) {
+    showToast('Bekleyen ürün bulunamadı. Yanıt: ' + JSON.stringify(data).substring(0, 300), 'warning');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  utsBekleyenUrunler = urunler;
+  utsBekleyenUrunleriGoster(urunler);
+  showToast(`${urunler.length} bekleyen ürün bulundu.${usedDirect ? ' (Doğrudan bağlantı)' : ''}`, 'success');
   if (btn) btn.disabled = false;
 }
 
