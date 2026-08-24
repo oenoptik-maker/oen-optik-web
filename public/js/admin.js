@@ -1366,10 +1366,12 @@ async function utsSifreOnayla() {
     document.getElementById('credGKK').value = sonuc.gkk || '';
     document.getElementById('credTc').value = sonuc.tc || '';
     document.getElementById('credSifre').value = sonuc.sifre || '';
+    document.getElementById('credWorkerUrl').value = sonuc.workerUrl || '';
   } else {
     document.getElementById('credGKK').value = '';
     document.getElementById('credTc').value = '';
     document.getElementById('credSifre').value = '';
+    document.getElementById('credWorkerUrl').value = '';
   }
 }
 
@@ -1381,13 +1383,14 @@ async function credentialKaydet() {
   const gkk = document.getElementById('credGKK').value.trim();
   const tc = document.getElementById('credTc').value.trim();
   const sifre = document.getElementById('credSifre').value.trim();
+  const workerUrl = document.getElementById('credWorkerUrl').value.trim();
 
   if (!gkk) {
     showToast('Kurum Kodu (GKK) zorunludur.', 'error');
     return;
   }
 
-  const sonuc = await window.api.credentialKaydet({ tc, sifre, gkk });
+  const sonuc = await window.api.credentialKaydet({ tc, sifre, gkk, workerUrl });
   if (sonuc.success) {
     showToast('UTS ayarları kaydedildi.', 'success');
     closeCredentialModal();
@@ -2097,45 +2100,72 @@ async function utsVerileriCek() {
     return;
   }
 
-  // Chrome eklentisine mesaj gönder - eklenti UTS API'yi çağırsın
-  try {
-    const response = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { type: 'UTS_BEKLEYENLERI_CEK', token: token, gkk: gkk },
-        (resp) => {
-          if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-          else resolve(resp);
-        }
-      );
-    });
+  let result = null;
+  let usedWorker = false;
 
-    if (!response || !response.ok) {
-      showToast('Eklenti hatası: ' + (response ? response.error : 'Yanıt yok'), 'error');
-      if (btn) btn.disabled = false;
-      return;
+  // Yöntem 1: Cloudflare Worker varsa kullan
+  const workerUrl = cred.workerUrl;
+  if (workerUrl) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const resp = await fetch(`${workerUrl}/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula`, {
+        method: 'POST',
+        headers: { 'utsToken': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ GKK: gkk, BNO: '', UNO: '', BID: '', SAN: 1 }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      result = await resp.json();
+      usedWorker = true;
+      console.log('UTS Worker Yanıtı:', result);
+    } catch (e) {
+      console.warn('Worker başarısız, eklentiden deneniyor:', e.message);
     }
-
-    console.log('UTS Eklenti Yanıtı:', response.data);
-    let urunler = [];
-    const data = response.data && response.data.veri ? response.data.veri : response.data;
-    if (Array.isArray(data)) urunler = data;
-    else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
-    else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
-    else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
-
-    if (urunler.length === 0) {
-      showToast('Bekleyen ürün bulunamadı.', 'warning');
-      if (btn) btn.disabled = false;
-      return;
-    }
-
-    utsBekleyenUrunler = urunler;
-    utsBekleyenUrunleriGoster(urunler);
-    showToast(`${urunler.length} bekleyen ürün bulundu.`, 'success');
-  } catch (err) {
-    showToast('Eklenti erişilemedi. Lütfen eklentiyi yükleyin ve yeniden yükleyin.', 'error');
-    console.error('UTS Eklenti Hatası:', err);
   }
+
+  // Yöntem 2: Chrome eklentisi üzerinden dene
+  if (!result) {
+    try {
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          { type: 'UTS_BEKLEYENLERI_CEK', token: token, gkk: gkk },
+          (resp) => {
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+            else resolve(resp);
+          }
+        );
+      });
+      if (response && response.ok) {
+        result = response.data;
+      }
+    } catch (e) {
+      console.warn('Eklenti erişilemedi:', e.message);
+    }
+  }
+
+  if (!result) {
+    showToast('UTS API\'ye erişilemedi. Worker veya eklenti gerekli.', 'error');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  let urunler = [];
+  const data = result && result.veri ? result.veri : result;
+  if (Array.isArray(data)) urunler = data;
+  else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
+  else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
+  else if (data && data.kayitlar && Array.isArray(data.kayitlar)) urunler = data.kayitlar;
+
+  if (urunler.length === 0) {
+    showToast('Bekleyen ürün bulunamadı.', 'warning');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  utsBekleyenUrunler = urunler;
+  utsBekleyenUrunleriGoster(urunler);
+  showToast(`${urunler.length} bekleyen ürün bulundu.${usedWorker ? ' (Worker)' : ' (Eklenti)'}`, 'success');
   if (btn) btn.disabled = false;
 }
 

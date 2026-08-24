@@ -113,11 +113,13 @@ async function initTables() {
       await db.client.execute(stmt);
     }
     try { await db.client.execute('ALTER TABLE credentials ADD COLUMN gkk TEXT'); } catch {}
+    try { await db.client.execute('ALTER TABLE credentials ADD COLUMN worker_url TEXT'); } catch {}
   } else {
     for (const stmt of tables) {
       db.client.run(stmt);
     }
     try { db.client.run('ALTER TABLE credentials ADD COLUMN gkk TEXT'); } catch {}
+    try { db.client.run('ALTER TABLE credentials ADD COLUMN worker_url TEXT'); } catch {}
     if (!IS_VERCEL) saveDb();
   }
 
