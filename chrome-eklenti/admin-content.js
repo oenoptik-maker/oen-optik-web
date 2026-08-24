@@ -10,7 +10,11 @@
       const urunler = data.utsAktarim.urunler;
       if (!urunler || urunler.length === 0) return;
 
-      document.dispatchEvent(new CustomEvent('utsDataAktar', { detail: urunler }));
+      const textarea = document.getElementById('utsYapistirmaAlani');
+      if (textarea) {
+        textarea.value = JSON.stringify(urunler);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     });
   }
 
