@@ -13,20 +13,8 @@
         const urunler = data.utsAktarim.urunler;
         if (!urunler || urunler.length === 0) return;
 
-        function tryAktar() {
-          if (typeof utsVeriAktar === 'function') {
-            utsVeriAktar(urunler);
-            return true;
-          }
-          return false;
-        }
-
-        if (tryAktar()) return;
-
-        const checkFunc = setInterval(() => {
-          if (tryAktar()) clearInterval(checkFunc);
-        }, 200);
-        setTimeout(() => clearInterval(checkFunc), 10000);
+        document.documentElement.setAttribute('data-uts-transfer', JSON.stringify(urunler));
+        document.documentElement.dispatchEvent(new CustomEvent('utsTransfer', { detail: urunler, bubbles: true }));
       });
     } catch(e) {}
   }

@@ -649,11 +649,30 @@
       }
     }
 
+    document.addEventListener('utsTransfer', function(e) {
+      if (e.detail && Array.isArray(e.detail) && e.detail.length > 0) {
+        utsVeriAktar(e.detail);
+      }
+    });
+
     document.addEventListener('utsDataAktar', function(e) {
       if (e.detail && Array.isArray(e.detail) && e.detail.length > 0) {
         utsVeriAktar(e.detail);
       }
     });
+
+    setInterval(function() {
+      var attr = document.documentElement.getAttribute('data-uts-transfer');
+      if (attr) {
+        document.documentElement.removeAttribute('data-uts-transfer');
+        try {
+          var urunler = JSON.parse(attr);
+          if (Array.isArray(urunler) && urunler.length > 0) {
+            utsVeriAktar(urunler);
+          }
+        } catch(e) {}
+      }
+    }, 1000);
 
     window.addEventListener('message', function(e) {
       if (e.data && e.data.type === 'UTS_URUNLER_AKTAR' && Array.isArray(e.data.urunler) && e.data.urunler.length > 0) {
