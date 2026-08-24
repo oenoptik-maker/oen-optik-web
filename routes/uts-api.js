@@ -137,46 +137,53 @@ router.post('/ayrintili-sorgula', async (req, res) => {
 
 router.post('/debug-sorgula', async (req, res) => {
   try {
-    if (!UTS_TOKEN) return res.json({ success: false, message: 'UTS_TOKEN tanımlı değil', tokenVar: false });
+    if (!UTS_TOKEN) return res.json({ success: false, message: 'UTS_TOKEN tanımlı değil' });
 
-    // Test 1: Basit bir UTS sorgulama
-    const url1 = `${UTS_BASE}/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula`;
-    let resp1, raw1;
+    // Test 1: DNS ve SSL kontrolü
+    let dnsTest;
     try {
-      resp1 = await fetch(url1, {
-        method: 'POST',
-        headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ GKK: null, BNO: '', UNO: '', BID: '', SAN: 1 })
+      const { lookup } = require('dns').promises || require('dns');
+      const dnsResult = await new Promise((resolve, reject) => {
+        require('dns').lookup('utsuygulama.saglik.gov.tr', (err, address) => {
+          if (err) reject(err); else resolve(address);
+        });
       });
-      raw1 = await resp1.text();
+      dnsTest = { basarili: true, ip: dnsResult };
     } catch (e) {
-      raw1 = 'FETCH_HATA: ' + e.message;
-      resp1 = { status: 0 };
+      dnsTest = { basarili: false, hata: e.message };
     }
 
-    // Test 2: UTS ürün sorgulama
-    const url2 = `${UTS_BASE}/UTS/rest/tibbiCihaz/urunSorgula`;
-    let resp2, raw2;
+    // Test 2: Basit GET isteği
+    let getTest;
     try {
-      resp2 = await fetch(url2, {
-        method: 'POST',
-        headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ UNO: '8680275853451' })
+      const resp = await fetch('https://utsuygulama.saglik.gov.tr/UTS', {
+        method: 'GET',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(15000)
       });
-      raw2 = await resp2.text();
+      getTest = { status: resp.status, ok: resp.ok, headers: Object.fromEntries(resp.headers) };
     } catch (e) {
-      raw2 = 'FETCH_HATA: ' + e.message;
-      resp2 = { status: 0 };
+      getTest = { hata: e.message, code: e.code, cause: e.cause ? e.cause.message : null };
     }
 
-    res.json({
-      tokenLength: UTS_TOKEN.length,
-      tokenPrefix: UTS_TOKEN.substring(0, 10),
-      test1: { url: url1, status: resp1.status || resp1.statusCode, yanit: (raw1 || '').substring(0, 1000) },
-      test2: { url: url2, status: resp2.status || resp2.statusCode, yanit: (raw2 || '').substring(0, 1000) }
-    });
+    // Test 3: POST isteği
+    let postTest;
+    try {
+      const resp = await fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
+        method: 'POST',
+        headers: { 'utsToken': UTS_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ GKK: null, BNO: '', UNO: '', BID: '', SAN: 1 }),
+        signal: AbortSignal.timeout(15000)
+      });
+      const text = await resp.text();
+      postTest = { status: resp.status, yanit: text.substring(0, 500) };
+    } catch (e) {
+      postTest = { hata: e.message, code: e.code, cause: e.cause ? e.cause.message : null };
+    }
+
+    res.json({ dnsTest, getTest, postTest, tokenLength: UTS_TOKEN.length });
   } catch (err) {
-    res.json({ success: false, message: err.message, stack: err.stack });
+    res.json({ success: false, message: err.message });
   }
 });
 
