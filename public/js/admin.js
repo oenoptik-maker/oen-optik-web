@@ -18,8 +18,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ===== KATEGORİ İŞLEMLERİ =====
 async function loadKategoriler() {
   tumKategoriler = await window.api.kategoriRead();
+  await kategoriNormallestir();
+  tumKategoriler = await window.api.kategoriRead();
   renderKategoriler();
   updateKategoriSelects();
+}
+
+async function kategoriNormallestir() {
+  const gruplar = {};
+  tumKategoriler.forEach(k => {
+    const key = (k.KATEGORI_ADI || '').toLocaleUpperCase('tr-TR');
+    if (!key) return;
+    if (!gruplar[key]) gruplar[key] = [];
+    gruplar[key].push(k);
+  });
+
+  const mevcutUrunler = await window.api.urunRead();
+  let birlestirildi = false;
+
+  for (const [key, kategoriler] of Object.entries(gruplar)) {
+    if (kategoriler.length <= 1) {
+      if (kategoriler[0].KATEGORI_ADI !== key) {
+        await window.api.kategoriSave({ KATEGORI_ID: kategoriler[0].KATEGORI_ID, KATEGORI_ADI: key });
+        birlestirildi = true;
+      }
+      continue;
+    }
+
+    const tutucu = kategoriler[0];
+    const tutucuYeniAd = key;
+    if (tutucu.KATEGORI_ADI !== tutucuYeniAd) {
+      await window.api.kategoriSave({ KATEGORI_ID: tutucu.KATEGORI_ID, KATEGORI_ADI: tutucuYeniAd });
+    }
+
+    for (let j = 1; j < kategoriler.length; j++) {
+      const eski = kategoriler[j];
+      const ayniKategoridekiUrunler = mevcutUrunler.filter(u => u.KATEGORI_ADI === eski.KATEGORI_ADI);
+      for (const u of ayniKategoridekiUrunler) {
+        await window.api.urunSave({ ...u, KATEGORI_ADI: tutucuYeniAd });
+      }
+      await window.api.kategoriDelete(eski.KATEGORI_ID);
+      birlestirildi = true;
+    }
+  }
+
+  if (birlestirildi) {
+    tumKategoriler = await window.api.kategoriRead();
+  }
 }
 
 function renderKategoriler() {
@@ -85,7 +130,7 @@ async function editKategori(id) {
 
 async function saveKategori() {
   const id = document.getElementById('kategoriId').value;
-  const adi = document.getElementById('kategoriAdi').value.trim();
+  const adi = document.getElementById('kategoriAdi').value.trim().toLocaleUpperCase('tr-TR');
 
   if (!adi) {
     showToast('Kategori adı boş olamaz.', 'error');
