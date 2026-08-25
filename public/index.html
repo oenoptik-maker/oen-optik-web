@@ -147,7 +147,7 @@
                   <input type="text" id="urunArama" placeholder="Ürün ara..." oninput="urunAramaYap(this.value)" onfocus="urunAramaYap(this.value)" autocomplete="off">
                   <div id="urunDropdown" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:150px; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; z-index:100; box-shadow:var(--shadow);"></div>
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="urunEkle()">+ Ekle</button>
+                <button class="btn btn-primary btn-sm" onclick="openUrunModal()">+ Ekle</button>
               </div>
               <input type="hidden" id="urunSecim">
             </div>
@@ -395,6 +395,45 @@
         <button class="btn btn-primary" id="aramaModalTamam">✅ Düzenle</button>
         <button class="btn btn-success" id="aramaModalYeniSatis">🛒 Yeni Satış Ekle</button>
         <button class="btn btn-outline" id="aramaModalIptal">❌ İptal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yeni Ürün Modal -->
+  <div id="urunModal" class="modal-overlay">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="urunModalTitle">Yeni Ürün</h3>
+        <button class="modal-close" onclick="closeUrunModal()">&times;</button>
+      </div>
+      <input type="hidden" id="urunId">
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Kategori</label>
+        <select id="urunKategori"></select>
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Ürün Adı</label>
+        <input type="text" id="urunAdi" placeholder="Örn: Ray-Ban RB2140">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Alış Fiyatı (₺)</label>
+        <input type="number" id="urunAlisFiyat" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Satış Fiyatı (₺)</label>
+        <input type="number" id="urunFiyat" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Adet</label>
+        <input type="number" id="urunAdet" step="1" min="0" placeholder="0">
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>Menşei</label>
+        <input type="text" id="urunMensei" placeholder="Örn: Türkiye, İtalya, Çin">
+      </div>
+      <div class="action-bar" style="border: none; padding: 0;">
+        <button class="btn btn-primary" onclick="modalUrunKaydet()">💾 Kaydet</button>
+        <button class="btn btn-outline" onclick="closeUrunModal()">İptal</button>
       </div>
     </div>
   </div>
