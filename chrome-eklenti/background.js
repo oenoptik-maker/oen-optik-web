@@ -1,3 +1,17 @@
+// Extension yuklendiginde mevcut sayfalara content script enjekte et
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (tab.url && (tab.url.includes('oenoptik.com') || tab.url.includes('oen-optik-web.vercel.app'))) {
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id, allFrames: true },
+          files: ['admin-content.js']
+        }).catch(() => {});
+      }
+    }
+  });
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'AKTAR_UTS') {
     chrome.storage.local.set({
@@ -24,12 +38,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         signal: controller.signal
       })
       .then(resp => { clearTimeout(timeout); return resp.json(); })
-      .then(data => {
-        sendResponse({ ok: true, data: data });
-      })
+      .then(data => { sendResponse({ ok: true, data: data }); })
       .catch(err => {
         clearTimeout(timeout);
-        sendResponse({ ok: false, error: err.name === 'AbortError' ? 'UTS sunucusu timeout (15sn). Ag baglantinizi kontrol edin.' : err.message });
+        sendResponse({ ok: false, error: err.name === 'AbortError' ? 'UTS timeout (15sn)' : err.message });
       });
     });
 
