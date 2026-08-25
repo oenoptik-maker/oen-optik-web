@@ -2081,15 +2081,6 @@ async function tumunuYazdir(kaynak) {
 
 // ===== UTS TOPLU ALIM VERİ ÇEKME =====
 async function utsVerileriCek() {
-  const btn = document.getElementById('utsVeriCekBtn');
-  if (btn) btn.disabled = true;
-
-  // Token'i DOM attribute'a yaz (content script icin)
-  const token = await window.api.utsApiGetToken();
-  if (token) {
-    document.documentElement.setAttribute('data-uts-token', token);
-  }
-
   // Onceden cekilmis veri var mi?
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     try {
@@ -2099,24 +2090,11 @@ async function utsVerileriCek() {
         utsBekleyenUrunler = urunler;
         utsBekleyenUrunleriGoster(urunler);
         showToast(urunler.length + ' urun yuklendi.', 'success');
-        if (btn) btn.disabled = false;
         return;
       }
     } catch(e) {}
   }
-
-  // UTS sayfasini yeni sekmede ac, otomatik ceksin
-  try {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ autoExtract: true });
-    }
-    window.open('https://utsuygulama.saglik.gov.tr/UTS/tibbiCihaz', '_blank');
-    showToast('UTS sayfasi acildi. Urunler otomatik cekilecek.', 'info');
-  } catch(e) {
-    showToast('UTS sayfasi acilamadi: ' + e.message, 'error');
-  }
-
-  if (btn) btn.disabled = false;
+  showToast('Once UTS sayfasinda urunleri secin.', 'info');
 }
 
 let utsBekleyenUrunler = [];
