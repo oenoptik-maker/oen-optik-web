@@ -2193,6 +2193,20 @@ function utsBekleyenUrunleriGoster(urunler) {
       <div style="flex:2;min-width:160px;">
         <input type="text" id="utsUrunAra" placeholder="🔍 Ürün adı veya numara ara..." oninput="utsGeciciFiltre()" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;">
       </div>
+      <div style="flex:1;min-width:100px;">
+        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Alış Fiyatı (Seçililere)</label>
+        <div style="display:flex;gap:4px;">
+          <input type="number" id="utsTopluAlis" step="0.01" min="0" placeholder="₺" style="flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+          <button class="btn btn-primary btn-sm" onclick="utsBekleyenTopluFiyatGuncelle('ALIS_FIYATI')" style="white-space:nowrap;">Uygula</button>
+        </div>
+      </div>
+      <div style="flex:1;min-width:100px;">
+        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Satış Fiyatı (Seçililere)</label>
+        <div style="display:flex;gap:4px;">
+          <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+          <button class="btn btn-primary btn-sm" onclick="utsBekleyenTopluFiyatGuncelle('SATIS_FIYATI')" style="white-space:nowrap;">Uygula</button>
+        </div>
+      </div>
       <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
         <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked> Tümünü Seç
       </label>
@@ -2245,6 +2259,30 @@ function utsApiTumuSecKaldir(checked) {
   utsApiSeciliGuncelle();
 }
 
+function utsBekleyenTopluFiyatGuncelle(alan) {
+  const inputId = alan === 'ALIS_FIYATI' ? 'utsTopluAlis' : 'utsTopluSatis';
+  const deger = parseFloat(document.getElementById(inputId)?.value);
+  if (isNaN(deger) || deger < 0) {
+    showToast('Geçerli bir fiyat girin.', 'warning');
+    return;
+  }
+  const secili = document.querySelectorAll('.uts-api-sec:checked');
+  if (secili.length === 0) {
+    showToast('Önce ürün seçin.', 'warning');
+    return;
+  }
+  secili.forEach(cb => {
+    const idx = parseInt(cb.dataset.index);
+    if (utsBekleyenUrunler[idx]) {
+      if (alan === 'ALIS_FIYATI') utsBekleyenUrunler[idx]._alisFiyat = deger;
+      else utsBekleyenUrunler[idx]._satisFiyat = deger;
+    }
+  });
+  const satinInput = document.getElementById(inputId);
+  if (satinInput) satinInput.value = '';
+  showToast(`${secili.length} ürüne ₺${deger.toLocaleString('tr-TR')} uygulandı.`, 'success');
+}
+
 async function utsStogaKaydet() {
   const seciliCheckboxes = document.querySelectorAll('.uts-api-sec:checked');
   if (seciliCheckboxes.length === 0) {
@@ -2277,17 +2315,12 @@ async function utsStogaKaydet() {
     const ayni = mevcutUrunler.find(u => u.URUN_ADI === urunAdi);
     if (ayni) { atlanan++; continue; }
 
-    const tbody = document.querySelector('#utsAlimListesi tbody');
-    const satir = tbody ? tbody.querySelectorAll('tr')[idx] : null;
-    const alisInput = satir ? satir.querySelector('.uts-alis-fiyat') : null;
-    const satisInput = satir ? satir.querySelector('.uts-satis-fiyat') : null;
-
     kayitlar.push(window.api.urunSave({
       URUN_ID: nextId++,
       KATEGORI_ADI: 'UTS Ürünleri',
       URUN_ADI: urunAdi,
-      ALIS_FIYATI: alisInput ? parseFloat(alisInput.value) || 0 : 0,
-      FIYAT: satisInput ? parseFloat(satisInput.value) || 0 : 0,
+      ALIS_FIYATI: veri._alisFiyat || 0,
+      FIYAT: veri._satisFiyat || 0,
       ADET: parseInt(veri.adet) || 1,
       KAREKOD: veri.urunNo || '',
       MENSEI: veri.gonderenKurum || ''
