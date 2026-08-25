@@ -574,6 +574,51 @@ async function urunFiyatKaydet(urunId, inputEl) {
   await window.api.fiyatTekli({ URUN_ID: urunId, ALIS_FIYATI: urun.ALIS_FIYATI, FIYAT: urun.FIYAT });
 }
 
+async function urunTopluFiyatUygula() {
+  const alisDeger = parseFloat(document.getElementById('urunTopluAlis')?.value);
+  const satisDeger = parseFloat(document.getElementById('urunTopluSatis')?.value);
+  const alisGecerli = !isNaN(alisDeger) && alisDeger >= 0;
+  const satisGecerli = !isNaN(satisDeger) && satisDeger >= 0;
+
+  if (!alisGecerli && !satisGecerli) {
+    showToast('En az bir fiyat girin.', 'warning');
+    return;
+  }
+
+  const filtrelenmis = filtrelenmisUrunleriAl();
+  if (filtrelenmis.length === 0) {
+    showToast('Güncellenecek ürün bulunamadı.', 'warning');
+    return;
+  }
+
+  const hedefler = seciliUrunler.size > 0
+    ? filtrelenmis.filter(u => seciliUrunler.has(u.URUN_ID))
+    : filtrelenmis;
+
+  if (hedefler.length === 0) {
+    showToast('Güncellenecek ürün bulunamadı.', 'warning');
+    return;
+  }
+
+  if (!(await showConfirm(`${hedefler.length} ürünün fiyatı güncellenecek. Onaylıyor musunuz?`, 'Toplu Fiyat Güncelleme'))) return;
+
+  const guncellemeler = hedefler.map(u => ({
+    URUN_ID: u.URUN_ID,
+    ALIS_FIYATI: alisGecerli ? alisDeger : (parseFloat(u.ALIS_FIYATI) || 0),
+    FIYAT: satisGecerli ? satisDeger : (parseFloat(u.FIYAT) || 0)
+  }));
+
+  const result = await window.api.fiyatGuncelle(guncellemeler);
+  if (result.success) {
+    showToast(`${hedefler.length} ürünün fiyatı güncellendi.`, 'success');
+    document.getElementById('urunTopluAlis').value = '';
+    document.getElementById('urunTopluSatis').value = '';
+    await loadUrunler();
+  } else {
+    showToast('Güncelleme hatası: ' + (result.message || ''), 'error');
+  }
+}
+
 async function filtrelenmisFiyatGuncelle() {
   const filtrelenmis = filtrelenmisUrunleriAl();
   if (filtrelenmis.length === 0) { showToast('Filtrelenmiş ürün bulunamadı', 'warning'); return; }

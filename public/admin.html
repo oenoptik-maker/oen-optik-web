@@ -128,6 +128,13 @@
                 <label>Arama</label>
                 <input type="text" id="urunArama" placeholder="Ürün adı ara..." oninput="debouncedFilterUrunler()">
               </div>
+              <div class="form-group" style="display:flex;gap:4px;align-items:end;">
+                <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Alış ₺</label>
+                <input type="number" id="urunTopluAlis" step="0.01" min="0" placeholder="₺" style="width:75px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+                <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
+                <input type="number" id="urunTopluSatis" step="0.01" min="0" placeholder="₺" style="width:75px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+                <button class="btn btn-primary btn-sm" onclick="urunTopluFiyatUygula()" style="white-space:nowrap;">Uygula</button>
+              </div>
               <div class="form-group">
                 <label>&nbsp;</label>
                 <button class="btn btn-danger btn-sm" onclick="stokSilOnay()">🗑️ Tüm Stoğu Sil</button>
