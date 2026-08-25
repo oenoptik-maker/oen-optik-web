@@ -1,12 +1,6 @@
 (function() {
-  console.log('[OEN] admin-content.js v10 yuklendi:', location.href);
+  console.log('[OEN] admin-content.js v11 yuklendi:', location.href);
 
-  // Token'i DOM'dan oku ve chrome.storage'a kaydet
-  function getToken() {
-    return document.documentElement.getAttribute('data-uts-token') || '';
-  }
-
-  // Background'tan gelen veriyi sayfaya ilet
   chrome.storage.onChanged.addListener(function(changes, area) {
     if (area === 'local' && changes.utsAktarim) {
       var val = changes.utsAktarim.newValue;
@@ -17,7 +11,6 @@
     }
   });
 
-  // Sayfadaki istegi background'a ilet
   function checkRequest() {
     try {
       var attr = document.documentElement.getAttribute('data-uts-request');
@@ -29,25 +22,24 @@
       var gkk = parseInt(parts[0]);
       if (!gkk) return;
 
-      // Token'i al ve storage'a kaydet
-      var token = getToken();
-      if (token) {
-        chrome.storage.local.set({ utsToken: token });
-      }
+      var token = document.documentElement.getAttribute('data-uts-token') || '';
+      console.log('[OEN] UTS istegi:', gkk, 'token:', token ? token.substring(0, 10) + '...' : 'YOK');
 
-      console.log('[OEN] UTS istegi:', gkk, 'token:', token ? 'var' : 'yok');
-      chrome.runtime.sendMessage({ type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk }, function(resp) {
-        if (chrome.runtime.lastError) {
-          console.error('[OEN] hata:', chrome.runtime.lastError.message);
-          document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: chrome.runtime.lastError.message }));
-          return;
-        }
-        console.log('[OEN] yanit:', resp);
-        if (resp && resp.ok && resp.data) {
-          chrome.storage.local.set({ utsAktarim: { urunler: resp.data, timestamp: Date.now() } });
-        } else {
-          document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: resp ? resp.error : 'Bilinmeyen' }));
-        }
+      // Token'i once storage'a kaydet, sonra mesaj gonder
+      chrome.storage.local.set({ utsToken: token }, function() {
+        chrome.runtime.sendMessage({ type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk }, function(resp) {
+          if (chrome.runtime.lastError) {
+            console.error('[OEN] hata:', chrome.runtime.lastError.message);
+            document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: chrome.runtime.lastError.message }));
+            return;
+          }
+          console.log('[OEN] yanit:', resp);
+          if (resp && resp.ok && resp.data) {
+            chrome.storage.local.set({ utsAktarim: { urunler: resp.data, timestamp: Date.now() } });
+          } else {
+            document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: resp ? resp.error : 'Bilinmeyen' }));
+          }
+        });
       });
     } catch(e) { console.error('[OEN]', e); }
   }
