@@ -1,13 +1,10 @@
-(function() {
+﻿(function() {
   if (document.getElementById('oen-utss-btn')) return;
+  var isUtsPage = location.href.includes('utsuygulama.saglik.gov.tr');
 
-  var UTS_URL = location.href;
-  var isUtsPage = UTS_URL.includes('utsuygulama.saglik.gov.tr');
-
-  // Buton ekle
   var btn = document.createElement('div');
   btn.id = 'oen-utss-btn';
-  btn.innerHTML = 'OEN Optik\'e Aktar';
+  btn.textContent = 'OEN Optike Aktar';
   btn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:999999;background:linear-gradient(135deg,#00b894,#00cec9);color:#fff;padding:14px 24px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;box-shadow:0 4px 20px rgba(0,206,201,0.5);font-family:Arial,sans-serif;user-select:none;';
 
   var durum = document.createElement('div');
@@ -24,7 +21,6 @@
   function aktarUrunleri() {
     var rows = document.querySelectorAll('table tbody tr');
     var secili = [];
-
     rows.forEach(function(row) {
       var cb = row.querySelector('input[type=checkbox]:checked');
       if (cb) {
@@ -41,64 +37,38 @@
         });
       }
     });
-
-    if (secili.length === 0) {
-      showDurum('Isaretli urun bulunamadi!', 'err');
-      return;
-    }
-
+    if (secili.length === 0) { showDurum('Isaretli urun bulunamadi!', 'err'); return; }
     showDurum(secili.length + ' urun aktariliyor...', '');
-
-    chrome.runtime.sendMessage({ type: 'AKTAR_UTS', urunler: secili }, function(response) {
-      if (response && response.ok) {
-        showDurum(secili.length + ' urun aktarildi!', 'ok');
-      } else {
-        showDurum('Hata: ' + (response ? response.error : 'Bilinmeyen'), 'err');
-      }
-    });
+    try {
+      chrome.storage.local.set({ utsAktarim: { urunler: secili, timestamp: Date.now() } }, function() {
+        if (chrome.runtime.lastError) { showDurum('Hata: ' + chrome.runtime.lastError.message, 'err'); }
+        else { showDurum(secili.length + ' urun aktarildi!', 'ok'); }
+      });
+    } catch(e) { showDurum('Hata: ' + e.message, 'err'); }
   }
 
   btn.addEventListener('click', aktarUrunleri);
-
   document.body.appendChild(btn);
   document.body.appendChild(durum);
 
-  // Otomatik mod: autoExtract flag'i varsa otomatik isaretle ve aktar
   if (isUtsPage) {
     chrome.storage.local.get('autoExtract', function(data) {
       if (!data || !data.autoExtract) return;
-
       chrome.storage.local.remove('autoExtract');
-
       showDurum('Otomatik urun cekiliyor...', '');
-
       var bekleme = setInterval(function() {
         var rows = document.querySelectorAll('table tbody tr');
         if (rows.length > 0) {
           clearInterval(bekleme);
-
-          // Tum checkbox'lari isaretle
           rows.forEach(function(row) {
             var cb = row.querySelector('input[type=checkbox]');
-            if (cb && !cb.checked) {
-              cb.click();
-            }
+            if (cb && !cb.checked) cb.click();
           });
-
           showDurum(rows.length + ' urun isaretlendi, aktariliyor...', '');
-
-          // Kisa sure bekle, sonra aktar
-          setTimeout(aktarUrunleri, 1000);
+          setTimeout(aktarUrunleri, 1500);
         }
       }, 500);
-
-      // 15 sn timeout
-      setTimeout(function() {
-        clearInterval(bekleme);
-        if (durum.style.display === 'block' && durum.textContent.indexOf('aktarildi') === -1) {
-          showDurum('UTS sayfasi yuklenemedi. Sayfayi kontrol edin.', 'err');
-        }
-      }, 15000);
+      setTimeout(function() { clearInterval(bekleme); }, 15000);
     });
   }
 })();
