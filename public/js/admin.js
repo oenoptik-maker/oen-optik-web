@@ -2150,9 +2150,20 @@ function utsBekleyenUrunleriGoster(urunler) {
   const container = document.getElementById('utsAlimListesi');
   if (!container) return;
 
-  utsBekleyenUrunler = urunler;
+  const grouped = {};
+  urunler.forEach(u => {
+    const key = (u.urunTanimi || u.TANIM || '').trim();
+    if (!key) return;
+    if (grouped[key]) {
+      grouped[key].adet = (parseInt(grouped[key].adet) || 0) + (parseInt(u.adet) || 0);
+    } else {
+      grouped[key] = { ...u };
+    }
+  });
+  const deduped = Object.values(grouped);
+  utsBekleyenUrunler = deduped;
 
-  const rows = urunler.map((u, i) => {
+  const rows = deduped.map((u, i) => {
     const uno = u.urunNo || u.UNO || '';
     const lno = u.lotBatch || u.LNO || '';
     const sno = u.seriNo || u.SNO || '';
@@ -2185,7 +2196,7 @@ function utsBekleyenUrunleriGoster(urunler) {
       <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
         <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked> Tümünü Seç
       </label>
-      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${urunler.length} ürün seçili</span>
+      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${deduped.length} ürün seçili</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="data-table" id="utsGeciciTablo">
@@ -2310,7 +2321,17 @@ async function utsAlimListesiniYukle() {
 
   utsSeciliSatirlar.clear();
 
-  let filtrelenmis = veriler.map((v, i) => ({ ...v, _index: i }));
+  const grouped = {};
+  veriler.forEach((v, i) => {
+    const key = (v.URUN_TANIMI || '').trim();
+    if (!key) return;
+    if (grouped[key]) {
+      grouped[key].ADET = (parseInt(grouped[key].ADET) || 0) + (parseInt(v.ADET) || 0);
+    } else {
+      grouped[key] = { ...v, _dbIndex: i };
+    }
+  });
+  let filtrelenmis = Object.values(grouped).map((v, i) => ({ ...v, _index: i }));
 
   if (utsAramalar.urunTanimi) {
     const q = utsAramalar.urunTanimi.toLowerCase();
@@ -2321,6 +2342,7 @@ async function utsAlimListesiniYukle() {
 
   const rows = filtrelenmis.map(v => {
     const i = v._index;
+    const dbIdx = v._dbIndex;
     return `
     <tr data-index="${i}">
       <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
@@ -2330,10 +2352,10 @@ async function utsAlimListesiniYukle() {
       <td>${v.SERI_SIRA_NO || '-'}</td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.URUN_TANIMI || ''}">${v.URUN_TANIMI || '-'}</td>
       <td>${v.ADET || '-'}</td>
-      <td><input type="number" step="0.01" min="0" value="${parseFloat(v.ALIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${i}, 'ALIS_FIYATI', this.value)"></td>
-      <td><input type="number" step="0.01" min="0" value="${parseFloat(v.SATIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${i}, 'SATIS_FIYATI', this.value)"></td>
+      <td><input type="number" step="0.01" min="0" value="${parseFloat(v.ALIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'ALIS_FIYATI', this.value)"></td>
+      <td><input type="number" step="0.01" min="0" value="${parseFloat(v.SATIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'SATIS_FIYATI', this.value)"></td>
       <td>${v.KAYIT_TARIHI || '-'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="utsAlimSil(${i})">🗑️</button></td>
+      <td><button class="btn btn-danger btn-sm" onclick="utsAlimSil(${dbIdx})">🗑️</button></td>
     </tr>
   `}).join('');
 
@@ -2384,6 +2406,18 @@ function utsTabloyuFiltrele() {
 
     let filtrelenmis = veriler.map((v, i) => ({ ...v, _index: i }));
 
+    const grouped = {};
+    filtrelenmis.forEach(v => {
+      const key = (v.URUN_TANIMI || '').trim();
+      if (!key) return;
+      if (grouped[key]) {
+        grouped[key].ADET = (parseInt(grouped[key].ADET) || 0) + (parseInt(v.ADET) || 0);
+      } else {
+        grouped[key] = { ...v };
+      }
+    });
+    filtrelenmis = Object.values(grouped).map((v, i) => ({ ...v, _index: i }));
+
     if (utsAramalar.urunTanimi) {
       const q = utsAramalar.urunTanimi.toLowerCase();
       filtrelenmis = filtrelenmis.filter(v => (v.URUN_TANIMI || '').toLowerCase().includes(q));
@@ -2393,6 +2427,7 @@ function utsTabloyuFiltrele() {
 
     const rows = filtrelenmis.map(v => {
       const i = v._index;
+      const dbIdx = v._dbIndex !== undefined ? v._dbIndex : i;
       return `
       <tr data-index="${i}">
         <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" ${utsSeciliSatirlar.has(i) ? 'checked' : ''} onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
@@ -2402,10 +2437,10 @@ function utsTabloyuFiltrele() {
         <td>${v.SERI_SIRA_NO || '-'}</td>
         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.URUN_TANIMI || ''}">${v.URUN_TANIMI || '-'}</td>
         <td>${v.ADET || '-'}</td>
-        <td><input type="number" step="0.01" min="0" value="${parseFloat(v.ALIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${i}, 'ALIS_FIYATI', this.value)"></td>
-        <td><input type="number" step="0.01" min="0" value="${parseFloat(v.SATIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${i}, 'SATIS_FIYATI', this.value)"></td>
+        <td><input type="number" step="0.01" min="0" value="${parseFloat(v.ALIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'ALIS_FIYATI', this.value)"></td>
+        <td><input type="number" step="0.01" min="0" value="${parseFloat(v.SATIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'SATIS_FIYATI', this.value)"></td>
         <td>${v.KAYIT_TARIHI || '-'}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="utsAlimSil(${i})">🗑️</button></td>
+        <td><button class="btn btn-danger btn-sm" onclick="utsAlimSil(${dbIdx})">🗑️</button></td>
       </tr>
     `}).join('');
 
