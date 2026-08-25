@@ -1,57 +1,47 @@
 (function() {
-  var sonCheck = 0;
+  console.log('[OEN] admin-content.js yuklendi, sayfa:', location.href);
+
   var sonUtsCheck = '';
 
-  function checkUtsData() {
-    try {
-      if (!chrome.storage || !chrome.storage.local) return;
-      chrome.storage.local.get('utsAktarim', function(data) {
-        if (chrome.runtime.lastError) return;
-        if (!data || !data.utsAktarim) return;
-        if (data.utsAktarim.timestamp <= sonCheck) return;
-        sonCheck = data.utsAktarim.timestamp;
-
-        var urunler = data.utsAktarim.urunler;
-        if (!urunler || urunler.length === 0) return;
-
+  // Background'tan gelen veriyi sayfaya ilet
+  chrome.storage.onChanged.addListener(function(changes, area) {
+    if (area === 'local' && changes.utsAktarim) {
+      var urunler = changes.utsAktarim.newValue && changes.utsAktarim.newValue.urunler;
+      if (urunler && urunler.length > 0) {
+        console.log('[OEN] UTS verisi geldi:', urunler.length, 'urun');
         document.documentElement.setAttribute('data-uts-result', JSON.stringify(urunler));
-        document.dispatchEvent(new CustomEvent('utsTransfer', { detail: urunler }));
-      });
-    } catch(e) {}
-  }
+      }
+    }
+  });
 
+  // Sayfadaki istegi background'a ilet
   function checkUtsRequest() {
     try {
       var attr = document.documentElement.getAttribute('data-uts-request');
-      if (!attr) return;
-      if (attr === sonUtsCheck) return;
+      if (!attr || attr === sonUtsCheck) return;
       sonUtsCheck = attr;
 
-      var parts = attr.split('_');
-      var gkk = parseInt(parts[0]);
+      var gkk = parseInt(attr.split('_')[0]);
       if (!gkk) return;
 
-      chrome.runtime.sendMessage(
-        { type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk },
-        function(resp) {
-          if (chrome.runtime.lastError) {
-            document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: chrome.runtime.lastError.message }));
-            return;
-          }
-          if (resp && resp.ok && resp.data) {
-            chrome.storage.local.set({
-              utsAktarim: { urunler: resp.data, timestamp: Date.now() }
-            });
-          } else {
-            document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: resp ? resp.error : 'Bilinmeyen hata' }));
-          }
+      console.log('[OEN] UTS istegi alindi, GKK:', gkk);
+      chrome.runtime.sendMessage({ type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk }, function(resp) {
+        if (chrome.runtime.lastError) {
+          console.error('[OEN] Background hatasi:', chrome.runtime.lastError.message);
+          document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: chrome.runtime.lastError.message }));
+          return;
         }
-      );
-    } catch(e) {}
+        console.log('[OEN] Background yaniti:', resp);
+        if (resp && resp.ok && resp.data) {
+          chrome.storage.local.set({ utsAktarim: { urunler: resp.data, timestamp: Date.now() } });
+        } else {
+          document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: resp ? resp.error : 'Bilinmeyen hata' }));
+        }
+      });
+    } catch(e) {
+      console.error('[OEN] checkUtsRequest hata:', e);
+    }
   }
 
-  setTimeout(checkUtsData, 500);
-  setInterval(checkUtsData, 1500);
-  setTimeout(checkUtsRequest, 500);
-  setInterval(checkUtsRequest, 1000);
+  setInterval(checkUtsRequest, 500);
 })();
