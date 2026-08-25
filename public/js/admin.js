@@ -2393,34 +2393,37 @@ async function utsAlimListesiniYukle() {
   `}).join('');
 
   container.innerHTML = `
-    <div style="display:flex;gap:8px;padding:8px;flex-wrap:wrap;align-items:end;">
-      <div style="flex:2;min-width:150px;">
+    <div style="padding:8px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:end;">
+      <div>
         <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">🔍 Ürün Tanımı Ara</label>
         <input type="text" id="utsAraUrunTanimi" placeholder="Ürün adı yazın..." value="${utsAramalar.urunTanimi}" oninput="utsAramaFiltre()" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;">
       </div>
-      <div style="flex:1;min-width:100px;">
-        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Alış Fiyatı (Seçililere Uygula)</label>
+      <div>
+        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Alış Fiyatı</label>
         <div style="display:flex;gap:4px;">
           <input type="number" id="utsTopluAlis" step="0.01" min="0" placeholder="₺" style="flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
           <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle('ALIS_FIYATI')" style="white-space:nowrap;">Uygula</button>
         </div>
       </div>
-      <div style="flex:1;min-width:100px;">
-        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Satış Fiyatı (Seçililere Uygula)</label>
+      <div>
+        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Satış Fiyatı</label>
         <div style="display:flex;gap:4px;">
           <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
           <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle('SATIS_FIYATI')" style="white-space:nowrap;">Uygula</button>
         </div>
       </div>
     </div>
-    <div style="padding:0 8px 4px 8px;font-size:0.7rem;color:var(--text-muted);" id="utsFiltreSayac">
-      ${filtrelenmis.length} / ${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}
+    <div style="padding:0 8px 4px 8px;font-size:0.7rem;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;">
+      <span id="utsFiltreSayac">${filtrelenmis.length} / ${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}</span>
+      <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" id="utsTumuSecCheck" onchange="utsTumuSecKaldir(this.checked)"> Tümünü Seç
+      </label>
     </div>
     <table class="data-table">
       <thead><tr>
-        <th style="width:30px;text-align:center;"><input type="checkbox" id="utsTumuSecCheck" onchange="utsTumuSecKaldir(this.checked)"></th>
+        <th style="width:30px;text-align:center;">✓</th>
         <th>#</th><th>Ürün No</th><th>Lot/Batch</th><th>Seri/Sıra</th>
-        <th>Ürün Tanımı</th><th>Bildirim</th><th>Adet</th><th>Alış ₺</th><th>Satış ₺</th><th>Kayıt Tarihi</th><th>İşlem</th>
+        <th>Ürün Tanımı</th><th>Adet</th><th>Alış ₺</th><th>Satış ₺</th><th>Kayıt Tarihi</th><th>İşlem</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
