@@ -1,8 +1,7 @@
 (function() {
   var sonCheck = 0;
-  var sonUtsCheck = 0;
+  var sonUtsCheck = '';
 
-  // UTS verilerini sayfaya aktar
   function checkUtsData() {
     try {
       if (!chrome.storage || !chrome.storage.local) return;
@@ -15,26 +14,12 @@
         var urunler = data.utsAktarim.urunler;
         if (!urunler || urunler.length === 0) return;
 
-        var script = document.createElement('script');
-        script.textContent = '(' + function(urunler) {
-          if (typeof utsVeriAktar === 'function') {
-            utsVeriAktar(urunler);
-          } else if (typeof utsBekleyenUrunleriGoster === 'function' && typeof adminTabAc === 'function') {
-            adminTabAc('uts');
-            setTimeout(function() {
-              window.utsBekleyenUrunler = urunler;
-              utsBekleyenUrunleriGoster(urunler);
-              if (typeof showToast === 'function') showToast(urunler.length + ' UTS urunu aktarildi!', 'success');
-            }, 300);
-          }
-        }.toString() + ')(' + JSON.stringify(urunler) + ')';
-        document.head.appendChild(script);
-        script.remove();
+        document.documentElement.setAttribute('data-uts-result', JSON.stringify(urunler));
+        document.dispatchEvent(new CustomEvent('utsTransfer', { detail: urunler }));
       });
     } catch(e) {}
   }
 
-  // Sayfadaki uts-request attribute'unu kontrol et
   function checkUtsRequest() {
     try {
       var attr = document.documentElement.getAttribute('data-uts-request');
@@ -42,22 +27,23 @@
       if (attr === sonUtsCheck) return;
       sonUtsCheck = attr;
 
-      var gkk = parseInt(attr);
+      var parts = attr.split('_');
+      var gkk = parseInt(parts[0]);
       if (!gkk) return;
 
-      // Background'a UTS verisi cekmesini soyle
       chrome.runtime.sendMessage(
         { type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk },
         function(resp) {
-          if (chrome.runtime.lastError) return;
+          if (chrome.runtime.lastError) {
+            document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: chrome.runtime.lastError.message }));
+            return;
+          }
           if (resp && resp.ok && resp.data) {
-            // Sonucu storage'a kaydet (checkUtsData bunu alacak)
             chrome.storage.local.set({
-              utsAktarim: {
-                urunler: resp.data,
-                timestamp: Date.now()
-              }
+              utsAktarim: { urunler: resp.data, timestamp: Date.now() }
             });
+          } else {
+            document.documentElement.setAttribute('data-uts-result', JSON.stringify({ error: resp ? resp.error : 'Bilinmeyen hata' }));
           }
         }
       );

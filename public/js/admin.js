@@ -2179,6 +2179,8 @@ async function utsVerileriCek() {
       utsBekleyenUrunler = urunler;
       utsBekleyenUrunleriGoster(urunler);
       showToast(urunler.length + ' bekleyen ürün bulundu. (Eklenti)', 'success');
+    } else if (result && result.error) {
+      showToast('UTS hatasi: ' + result.error, 'error');
     } else {
       showToast('Bekleyen ürün bulunamadi.', 'warning');
     }
