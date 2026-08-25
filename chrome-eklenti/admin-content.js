@@ -1,7 +1,8 @@
 (function() {
   var sonCheck = 0;
-  var bekleyenPromiseler = [];
+  var sonUtsCheck = 0;
 
+  // UTS verilerini sayfaya aktar
   function checkUtsData() {
     try {
       if (!chrome.storage || !chrome.storage.local) return;
@@ -33,32 +34,38 @@
     } catch(e) {}
   }
 
-  function bekleyenleriCek(gkk) {
-    return new Promise(function(resolve, reject) {
+  // Sayfadaki uts-request attribute'unu kontrol et
+  function checkUtsRequest() {
+    try {
+      var attr = document.documentElement.getAttribute('data-uts-request');
+      if (!attr) return;
+      if (attr === sonUtsCheck) return;
+      sonUtsCheck = attr;
+
+      var gkk = parseInt(attr);
+      if (!gkk) return;
+
+      // Background'a UTS verisi cekmesini soyle
       chrome.runtime.sendMessage(
         { type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk },
         function(resp) {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
+          if (chrome.runtime.lastError) return;
+          if (resp && resp.ok && resp.data) {
+            // Sonucu storage'a kaydet (checkUtsData bunu alacak)
+            chrome.storage.local.set({
+              utsAktarim: {
+                urunler: resp.data,
+                timestamp: Date.now()
+              }
+            });
           }
-          resolve(resp);
         }
       );
-    });
+    } catch(e) {}
   }
 
-  window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'UTS_BEKLEYENLERI_CEK') {
-      var gkk = e.data.gkk;
-      bekleyenleriCek(gkk).then(function(resp) {
-        window.postMessage({ type: 'UTS_BEKLEYENLERI_SONUC', success: true, data: resp }, '*');
-      }).catch(function(err) {
-        window.postMessage({ type: 'UTS_BEKLEYENLERI_SONUC', success: false, error: err.message }, '*');
-      });
-    }
-  });
-
-  setTimeout(checkUtsData, 1000);
-  setInterval(checkUtsData, 2000);
+  setTimeout(checkUtsData, 500);
+  setInterval(checkUtsData, 1500);
+  setTimeout(checkUtsRequest, 500);
+  setInterval(checkUtsRequest, 1000);
 })();

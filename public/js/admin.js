@@ -2139,27 +2139,41 @@ async function utsVerileriCek() {
     }
   }
 
-  // Yöntem 2: Chrome eklentisi background'u勾ragsin (content script uzerinden)
+  // Yöntem 2: Chrome eklentisi - DOM attribute ile iletisim
   try {
     showToast('Eklenti uzerinden UTS sorgulanıyor...', 'info');
+
+    // Eski sonucu temizle
+    document.documentElement.removeAttribute('data-uts-result');
+    document.documentElement.setAttribute('data-uts-request', gkk + '_' + Date.now());
+
+    // Sonucu bekle (en fazla 20 sn)
     const result = await new Promise((resolve, reject) => {
-      const handler = function(e) {
-        if (e.data && e.data.type === 'UTS_BEKLEYENLERI_SONUC') {
-          window.removeEventListener('message', handler);
-          if (e.data.success) resolve(e.data.data);
-          else reject(new Error(e.data.error || 'Bilinmeyen hata'));
+      var startTime = Date.now();
+      var checker = setInterval(function() {
+        var resultAttr = document.documentElement.getAttribute('data-uts-result');
+        if (resultAttr) {
+          clearInterval(checker);
+          document.documentElement.removeAttribute('data-uts-result');
+          try { resolve(JSON.parse(resultAttr)); }
+          catch(e) { reject(new Error('Sonuc parse edilemedi')); }
+          return;
         }
-      };
-      window.addEventListener('message', handler);
-      window.postMessage({ type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk }, '*');
-      setTimeout(() => { window.removeEventListener('message', handler); reject(new Error('Timeout')); }, 20000);
+        if (Date.now() - startTime > 20000) {
+          clearInterval(checker);
+          reject(new Error('20 saniye timeout'));
+        }
+      }, 500);
     });
 
     let urunler = [];
-    const data = result && result.veri ? result.veri : result;
-    if (Array.isArray(data)) urunler = data;
-    else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
-    else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
+    if (Array.isArray(result)) urunler = result;
+    else if (result && result.veri) {
+      const d = result.veri;
+      if (Array.isArray(d)) urunler = d;
+      else if (d.urunler) urunler = d.urunler;
+      else if (d.data) urunler = d.data;
+    }
 
     if (urunler.length > 0) {
       utsBekleyenUrunler = urunler;

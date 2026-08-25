@@ -15,36 +15,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const gkk = msg.gkk;
     if (!gkk) {
       sendResponse({ ok: false, error: 'GKK eksik' });
-      return;
+      return false;
     }
 
-    chrome.storage.local.get('utsToken', async function(tokenData) {
-      const token = tokenData.utsToken;
+    chrome.storage.local.get(['utsToken'], (result) => {
+      const token = result.utsToken;
       if (!token) {
         sendResponse({ ok: false, error: 'Token bulunamadi' });
         return;
       }
 
-      try {
-        const resp = await fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
-          method: 'POST',
-          headers: { 'utsToken': token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ GKK: parseInt(gkk), BNO: '', UNO: '', BID: '', SAN: 1 })
-        });
-        const data = await resp.json();
-
-        chrome.storage.local.set({
-          utsAktarim: {
-            urunler: data,
-            timestamp: Date.now()
-          }
-        }, () => {
-          sendResponse({ ok: true, data: data });
-        });
-      } catch (err) {
+      fetch('https://utsuygulama.saglik.gov.tr/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
+        method: 'POST',
+        headers: { 'utsToken': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ GKK: parseInt(gkk), BNO: '', UNO: '', BID: '', SAN: 1 })
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        sendResponse({ ok: true, data: data });
+      })
+      .catch(err => {
         sendResponse({ ok: false, error: err.message });
-      }
+      });
     });
+
     return true;
   }
 });
