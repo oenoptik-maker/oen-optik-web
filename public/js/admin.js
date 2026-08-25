@@ -2199,16 +2199,13 @@ function utsBekleyenUrunleriGoster(urunler) {
         <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
         <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="utsBekleyenTopluFiyatGuncelle()" style="white-space:nowrap;">Uygula</button>
-        <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;margin-left:8px;">
-          <input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked> Tümünü Seç
-        </label>
       </div>
       <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${deduped.length} ürün seçili</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="data-table" id="utsGeciciTablo">
         <thead><tr>
-          <th style="width:30px;text-align:center;">✓</th>
+          <th style="width:30px;text-align:center;"><input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked></th>
           <th style="width:30px;">#</th>
           <th>Ürün No</th>
           <th>Lot/Batch</th>
@@ -2243,6 +2240,11 @@ function utsGeciciFiltre() {
 
 function utsApiSeciliGuncelle() {
   const secili = document.querySelectorAll('.uts-api-sec:checked');
+  const tumCheck = document.getElementById('utsApiTumuSec');
+  if (tumCheck) {
+    const toplam = document.querySelectorAll('.uts-api-sec').length;
+    tumCheck.checked = toplam > 0 && secili.length === toplam;
+  }
   const el = document.getElementById('utsApiSeciliAdet');
   if (el) el.textContent = secili.length > 0 ? `${secili.length} ürün seçili` : '';
 }
