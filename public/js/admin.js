@@ -2218,10 +2218,8 @@ function utsBekleyenUrunleriGoster(urunler) {
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <div style="padding:8px 12px;border-top:1px solid var(--border);">
-      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${deduped.length} ürün seçili</span>
-    </div>
   `;
+  utsApiSeciliAdetGuncelle();
 }
 
 function utsGeciciFiltre() {
@@ -2247,8 +2245,13 @@ function utsApiSeciliGuncelle() {
     const toplam = document.querySelectorAll('.uts-api-sec').length;
     tumCheck.checked = toplam > 0 && secili.length === toplam;
   }
-  const el = document.getElementById('utsApiSeciliAdet');
-  if (el) el.textContent = secili.length > 0 ? `${secili.length} ürün seçili` : '';
+  utsApiSeciliAdetGuncelle();
+}
+
+function utsApiSeciliAdetGuncelle() {
+  const secili = document.querySelectorAll('.uts-api-sec:checked').length;
+  const el = document.getElementById('utsSeciliAdetDis');
+  if (el) el.textContent = secili > 0 ? `${secili} ürün seçili` : '';
 }
 
 function utsApiTumuSecKaldir(checked) {
