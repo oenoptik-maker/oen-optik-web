@@ -2099,6 +2099,21 @@ async function utsVerileriCek() {
 
 let utsBekleyenUrunler = [];
 
+function utsBekleyenleriKaydet() {
+  try { localStorage.setItem('utsBekleyen', JSON.stringify(utsBekleyenUrunler)); } catch(e) {}
+}
+
+function utsBekleyenleriYukle() {
+  try {
+    const data = localStorage.getItem('utsBekleyen');
+    if (data) {
+      const arr = JSON.parse(data);
+      if (Array.isArray(arr) && arr.length > 0) return arr;
+    }
+  } catch(e) {}
+  return [];
+}
+
 async function utsYapistir() {
   const textarea = document.getElementById('utsYapistirmaAlani');
   if (!textarea || !textarea.value.trim()) {
@@ -2162,6 +2177,7 @@ function utsBekleyenUrunleriGoster(urunler) {
   });
   const deduped = Object.values(grouped);
   utsBekleyenUrunler = deduped;
+  utsBekleyenleriKaydet();
 
   const rows = deduped.map((u, i) => {
     const uno = u.urunNo || u.UNO || '';
@@ -2262,6 +2278,7 @@ function utsApiTumuSecKaldir(checked) {
 function utsBekleyenAlanGuncelle(index, alan, deger) {
   if (utsBekleyenUrunler[index]) {
     utsBekleyenUrunler[index][alan] = parseFloat(deger) || 0;
+    utsBekleyenleriKaydet();
   }
 }
 
@@ -2305,6 +2322,7 @@ function utsBekleyenTopluFiyatGuncelle() {
   const satinSatisInput = document.getElementById('utsTopluSatis');
   if (alisGecerli && satinAlisInput) satinAlisInput.value = '';
   if (satisGecerli && satinSatisInput) satinSatisInput.value = '';
+  utsBekleyenleriKaydet();
 
   let msg = `${secili.length} ürüne `;
   if (alisGecerli && satisGecerli) msg += `Alış: ₺${alisDeger.toLocaleString('tr-TR')}, Satış: ₺${satisDeger.toLocaleString('tr-TR')}`;
@@ -2361,8 +2379,14 @@ async function utsStogaKaydet() {
 
   if (kayitlar.length > 0) {
     await Promise.all(kayitlar);
-    utsBekleyenUrunler = [];
-    document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Tüm ürünler stoğa kaydedildi.</div>';
+    const kurtarilanIdx = new Set([...seciliCheckboxes].map(cb => parseInt(cb.dataset.index)));
+    utsBekleyenUrunler = utsBekleyenUrunler.filter((_, i) => !kurtarilanIdx.has(i));
+    utsBekleyenleriKaydet();
+    if (utsBekleyenUrunler.length > 0) {
+      utsBekleyenUrunleriGoster(utsBekleyenUrunler);
+    } else {
+      document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Tüm ürünler stoğa kaydedildi.</div>';
+    }
     if (typeof loadUrunler === 'function') await loadUrunler();
   }
 
@@ -2374,6 +2398,13 @@ let utsSeciliSatirlar = new Set();
 let utsFiltrelenmisIndexler = [];
 
 async function utsAlimListesiniYukle() {
+  const bekleyen = utsBekleyenleriYukle();
+  if (bekleyen.length > 0) {
+    utsBekleyenUrunler = bekleyen;
+    utsBekleyenUrunleriGoster(bekleyen);
+    return;
+  }
+
   const veriler = await window.api.utsAlimOku();
   const container = document.getElementById('utsAlimListesi');
   if (!container) return;
