@@ -2345,7 +2345,7 @@ async function utsAlimListesiniYukle() {
     const dbIdx = v._dbIndex;
     return `
     <tr data-index="${i}">
-      <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
+      <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" data-db-index="${dbIdx}" onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
       <td>${i + 1}</td>
       <td>${v.URUN_NUMARASI || '-'}</td>
       <td>${v.LOT_BATCH_NO || '-'}</td>
@@ -2413,7 +2413,7 @@ function utsTabloyuFiltrele() {
       if (grouped[key]) {
         grouped[key].ADET = (parseInt(grouped[key].ADET) || 0) + (parseInt(v.ADET) || 0);
       } else {
-        grouped[key] = { ...v };
+        grouped[key] = { ...v, _dbIndex: v._index };
       }
     });
     filtrelenmis = Object.values(grouped).map((v, i) => ({ ...v, _index: i }));
@@ -2430,7 +2430,7 @@ function utsTabloyuFiltrele() {
       const dbIdx = v._dbIndex !== undefined ? v._dbIndex : i;
       return `
       <tr data-index="${i}">
-        <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" ${utsSeciliSatirlar.has(i) ? 'checked' : ''} onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
+        <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" data-db-index="${dbIdx}" ${utsSeciliSatirlar.has(i) ? 'checked' : ''} onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
         <td>${i + 1}</td>
         <td>${v.URUN_NUMARASI || '-'}</td>
         <td>${v.LOT_BATCH_NO || '-'}</td>
@@ -2514,8 +2514,18 @@ async function utsTopluFiyatGuncelle(alan) {
     return;
   }
 
-  const guncellemeler = Array.from(utsSeciliSatirlar);
-  const result = await window.api.utsAlimTopluFiyatGuncelle({ guncellemeler, alan, deger });
+  const dbIndices = [];
+  document.querySelectorAll('.uts-sec-check:checked').forEach(cb => {
+    const dbIdx = parseInt(cb.dataset.dbIndex);
+    if (!isNaN(dbIdx)) dbIndices.push(dbIdx);
+  });
+
+  if (dbIndices.length === 0) {
+    showToast('Seçili ürún bulunamadı.', 'warning');
+    return;
+  }
+
+  const result = await window.api.utsAlimTopluFiyatGuncelle({ guncellemeler: dbIndices, alan, deger });
 
   if (result.success) {
     showToast(`${result.basarili} ürüne ₺${deger.toLocaleString('tr-TR')} uygulandı.`, 'success');
