@@ -632,14 +632,20 @@
   <script src="js/session-timer.js"></script>
   <script>
     function utsVeriAktar(urunler) {
-      if (typeof adminTabAc === 'function') {
-        adminTabAc('uts');
-        setTimeout(function() {
-          if (typeof utsBekleyenUrunleriGoster === 'function') {
-            utsBekleyenUrunleriGoster(urunler);
-            showToast(urunler.length + ' ürün UTS sayfasından aktarıldı!', 'success');
-          }
-        }, 300);
+      var tabUTS = document.getElementById('tabUTS');
+      var panelUTS = document.getElementById('panelUTS');
+      var panelUrunler = document.getElementById('panelUrunler');
+      var panelTopluStok = document.getElementById('panelTopluStok');
+      var panelStokSayim = document.getElementById('panelStokSayim');
+      document.querySelectorAll('.admin-tab-btn').forEach(function(b){b.classList.remove('active');});
+      if (panelUrunler) panelUrunler.style.display = 'none';
+      if (panelTopluStok) panelTopluStok.style.display = 'none';
+      if (panelStokSayim) panelStokSayim.style.display = 'none';
+      if (tabUTS) tabUTS.classList.add('active');
+      if (panelUTS) panelUTS.style.display = '';
+      if (typeof utsBekleyenUrunleriGoster === 'function') {
+        utsBekleyenUrunleriGoster(urunler);
+        showToast(urunler.length + ' ürün UTS sayfasından aktarıldı!', 'success');
       }
     }
 
