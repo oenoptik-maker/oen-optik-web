@@ -2100,10 +2100,8 @@ async function utsVerileriCek() {
     return;
   }
 
-  // Token'ı chrome storage'a kaydet (background script erişebilsin diye)
-  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.set({ utsToken: token });
-  }
+  // Token'ı DOM attribute'a yaz (content script alsin)
+  document.documentElement.setAttribute('data-uts-token', token);
 
   // Yöntem 1: Cloudflare Worker
   const workerUrl = cred.workerUrl;

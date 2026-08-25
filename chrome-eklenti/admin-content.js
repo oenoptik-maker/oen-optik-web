@@ -1,13 +1,17 @@
 (function() {
-  console.log('[OEN] admin-content.js v2 yuklendi:', location.href);
+  console.log('[OEN] admin-content.js v10 yuklendi:', location.href);
 
-  // Background'tan gelen veriyi localStorage'a yaz
+  // Token'i DOM'dan oku ve chrome.storage'a kaydet
+  function getToken() {
+    return document.documentElement.getAttribute('data-uts-token') || '';
+  }
+
+  // Background'tan gelen veriyi sayfaya ilet
   chrome.storage.onChanged.addListener(function(changes, area) {
     if (area === 'local' && changes.utsAktarim) {
       var val = changes.utsAktarim.newValue;
       if (val && val.urunler && val.urunler.length > 0) {
-        console.log('[OEN] UTS verisi localStorage\'a yaziliyor:', val.urunler.length);
-        try { localStorage.setItem('utsAktarim', JSON.stringify(val)); } catch(e) {}
+        console.log('[OEN] UTS verisi geldi:', val.urunler.length);
         document.documentElement.setAttribute('data-uts-result', JSON.stringify(val.urunler));
       }
     }
@@ -21,10 +25,17 @@
       if (checkRequest._last === attr) return;
       checkRequest._last = attr;
 
-      var gkk = parseInt(attr.split('_')[0]);
+      var parts = attr.split('_');
+      var gkk = parseInt(parts[0]);
       if (!gkk) return;
 
-      console.log('[OEN] UTS istegi:', gkk);
+      // Token'i al ve storage'a kaydet
+      var token = getToken();
+      if (token) {
+        chrome.storage.local.set({ utsToken: token });
+      }
+
+      console.log('[OEN] UTS istegi:', gkk, 'token:', token ? 'var' : 'yok');
       chrome.runtime.sendMessage({ type: 'UTS_BEKLEYENLERI_CEK', gkk: gkk }, function(resp) {
         if (chrome.runtime.lastError) {
           console.error('[OEN] hata:', chrome.runtime.lastError.message);
