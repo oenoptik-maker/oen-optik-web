@@ -2380,50 +2380,42 @@ async function utsAlimListesiniYukle() {
     <tr data-index="${i}">
       <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" data-db-index="${dbIdx}" onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
       <td>${i + 1}</td>
-      <td>${v.URUN_NUMARASI || '-'}</td>
-      <td>${v.LOT_BATCH_NO || '-'}</td>
-      <td>${v.SERI_SIRA_NO || '-'}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.URUN_TANIMI || ''}">${v.URUN_TANIMI || '-'}</td>
-      <td>${v.ADET || '-'}</td>
+      <td style="font-size:0.7rem;">${v.URUN_NUMARASI || '-'}</td>
+      <td style="font-size:0.7rem;">${v.LOT_BATCH_NO || '-'}</td>
+      <td style="font-size:0.7rem;">${v.SERI_SIRA_NO || '-'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${v.URUN_TANIMI || ''}">${v.URUN_TANIMI || '-'}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${v.GONDEREN_KURUM || ''}">${v.GONDEREN_KURUM || '-'}</td>
+      <td style="text-align:center;">${v.ADET || '-'}</td>
       <td><input type="number" step="0.01" min="0" value="${parseFloat(v.ALIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'ALIS_FIYATI', this.value)"></td>
       <td><input type="number" step="0.01" min="0" value="${parseFloat(v.SATIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'SATIS_FIYATI', this.value)"></td>
-      <td>${v.KAYIT_TARIHI || '-'}</td>
       <td><button class="btn btn-danger btn-sm" onclick="utsAlimSil(${dbIdx})">🗑️</button></td>
     </tr>
   `}).join('');
 
   container.innerHTML = `
-    <div style="padding:8px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:end;">
-      <div>
-        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">🔍 Ürün Tanımı Ara</label>
-        <input type="text" id="utsAraUrunTanimi" placeholder="Ürün adı yazın..." value="${utsAramalar.urunTanimi}" oninput="utsAramaFiltre()" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;">
+    <div style="padding:8px 8px 0 8px;display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+      <div style="flex:2;min-width:180px;">
+        <input type="text" id="utsAraUrunTanimi" placeholder="🔍 Ürün adı veya numara ara..." value="${utsAramalar.urunTanimi}" oninput="utsAramaFiltre()" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;">
       </div>
-      <div>
-        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Alış Fiyatı</label>
-        <div style="display:flex;gap:4px;">
-          <input type="number" id="utsTopluAlis" step="0.01" min="0" placeholder="₺" style="flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
-          <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle('ALIS_FIYATI')" style="white-space:nowrap;">Uygula</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:0.65rem;color:var(--text-secondary);margin-bottom:2px;display:block;">💰 Satış Fiyatı</label>
-        <div style="display:flex;gap:4px;">
-          <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
-          <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle('SATIS_FIYATI')" style="white-space:nowrap;">Uygula</button>
-        </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Alış ₺</label>
+        <input type="number" id="utsTopluAlis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
+        <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+        <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle()" style="white-space:nowrap;">Uygula</button>
+        <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;margin-left:8px;">
+          <input type="checkbox" id="utsTumuSecCheck" onchange="utsTumuSecKaldir(this.checked)"> Tümünü Seç
+        </label>
       </div>
     </div>
-    <div style="padding:0 8px 4px 8px;font-size:0.7rem;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;">
-      <span id="utsFiltreSayac">${filtrelenmis.length} / ${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}</span>
-      <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <input type="checkbox" id="utsTumuSecCheck" onchange="utsTumuSecKaldir(this.checked)"> Tümünü Seç
-      </label>
+    <div style="padding:4px 8px;font-size:0.7rem;color:var(--text-muted);" id="utsFiltreSayac">
+      ${filtrelenmis.length} / ${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}
     </div>
     <table class="data-table">
       <thead><tr>
         <th style="width:30px;text-align:center;">✓</th>
         <th>#</th><th>Ürün No</th><th>Lot/Batch</th><th>Seri/Sıra</th>
-        <th>Ürün Tanımı</th><th>Adet</th><th>Alış ₺</th><th>Satış ₺</th><th>Kayıt Tarihi</th><th>İşlem</th>
+        <th>Ürün Tanımı</th><th>Gönderen Kurum</th><th>Adet</th><th>Alış ₺</th><th>Satış ₺</th><th>İşlem</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -2468,14 +2460,14 @@ function utsTabloyuFiltrele() {
       <tr data-index="${i}">
         <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" data-db-index="${dbIdx}" ${utsSeciliSatirlar.has(i) ? 'checked' : ''} onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
         <td>${i + 1}</td>
-        <td>${v.URUN_NUMARASI || '-'}</td>
-        <td>${v.LOT_BATCH_NO || '-'}</td>
-        <td>${v.SERI_SIRA_NO || '-'}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.URUN_TANIMI || ''}">${v.URUN_TANIMI || '-'}</td>
-        <td>${v.ADET || '-'}</td>
+        <td style="font-size:0.7rem;">${v.URUN_NUMARASI || '-'}</td>
+        <td style="font-size:0.7rem;">${v.LOT_BATCH_NO || '-'}</td>
+        <td style="font-size:0.7rem;">${v.SERI_SIRA_NO || '-'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${v.URUN_TANIMI || ''}">${v.URUN_TANIMI || '-'}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${v.GONDEREN_KURUM || ''}">${v.GONDEREN_KURUM || '-'}</td>
+        <td style="text-align:center;">${v.ADET || '-'}</td>
         <td><input type="number" step="0.01" min="0" value="${parseFloat(v.ALIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'ALIS_FIYATI', this.value)"></td>
         <td><input type="number" step="0.01" min="0" value="${parseFloat(v.SATIS_FIYATI) || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" onchange="utsAlanGuncelle(${dbIdx}, 'SATIS_FIYATI', this.value)"></td>
-        <td>${v.KAYIT_TARIHI || '-'}</td>
         <td><button class="btn btn-danger btn-sm" onclick="utsAlimSil(${dbIdx})">🗑️</button></td>
       </tr>
     `}).join('');
@@ -2538,15 +2530,18 @@ function utsTumuSecKaldir(hepsiniSec) {
   }
 }
 
-async function utsTopluFiyatGuncelle(alan) {
+async function utsTopluFiyatGuncelle() {
   if (utsSeciliSatirlar.size === 0) {
     showToast('Önce ürün seçin.', 'warning');
     return;
   }
-  const inputId = alan === 'ALIS_FIYATI' ? 'utsTopluAlis' : 'utsTopluSatis';
-  const deger = parseFloat(document.getElementById(inputId)?.value);
-  if (isNaN(deger) || deger < 0) {
-    showToast('Geçerli bir fiyat girin.', 'warning');
+  const alisDeger = parseFloat(document.getElementById('utsTopluAlis')?.value);
+  const satisDeger = parseFloat(document.getElementById('utsTopluSatis')?.value);
+  const alisGecerli = !isNaN(alisDeger) && alisDeger >= 0;
+  const satisGecerli = !isNaN(satisDeger) && satisDeger >= 0;
+
+  if (!alisGecerli && !satisGecerli) {
+    showToast('En az bir fiyat girin.', 'warning');
     return;
   }
 
@@ -2557,20 +2552,24 @@ async function utsTopluFiyatGuncelle(alan) {
   });
 
   if (dbIndices.length === 0) {
-    showToast('Seçili ürún bulunamadı.', 'warning');
+    showToast('Seçili ürün bulunamadı.', 'warning');
     return;
   }
 
-  const result = await window.api.utsAlimTopluFiyatGuncelle({ guncellemeler: dbIndices, alan, deger });
-
-  if (result.success) {
-    showToast(`${result.basarili} ürüne ₺${deger.toLocaleString('tr-TR')} uygulandı.`, 'success');
-  } else {
-    showToast(`Hata: ${result.message}`, 'error');
+  let toplam = 0;
+  if (alisGecerli) {
+    const r1 = await window.api.utsAlimTopluFiyatGuncelle({ guncellemeler: dbIndices, alan: 'ALIS_FIYATI', deger: alisDeger });
+    if (r1.success) toplam += r1.basarili;
+  }
+  if (satisGecerli) {
+    const r2 = await window.api.utsAlimTopluFiyatGuncelle({ guncellemeler: dbIndices, alan: 'SATIS_FIYATI', deger: satisDeger });
+    if (r2.success) toplam += r2.basarili;
   }
 
+  showToast(`${dbIndices.length} ürüne fiyat uygulandı.`, 'success');
   utsSeciliSatirlar.clear();
-  document.getElementById(inputId).value = '';
+  document.getElementById('utsTopluAlis').value = '';
+  document.getElementById('utsTopluSatis').value = '';
   await utsTabloyuFiltrele();
 }
 
