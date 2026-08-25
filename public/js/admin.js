@@ -2183,8 +2183,8 @@ function utsBekleyenUrunleriGoster(urunler) {
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
       <td style="font-size:0.65rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${gonderen}">${gonderen}</td>
       <td style="text-align:center;">${adet}</td>
-      <td><input type="number" step="0.01" min="0" value="0" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-alis-fiyat"></td>
-      <td><input type="number" step="0.01" min="0" value="0" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-satis-fiyat"></td>
+      <td><input type="number" step="0.01" min="0" value="${u._alisFiyat || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-alis-fiyat" onchange="utsBekleyenAlanGuncelle(${i}, '_alisFiyat', this.value)"></td>
+      <td><input type="number" step="0.01" min="0" value="${u._satisFiyat || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-satis-fiyat" onchange="utsBekleyenAlanGuncelle(${i}, '_satisFiyat', this.value)"></td>
     </tr>`;
   }).join('');
 
@@ -2252,6 +2252,12 @@ function utsApiTumuSecKaldir(checked) {
   utsApiSeciliGuncelle();
 }
 
+function utsBekleyenAlanGuncelle(index, alan, deger) {
+  if (utsBekleyenUrunler[index]) {
+    utsBekleyenUrunler[index][alan] = parseFloat(deger) || 0;
+  }
+}
+
 function utsBekleyenTopluFiyatGuncelle() {
   const alisDeger = parseFloat(document.getElementById('utsTopluAlis')?.value);
   const satisDeger = parseFloat(document.getElementById('utsTopluSatis')?.value);
@@ -2274,6 +2280,17 @@ function utsBekleyenTopluFiyatGuncelle() {
     if (utsBekleyenUrunler[idx]) {
       if (alisGecerli) utsBekleyenUrunler[idx]._alisFiyat = alisDeger;
       if (satisGecerli) utsBekleyenUrunler[idx]._satisFiyat = satisDeger;
+    }
+  });
+
+  secili.forEach(cb => {
+    const idx = parseInt(cb.dataset.index);
+    const tr = cb.closest('tr');
+    if (tr) {
+      const alisInput = tr.querySelector('.uts-alis-fiyat');
+      const satisInput = tr.querySelector('.uts-satis-fiyat');
+      if (alisGecerli && alisInput) alisInput.value = alisDeger;
+      if (satisGecerli && satisInput) satisInput.value = satisDeger;
     }
   });
 
