@@ -34,7 +34,6 @@ function renderKategoriler() {
       <td><strong>${k.KATEGORI_ADI}</strong></td>
       <td>
         <button class="btn btn-outline btn-sm" onclick="editKategori(${k.KATEGORI_ID})">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteKategori(${k.KATEGORI_ID})">🗑️</button>
       </td>
     </tr>
   `).join('');
