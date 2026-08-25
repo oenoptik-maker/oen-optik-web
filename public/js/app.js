@@ -295,6 +295,59 @@ function filtreUrunleri() {
   }
 }
 
+async function openUrunModal() {
+  document.getElementById('urunModalTitle').textContent = 'Yeni Ürün';
+  document.getElementById('urunId').value = '';
+  document.getElementById('urunAdi').value = '';
+  document.getElementById('urunAlisFiyat').value = '';
+  document.getElementById('urunFiyat').value = '';
+  document.getElementById('urunAdet').value = '';
+  document.getElementById('urunMensei').value = '';
+
+  const kategoriler = await window.api.kategoriRead();
+  const select = document.getElementById('urunKategori');
+  select.innerHTML = kategoriler.map(k => `<option value="${k.KATEGORI_ADI}">${k.KATEGORI_ADI}</option>`).join('');
+
+  document.getElementById('urunModal').classList.add('active');
+  document.getElementById('urunAdi').focus();
+}
+
+function closeUrunModal() {
+  document.getElementById('urunModal').classList.remove('active');
+}
+
+async function modalUrunKaydet() {
+  const kategori = document.getElementById('urunKategori').value;
+  const adi = document.getElementById('urunAdi').value.trim();
+  const alisFiyat = document.getElementById('urunAlisFiyat').value;
+  const fiyat = document.getElementById('urunFiyat').value;
+  const adet = document.getElementById('urunAdet').value;
+  const mensei = document.getElementById('urunMensei').value.trim();
+
+  if (!adi) { showToast('Ürün adı boş olamaz.', 'error'); return; }
+  if (!kategori) { showToast('Kategori seçiniz.', 'error'); return; }
+
+  const urunId = await window.api.urunGetNextId();
+  const result = await window.api.urunSave({
+    URUN_ID: urunId,
+    KATEGORI_ADI: kategori,
+    URUN_ADI: adi,
+    ALIS_FIYATI: parseFloat(alisFiyat) || 0,
+    FIYAT: parseFloat(fiyat) || 0,
+    ADET: parseInt(adet) || 0,
+    KAREKOD: '',
+    MENSEI: mensei
+  });
+
+  if (result) {
+    showToast('Ürün kaydedildi.', 'success');
+    closeUrunModal();
+    tumUrunler = await window.api.urunRead();
+  } else {
+    showToast('Kaydetme hatası!', 'error');
+  }
+}
+
 function urunEkle() {
   const urunSecim = document.getElementById('urunSecim');
   if (!urunSecim || !urunSecim.value) return;
