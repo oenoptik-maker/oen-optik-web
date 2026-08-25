@@ -2150,7 +2150,7 @@ function utsBekleyenUrunleriGoster(urunler) {
   const container = document.getElementById('utsAlimListesi');
   if (!container) return;
 
-  window.utsBekleyenUrunler = urunler;
+  utsBekleyenUrunler = urunler;
 
   const rows = urunler.map((u, i) => {
     const uno = u.urunNo || u.UNO || '';

@@ -636,7 +636,6 @@
         adminTabAc('uts');
         setTimeout(function() {
           if (typeof utsBekleyenUrunleriGoster === 'function') {
-            window.utsBekleyenUrunler = urunler;
             utsBekleyenUrunleriGoster(urunler);
             showToast(urunler.length + ' ürün UTS sayfasından aktarıldı!', 'success');
           }
