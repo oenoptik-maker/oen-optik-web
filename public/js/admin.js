@@ -2200,7 +2200,6 @@ function utsBekleyenUrunleriGoster(urunler) {
         <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="utsBekleyenTopluFiyatGuncelle()" style="white-space:nowrap;">Uygula</button>
       </div>
-      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${deduped.length} ürün seçili</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="data-table" id="utsGeciciTablo">
@@ -2218,6 +2217,9 @@ function utsBekleyenUrunleriGoster(urunler) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+    </div>
+    <div style="padding:8px 12px;border-top:1px solid var(--border);">
+      <span id="utsApiSeciliAdet" style="font-size:0.75rem;color:var(--primary);font-weight:600;">${deduped.length} ürün seçili</span>
     </div>
   `;
 }
