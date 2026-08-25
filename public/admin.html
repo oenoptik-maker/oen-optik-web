@@ -128,17 +128,16 @@
                 <label>Arama</label>
                 <input type="text" id="urunArama" placeholder="Ürün adı ara..." oninput="debouncedFilterUrunler()">
               </div>
-              <div class="form-group" style="display:flex;gap:4px;align-items:end;">
-                <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Alış ₺</label>
-                <input type="number" id="urunTopluAlis" step="0.01" min="0" placeholder="₺" style="width:75px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
-                <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
-                <input type="number" id="urunTopluSatis" step="0.01" min="0" placeholder="₺" style="width:75px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
-                <button class="btn btn-primary btn-sm" onclick="urunTopluFiyatUygula()" style="white-space:nowrap;">Uygula</button>
-              </div>
               <div class="form-group">
                 <label>&nbsp;</label>
                 <button class="btn btn-danger btn-sm" onclick="stokSilOnay()">🗑️ Tüm Stoğu Sil</button>
               </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;border:1px solid var(--border);">
+              <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:600;">Toplu Fiyat:</span>
+              <input type="number" id="urunTopluAlis" step="0.01" min="0" placeholder="Alış ₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+              <input type="number" id="urunTopluSatis" step="0.01" min="0" placeholder="Satış ₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+              <button class="btn btn-primary btn-sm" onclick="urunTopluFiyatUygula()" style="padding:4px 10px;font-size:0.7rem;">Uygula</button>
             </div>
             <div id="urunListesi" class="table-container"></div>
             <div id="urunPagination" class="pagination-container"></div>
