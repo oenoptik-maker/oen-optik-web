@@ -2181,21 +2181,15 @@ function utsBekleyenUrunleriGoster(urunler) {
 
   const rows = deduped.map((u, i) => {
     const uno = u.urunNo || u.UNO || '';
-    const lno = u.lotBatch || u.LNO || '';
-    const sno = u.seriNo || u.SNO || '';
     const tanim = u.urunTanimi || u.TANIM || '';
     const adet = u.adet || u.ADET || '1';
     const gonderen = u.gonderenKurum || '';
-    const kurumKodu = u.kurumKodu || u.GKK || '';
-    const bildirimKodu = u.bildirimKodu || '';
 
     return `
     <tr data-idx="${i}">
       <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" checked onchange="utsApiSeciliGuncelle()"></td>
       <td>${i + 1}</td>
       <td style="font-size:0.7rem;white-space:nowrap;">${uno}</td>
-      <td style="font-size:0.7rem;">${lno}</td>
-      <td style="font-size:0.7rem;">${sno}</td>
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
       <td style="font-size:0.65rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${gonderen}">${gonderen}</td>
       <td style="text-align:center;">${adet}</td>
@@ -2223,8 +2217,6 @@ function utsBekleyenUrunleriGoster(urunler) {
           <th style="width:30px;text-align:center;"><input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked></th>
           <th style="width:30px;">#</th>
           <th>Ürün No</th>
-          <th>Lot/Batch</th>
-          <th>Seri No</th>
           <th>Ürün Tanımı</th>
           <th>Gönderen Kurum</th>
           <th style="width:40px;">Adet</th>
