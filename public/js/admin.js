@@ -2334,10 +2334,19 @@ async function utsStogaKaydet() {
   if (!(await showConfirm(`${seciliCheckboxes.length} seçili UTS ürününü stoğa eklemek istediğinize emin misiniz?`, 'UTS Stoğa Kaydet'))) return;
 
   const mevcutKategoriler = await window.api.kategoriRead();
-  const utsKategoriVar = mevcutKategoriler.some(k => k.KATEGORI_ADI === 'UTS Ürünleri');
-  if (!utsKategoriVar) {
-    const nextKatId = await window.api.kategoriGetNextId();
-    await window.api.kategoriSave({ KATEGORI_ID: nextKatId, KATEGORI_ADI: 'UTS Ürünleri' });
+  const kategoriIsimleri = ['UTS Ürünleri', 'Gözlük Camı', 'Optik Çerçeve'];
+  let nextKatId = mevcutKategoriler.length > 0 ? Math.max(...mevcutKategoriler.map(k => parseInt(k.KATEGORI_ID) || 0)) + 1 : 1;
+  for (const isim of kategoriIsimleri) {
+    if (!mevcutKategoriler.some(k => k.KATEGORI_ADI === isim)) {
+      await window.api.kategoriSave({ KATEGORI_ID: nextKatId++, KATEGORI_ADI: isim });
+    }
+  }
+
+  function kategoriBelirle(urunAdi) {
+    const ad = urunAdi.toLowerCase();
+    if (ad.includes('gözlük camı')) return 'Gözlük Camı';
+    if (ad.includes('optik çerçeve') || ad.includes('optik gözlük çerçevesi')) return 'Optik Çerçeve';
+    return 'UTS Ürünleri';
   }
 
   const mevcutUrunler = await window.api.urunRead();
@@ -2358,7 +2367,7 @@ async function utsStogaKaydet() {
 
     kayitlar.push(window.api.urunSave({
       URUN_ID: nextId++,
-      KATEGORI_ADI: 'UTS Ürünleri',
+      KATEGORI_ADI: kategoriBelirle(urunAdi),
       URUN_ADI: urunAdi,
       ALIS_FIYATI: veri._alisFiyat || 0,
       FIYAT: veri._satisFiyat || 0,
