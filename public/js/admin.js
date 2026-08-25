@@ -2083,109 +2083,39 @@ async function tumunuYazdir(kaynak) {
 async function utsVerileriCek() {
   const btn = document.getElementById('utsVeriCekBtn');
   if (btn) btn.disabled = true;
-  showToast('UTS API\'den bekleyen ürünler sorgulanıyor...', 'info');
 
-  const cred = await window.api.credentialOku();
-  const gkk = cred && cred.gkk ? parseInt(cred.gkk) : null;
-  if (!gkk) {
-    showToast('Kurum Kodu (GKK) tanımlı değil! UTS Ayarlarından girin.', 'error');
-    if (btn) btn.disabled = false;
-    return;
-  }
-
+  // Token'i DOM attribute'a yaz (content script icin)
   const token = await window.api.utsApiGetToken();
-  if (!token) {
-    showToast('UTS Token tanımlı değil!', 'error');
-    if (btn) btn.disabled = false;
-    return;
+  if (token) {
+    document.documentElement.setAttribute('data-uts-token', token);
   }
 
-  // Token'ı DOM attribute'a yaz (content script alsin)
-  document.documentElement.setAttribute('data-uts-token', token);
-
-  // Yöntem 1: Cloudflare Worker
-  const workerUrl = cred.workerUrl;
-  if (workerUrl) {
+  // Onceden cekilmis veri var mi?
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     try {
-      showToast('Worker üzerinden UTS sorgulanıyor...', 'info');
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      const resp = await fetch(workerUrl + '/UTS/uh/rest/bildirim/alma/bekleyenler/sorgula', {
-        method: 'POST',
-        headers: { 'utsToken': token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ GKK: gkk, BNO: '', UNO: '', BID: '', SAN: 1 }),
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-      const result = await resp.json();
-
-      let urunler = [];
-      const data = result && result.veri ? result.veri : result;
-      if (Array.isArray(data)) urunler = data;
-      else if (data && Array.isArray(data.urunler)) urunler = data.urunler;
-      else if (data && data.data && Array.isArray(data.data)) urunler = data.data;
-
-      if (urunler.length > 0) {
+      const data = await new Promise(resolve => chrome.storage.local.get('utsAktarim', resolve));
+      if (data && data.utsAktarim && data.utsAktarim.urunler && data.utsAktarim.urunler.length > 0) {
+        const urunler = data.utsAktarim.urunler;
         utsBekleyenUrunler = urunler;
         utsBekleyenUrunleriGoster(urunler);
-        showToast(urunler.length + ' bekleyen ürün bulundu. (Worker)', 'success');
+        showToast(urunler.length + ' urun yuklendi.', 'success');
         if (btn) btn.disabled = false;
         return;
       }
-    } catch (e) {
-      console.warn('Worker basarisiz:', e.message);
-    }
+    } catch(e) {}
   }
 
-  // Yöntem 2: Chrome eklentisi - DOM attribute ile iletisim
+  // UTS sayfasini yeni sekmede ac, otomatik ceksin
   try {
-    showToast('Eklenti uzerinden UTS sorgulanıyor...', 'info');
-
-    // Eski sonucu temizle
-    document.documentElement.removeAttribute('data-uts-result');
-    document.documentElement.setAttribute('data-uts-request', gkk + '_' + Date.now());
-
-    // Sonucu bekle (en fazla 20 sn)
-    const result = await new Promise((resolve, reject) => {
-      var startTime = Date.now();
-      var checker = setInterval(function() {
-        var resultAttr = document.documentElement.getAttribute('data-uts-result');
-        if (resultAttr) {
-          clearInterval(checker);
-          document.documentElement.removeAttribute('data-uts-result');
-          try { resolve(JSON.parse(resultAttr)); }
-          catch(e) { reject(new Error('Sonuc parse edilemedi')); }
-          return;
-        }
-        if (Date.now() - startTime > 20000) {
-          clearInterval(checker);
-          reject(new Error('20 saniye timeout'));
-        }
-      }, 500);
-    });
-
-    let urunler = [];
-    if (Array.isArray(result)) urunler = result;
-    else if (result && result.veri) {
-      const d = result.veri;
-      if (Array.isArray(d)) urunler = d;
-      else if (d.urunler) urunler = d.urunler;
-      else if (d.data) urunler = d.data;
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ autoExtract: true });
     }
-
-    if (urunler.length > 0) {
-      utsBekleyenUrunler = urunler;
-      utsBekleyenUrunleriGoster(urunler);
-      showToast(urunler.length + ' bekleyen ürün bulundu. (Eklenti)', 'success');
-    } else if (result && result.error) {
-      showToast('UTS hatasi: ' + result.error, 'error');
-    } else {
-      showToast('Bekleyen ürün bulunamadi.', 'warning');
-    }
-  } catch (e) {
-    console.error('UTS cekme hatasi:', e);
-    showToast('UTS verisi cekilemedi: ' + e.message + '. UTS sayfasindan eklenti butonunu kullanin.', 'error');
+    window.open('https://utsuygulama.saglik.gov.tr/UTS/tibbiCihaz', '_blank');
+    showToast('UTS sayfasi acildi. Urunler otomatik cekilecek.', 'info');
+  } catch(e) {
+    showToast('UTS sayfasi acilamadi: ' + e.message, 'error');
   }
+
   if (btn) btn.disabled = false;
 }
 
