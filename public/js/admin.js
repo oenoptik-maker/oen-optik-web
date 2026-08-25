@@ -2254,17 +2254,9 @@ async function utsStogaKaydet() {
   let nextId = mevcutUrunler.length > 0 ? Math.max(...mevcutUrunler.map(u => parseInt(u.URUN_ID) || 0)) + 1 : 1;
   let eklenen = 0, atlanan = 0;
 
-  const tbody = document.querySelector('#utsAlimListesi tbody');
-  const satirlar = tbody ? tbody.querySelectorAll('tr') : [];
-
+  const kayitlar = [];
   for (const cb of seciliCheckboxes) {
     const idx = parseInt(cb.dataset.index);
-    const satir = satirlar[idx];
-    const alisInput = satir ? satir.querySelector('.uts-alis-fiyat') : null;
-    const satisInput = satir ? satir.querySelector('.uts-satis-fiyat') : null;
-    const alisFiyat = alisInput ? parseFloat(alisInput.value) || 0 : 0;
-    const satisFiyat = satisInput ? parseFloat(satisInput.value) || 0 : 0;
-
     const veri = utsBekleyenUrunler[idx];
     if (!veri) { atlanan++; continue; }
 
@@ -2274,23 +2266,32 @@ async function utsStogaKaydet() {
     const ayni = mevcutUrunler.find(u => u.URUN_ADI === urunAdi);
     if (ayni) { atlanan++; continue; }
 
-    await window.api.urunSave({
+    const tbody = document.querySelector('#utsAlimListesi tbody');
+    const satir = tbody ? tbody.querySelectorAll('tr')[idx] : null;
+    const alisInput = satir ? satir.querySelector('.uts-alis-fiyat') : null;
+    const satisInput = satir ? satir.querySelector('.uts-satis-fiyat') : null;
+
+    kayitlar.push(window.api.urunSave({
       URUN_ID: nextId++,
       KATEGORI_ADI: 'UTS Ürünleri',
       URUN_ADI: urunAdi,
-      ALIS_FIYATI: alisFiyat,
-      FIYAT: satisFiyat,
+      ALIS_FIYATI: alisInput ? parseFloat(alisInput.value) || 0 : 0,
+      FIYAT: satisInput ? parseFloat(satisInput.value) || 0 : 0,
       ADET: parseInt(veri.adet) || 1,
       KAREKOD: veri.urunNo || '',
       MENSEI: veri.gonderenKurum || ''
-    });
+    }));
     eklenen++;
   }
 
+  if (kayitlar.length > 0) {
+    await Promise.all(kayitlar);
+    utsBekleyenUrunler = [];
+    document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Tüm ürünler stoğa kaydedildi.</div>';
+    if (typeof loadUrunler === 'function') await loadUrunler();
+  }
+
   showToast(`${eklenen} ürün stoğa eklendi, ${atlanan} ürün atlandı.`, eklenen > 0 ? 'success' : 'warning');
-  utsBekleyenUrunler = [];
-  document.getElementById('utsAlimListesi').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">Henüz veri yüklenmedi</div>';
-  if (typeof loadUrunler === 'function') await loadUrunler();
 }
 
 let utsAramalar = { urunTanimi: '', alisFiyati: '', satisFiyati: '' };
