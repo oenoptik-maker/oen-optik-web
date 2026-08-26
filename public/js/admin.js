@@ -2309,6 +2309,9 @@ function utsBekleyenUrunleriGoster(urunler) {
         <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
         <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="utsBekleyenTopluFiyatGuncelle()" style="white-space:nowrap;">Uygula</button>
+        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;margin-left:4px;">Çarpan</label>
+        <input type="number" id="utsBekleyenCarpan" step="0.01" min="0" placeholder="1.5" style="width:60px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+        <button class="btn btn-warning btn-sm" onclick="utsBekleyenCarpanUygula()" style="white-space:nowrap;">Alış×Çarpan→Satış</button>
       </div>
     </div>
     <div style="overflow-x:auto;">
@@ -2422,6 +2425,40 @@ function utsBekleyenTopluFiyatGuncelle() {
   else msg += `Satış: ₺${satisDeger.toLocaleString('tr-TR')}`;
   msg += ' uygulandı.';
   showToast(msg, 'success');
+}
+
+function utsBekleyenCarpanUygula() {
+  const carpan = parseFloat(document.getElementById('utsBekleyenCarpan')?.value);
+  if (isNaN(carpan) || carpan <= 0) {
+    showToast('Geçerli bir çarpan girin.', 'warning');
+    return;
+  }
+
+  const secili = document.querySelectorAll('.uts-api-sec:checked');
+  if (secili.length === 0) {
+    showToast('Önce ürün seçin.', 'warning');
+    return;
+  }
+
+  let guncellenen = 0;
+  secili.forEach(cb => {
+    const idx = parseInt(cb.dataset.index);
+    const u = utsBekleyenUrunler[idx];
+    if (!u) return;
+    const alis = parseFloat(u._alisFiyat) || 0;
+    const yeniSatis = Math.round(alis * carpan * 100) / 100;
+    u._satisFiyat = yeniSatis;
+    const tr = cb.closest('tr');
+    if (tr) {
+      const satisInput = tr.querySelector('.uts-satis-fiyat');
+      if (satisInput) satisInput.value = yeniSatis;
+    }
+    guncellenen++;
+  });
+
+  utsBekleyenleriKaydet();
+  showToast(`${guncellenen} ürüne Alış×${carpan} → Satış uygulandı.`, 'success');
+  document.getElementById('utsBekleyenCarpan').value = '';
 }
 
 async function utsStogaKaydet() {
@@ -2566,9 +2603,9 @@ async function utsAlimListesiniYukle() {
         <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
         <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle()" style="white-space:nowrap;">Uygula</button>
-        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;margin-left:4px;">✕ Çarpı</label>
+        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;margin-left:4px;">Çarpan</label>
         <input type="number" id="utsCarpan" step="0.01" min="0" placeholder="1.5" style="width:60px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
-        <button class="btn btn-warning btn-sm" onclick="utsCarpanUygula()" style="white-space:nowrap;">Alış✕Çarpı→Satış</button>
+        <button class="btn btn-warning btn-sm" onclick="utsCarpanUygula()" style="white-space:nowrap;">Alış×Çarpan→Satış</button>
         <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;margin-left:8px;">
           <input type="checkbox" id="utsTumuSecCheck" onchange="utsTumuSecKaldir(this.checked)"> Tümünü Seç
         </label>
