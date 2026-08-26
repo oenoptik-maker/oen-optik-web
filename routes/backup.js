@@ -28,7 +28,7 @@ router.post('/olustur', async (req, res) => {
 
     // Vercel'de dosyaya yazma, direkt indir olarak gönder
     if (IS_VERCEL) {
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Disposition', `attachment; filename="yedek_${new Date().toISOString().slice(0,10)}.json"`);
       return res.send(jsonStr);
     }

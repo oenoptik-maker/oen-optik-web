@@ -132,8 +132,9 @@ window.api = {
   // ===== YEDEKLEME =====
   createBackup: () => fetch('/api/backup/olustur', { method: 'POST' }).then(async r => {
     if (r.status === 401) { window.location.href = '/login.html'; return null; }
-    const contentType = r.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) return await r.json();
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'Sunucu hatası'); }
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return await r.json();
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

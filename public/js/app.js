@@ -1660,25 +1660,10 @@ function showToast(message, type = 'info') {
 // ===== YEDEK =====
 async function createBackup() {
   try {
-    const r = await fetch('/api/backup/olustur', { method: 'POST' });
-    const ct = r.headers.get('content-type');
-    if (ct && ct.includes('application/json')) {
-      const result = await r.json();
-      if (result.success) {
-        showToast('Yedek başarıyla alındı.', 'success');
-        await loadBackupList();
-      } else {
-        showToast('Yedek alma hatası: ' + result.message, 'error');
-      }
-    } else {
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `yedek_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Yedek dosyası indirildi.', 'success');
+    const result = await window.api.createBackup();
+    if (result && result.success) {
+      showToast('Yedek başarıyla alındı.', 'success');
+      await loadBackupList();
     }
   } catch (err) {
     showToast('Yedek alma hatası: ' + err.message, 'error');
