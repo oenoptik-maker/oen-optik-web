@@ -116,24 +116,22 @@ async function importYedek(yedek) {
 
   if (yedek.siparisler && yedek.siparisler.length > 0) {
     batches.push({ sql: 'DELETE FROM siparisler' });
+    const cols = [
+      'SIRA_NO', 'AD_SOYAD', 'TC_KIMLIK', 'TELEFON', 'SIPARIS_TARIHI', 'TESLIM_TARIHI', 'EMAIL', 'ADRES',
+      'SAG_SPH_UZAK', 'SAG_CYL_UZAK', 'SAG_AXE_UZAK', 'SOL_SPH_UZAK', 'SOL_CYL_UZAK', 'SOL_AXE_UZAK',
+      'SAG_SPH_YAKIN', 'SAG_CYL_YAKIN', 'SAG_AXE_YAKIN', 'SOL_SPH_YAKIN', 'SOL_CYL_YAKIN', 'SOL_AXE_YAKIN',
+      'ADD_DEGER', 'PD_SAG_UZAK', 'PD_SOL_UZAK', 'PD_SAG_YAKIN', 'PD_SOL_YAKIN',
+      'YUKSEKLIK_SAG_UZAK', 'YUKSEKLIK_SOL_UZAK', 'YUKSEKLIK_SAG_YAKIN', 'YUKSEKLIK_SOL_YAKIN',
+      'CAP_SAG_UZAK', 'CAP_SOL_UZAK', 'CAP_SAG_YAKIN', 'CAP_SOL_YAKIN',
+      'ACIKLAMA_UZAK', 'ACIKLAMA_YAKIN', 'ODEME_DETAYLARI', 'SECILEN_URUNLER',
+      'TOPLAM', 'ALINAN', 'KALAN', 'INDIRIM', 'INDIRIM_NOTU'
+    ];
+    const placeholders = cols.map(() => '?').join(',');
+    const colStr = cols.join(', ');
     for (const s of yedek.siparisler) {
       batches.push({
-        sql: `INSERT OR REPLACE INTO siparisler (SIRA_NO, AD_SOYAD, TC_KIMLIK, TELEFON, SIPARIS_TARIHI, TESLIM_TARIHI, EMAIL, ADRES,
-          SAG_SPH_UZAK, SAG_CYL_UZAK, SAG_AXE_UZAK, SOL_SPH_UZAK, SOL_CYL_UZAK, SOL_AXE_UZAK,
-          SAG_SPH_YAKIN, SAG_CYL_YAKIN, SAG_AXE_YAKIN, SOL_SPH_YAKIN, SOL_CYL_YAKIN, SOL_AXE_YAKIN,
-          ADD_DEGER, PD_SAG_UZAK, PD_SOL_UZAK, PD_SAG_YAKIN, PD_SOL_YAKIN,
-          YUKSEKLIK_SAG_UZAK, YUKSEKLIK_SOL_UZAK, YUKSEKLIK_SAG_YAKIN, YUKSEKLIK_SOL_YAKIN,
-          CAP_SAG_UZAK, CAP_SOL_UZAK, CAP_SAG_YAKIN, CAP_SOL_YAKIN,
-          ACIKLAMA_UZAK, ACIKLAMA_YAKIN, ODEME_DETAYLARI, SECILEN_URUNLER,
-          TOPLAM, ALINAN, KALAN, INDIRIM, INDIRIM_NOTU) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        params: [s.SIRA_NO, s.AD_SOYAD, s.TC_KIMLIK, s.TELEFON, s.SIPARIS_TARIHI, s.TESLIM_TARIHI, s.EMAIL, s.ADRES,
-          s.SAG_SPH_UZAK, s.SAG_CYL_UZAK, s.SAG_AXE_UZAK, s.SOL_SPH_UZAK, s.SOL_CYL_UZAK, s.SOL_AXE_UZAK,
-          s.SAG_SPH_YAKIN, s.SAG_CYL_YAKIN, s.SAG_AXE_YAKIN, s.SOL_SPH_YAKIN, s.SOL_CYL_YAKIN, s.SOL_AXE_YAKIN,
-          s.ADD_DEGER, s.PD_SAG_UZAK, s.PD_SOL_UZAK, s.PD_SAG_YAKIN, s.PD_SOL_YAKIN,
-          s.YUKSEKLIK_SAG_UZAK, s.YUKSEKLIK_SOL_UZAK, s.YUKSEKLIK_SAG_YAKIN, s.YUKSEKLIK_SOL_YAKIN,
-          s.CAP_SAG_UZAK, s.CAP_SOL_UZAK, s.CAP_SAG_YAKIN, s.CAP_SOL_YAKIN,
-          s.ACIKLAMA_UZAK, s.ACIKLAMA_YAKIN, s.ODEME_DETAYLARI, s.SECILEN_URUNLER,
-          s.TOPLAM, s.ALINAN, s.KALAN, s.INDIRIM, s.INDIRIM_NOTU]
+        sql: `INSERT OR REPLACE INTO siparisler (${colStr}) VALUES (${placeholders})`,
+        params: cols.map(c => s[c] !== undefined ? s[c] : null)
       });
     }
   }
