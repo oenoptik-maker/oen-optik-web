@@ -187,9 +187,9 @@ body {
 
 /* Main Container */
 .container {
-  padding: 8px 12px;
-  max-width: 1600px;
-  margin: 0 auto;
+  padding: 4px 2px;
+  max-width: 100%;
+  margin: 0;
   max-height: calc(100vh - 60px);
   overflow-y: auto;
 }
@@ -199,8 +199,8 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 8px 10px;
-  margin-bottom: 8px;
+  padding: 6px 4px;
+  margin-bottom: 4px;
   box-shadow: var(--shadow);
 }
 
@@ -1222,7 +1222,7 @@ a.btn {
   }
 
   .container {
-    padding: 6px 8px;
+    padding: 2px 0;
     max-height: none;
     overflow-y: visible;
   }
