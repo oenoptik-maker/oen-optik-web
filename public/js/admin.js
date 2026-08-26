@@ -314,6 +314,15 @@ function sayfaDegistir(sayfa) {
   document.getElementById('urunListesi').scrollTop = 0;
 }
 
+function sayfaBoyutuDegistir() {
+  const select = document.getElementById('sayfaBoyutuSelect');
+  if (select) {
+    sayfaBoyutu = parseInt(select.value) || 100;
+    mevcutSayfa = 1;
+    renderUrunler();
+  }
+}
+
 function urunSecKaldir(id, isaretli) {
   if (isaretli) seciliUrunler.add(id);
   else seciliUrunler.delete(id);
