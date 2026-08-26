@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getDb, dbAll, dbRun, dbBatch, getDbType } = require('../db/database');
+const { getDb, dbAll, dbBatch } = require('../db/database');
 const fs = require('fs');
 const path = require('path');
 
 const IS_VERCEL = !!process.env.VERCEL;
-const BACKUP_DIR = path.join(__dirname, '../data/yedekler');
+const BACKUP_DIR = path.join(__dirname, '../../data/yedekler');
 
 // Yedek Oluştur (JSON export)
 router.post('/olustur', async (req, res) => {
@@ -159,15 +159,7 @@ async function importYedek(yedek) {
   }
 
   if (batches.length > 0) {
-    if (getDbType() === 'turso') {
-      // Turso batch
-      const stmts = batches.map(s => ({ sql: s.sql, args: (s.params || []).map(p => p === undefined ? null : p) }));
-      await db.client.batch(stmts);
-    } else {
-      for (const b of batches) {
-        await dbRun(b.sql, b.params || []);
-      }
-    }
+    await dbBatch(batches);
   }
 }
 
