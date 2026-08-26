@@ -206,7 +206,11 @@ function renderUrunler() {
     filtrelenmis = filtrelenmis.filter(u => u.KATEGORI_ADI === kategoriFiltre);
   }
   if (arama) {
-    filtrelenmis = filtrelenmis.filter(u => u.URUN_ADI && u.URUN_ADI.toLowerCase().includes(arama));
+    filtrelenmis = filtrelenmis.filter(u => {
+      const urunAdi = (u.URUN_ADI || '').toLowerCase();
+      const karekod = (u.KAREKOD || '').toLowerCase();
+      return urunAdi.includes(arama) || karekod.includes(arama);
+    });
   }
 
   const toplamUrun = filtrelenmis.length;
@@ -1091,19 +1095,24 @@ function stokSilOnay() {
   }
 
   const kategoriFiltre = document.getElementById('kategoriFiltre').value;
-  if (!kategoriFiltre) {
-    showToast('Lütfen bir kategori seçin.', 'error');
+
+  let urunler;
+  let baslik;
+  if (kategoriFiltre) {
+    urunler = tumUrunlerAdmin.filter(u => u.KATEGORI_ADI === kategoriFiltre);
+    baslik = `"${kategoriFiltre}" kategorisindeki`;
+  } else {
+    urunler = tumUrunlerAdmin;
+    baslik = 'Tüm kategorilerdeki';
+  }
+
+  if (urunler.length === 0) {
+    showToast('Silinecek ürün bulunmuyor.', 'warning');
     return;
   }
 
-  const kategoridekiUrunler = tumUrunlerAdmin.filter(u => u.KATEGORI_ADI === kategoriFiltre);
-  if (kategoridekiUrunler.length === 0) {
-    showToast('Bu kategoride ürün bulunmuyor.', 'warning');
-    return;
-  }
-
-  const toplamStok = kategoridekiUrunler.reduce((sum, u) => sum + (parseInt(u.ADET) || 0), 0);
-  sifreOnaybekleyen = { kategori: kategoriFiltre, urunler: kategoridekiUrunler, toplamStok };
+  const toplamStok = urunler.reduce((sum, u) => sum + (parseInt(u.ADET) || 0), 0);
+  sifreOnaybekleyen = { kategori: kategoriFiltre || 'Tümü', urunler, toplamStok };
 
   const sifreInput = document.getElementById('sifreGiris');
   sifreInput.value = '';
@@ -1141,7 +1150,9 @@ async function sifreOnayla() {
 
   const { kategori, urunler, toplamStok } = sifreOnaybekleyen;
 
-  if (!(await showConfirm(`"${kategori}" kategorisindeki ${urunler.length} ürün tamamen silinecek.\n\nDevam etmek istiyor musunuz?`, 'Stok Silme'))) {
+  const mesajBaslik = kategori === 'Tümü' ? 'Tüm kategorilerdeki' : `"${kategori}" kategorisindeki`;
+
+  if (!(await showConfirm(`${mesajBaslik} ${urunler.length} ürün tamamen silinecek.\n\nDevam etmek istiyor musunuz?`, 'Stok Silme'))) {
     closeSifreModal();
     return;
   }
@@ -1150,7 +1161,7 @@ async function sifreOnayla() {
   const result = await window.api.urunDeleteBulk(urunIdler);
 
   if (result) {
-    showToast(`"${kategori}" kategorisindeki ${urunler.length} ürün silindi.`, 'success');
+    showToast(`${mesajBaslik} ${urunler.length} ürün silindi.`, 'success');
     stokSilindi = true;
     await loadUrunler();
   } else {
