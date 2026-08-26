@@ -2566,6 +2566,9 @@ async function utsAlimListesiniYukle() {
         <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
         <input type="number" id="utsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="utsTopluFiyatGuncelle()" style="white-space:nowrap;">Uygula</button>
+        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;margin-left:4px;">✕ Çarpı</label>
+        <input type="number" id="utsCarpan" step="0.01" min="0" placeholder="1.5" style="width:60px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+        <button class="btn btn-warning btn-sm" onclick="utsCarpanUygula()" style="white-space:nowrap;">Alış✕Çarpı→Satış</button>
         <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;cursor:pointer;margin-left:8px;">
           <input type="checkbox" id="utsTumuSecCheck" onchange="utsTumuSecKaldir(this.checked)"> Tümünü Seç
         </label>
@@ -2733,6 +2736,40 @@ async function utsTopluFiyatGuncelle() {
   utsSeciliSatirlar.clear();
   document.getElementById('utsTopluAlis').value = '';
   document.getElementById('utsTopluSatis').value = '';
+  await utsTabloyuFiltrele();
+}
+
+async function utsCarpanUygula() {
+  const carpan = parseFloat(document.getElementById('utsCarpan')?.value);
+  if (isNaN(carpan) || carpan <= 0) {
+    showToast('Geçerli bir çarpan girin.', 'warning');
+    return;
+  }
+
+  const dbIndices = [];
+  document.querySelectorAll('.uts-sec-check:checked').forEach(cb => {
+    const dbIdx = parseInt(cb.dataset.dbIndex);
+    if (!isNaN(dbIdx)) dbIndices.push(dbIdx);
+  });
+
+  if (dbIndices.length === 0) {
+    showToast('Önce ürün seçin.', 'warning');
+    return;
+  }
+
+  const veriler = await window.api.utsAlimOku();
+  let guncellenen = 0;
+  for (const dbIdx of dbIndices) {
+    const v = veriler[dbIdx];
+    if (!v) continue;
+    const alis = parseFloat(v.ALIS_FIYATI) || 0;
+    const yeniSatis = Math.round(alis * carpan * 100) / 100;
+    await window.api.utsAlimTopluFiyatGuncelle({ guncellemeler: [dbIdx], alan: 'SATIS_FIYATI', deger: yeniSatis });
+    guncellenen++;
+  }
+
+  showToast(`${guncellenen} ürüne Alış✕${carpan} → Satış uygulandı.`, 'success');
+  document.getElementById('utsCarpan').value = '';
   await utsTabloyuFiltrele();
 }
 
