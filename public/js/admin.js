@@ -998,6 +998,66 @@ function topluStokAdetGuncelle(index, deger) {
   topluStokVerileri[index].Adet = parseInt(deger) || 0;
 }
 
+function tsTopluFiyatUygula() {
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  if (filtrelenmis.length === 0) {
+    showToast('Filtrelenmiş ürün bulunamadı.', 'warning');
+    return;
+  }
+
+  const alisDeger = parseFloat(document.getElementById('tsTopluAlis')?.value);
+  const satisDeger = parseFloat(document.getElementById('tsTopluSatis')?.value);
+  const alisGecerli = !isNaN(alisDeger) && alisDeger >= 0;
+  const satisGecerli = !isNaN(satisDeger) && satisDeger >= 0;
+
+  if (!alisGecerli && !satisGecerli) {
+    showToast('En az bir fiyat girin.', 'warning');
+    return;
+  }
+
+  let guncellenen = 0;
+  filtrelenmis.forEach(item => {
+    const u = topluStokVerileri[item._index];
+    if (!u) return;
+    if (alisGecerli) u['Alis Fiyati'] = u['Alış Fiyatı'] = alisDeger;
+    if (satisGecerli) u['Satis Fiyati'] = u['Satış Fiyatı'] = satisDeger;
+    guncellenen++;
+  });
+
+  showToast(`${guncellenen} ürüne fiyat uygulandı.`, 'success');
+  document.getElementById('tsTopluAlis').value = '';
+  document.getElementById('tsTopluSatis').value = '';
+  renderTopluStok();
+}
+
+function tsCarpanUygula() {
+  const carpan = parseFloat(document.getElementById('tsCarpan')?.value);
+  if (isNaN(carpan) || carpan <= 0) {
+    showToast('Geçerli bir çarpan girin.', 'warning');
+    return;
+  }
+
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  if (filtrelenmis.length === 0) {
+    showToast('Filtrelenmiş ürün bulunamadı.', 'warning');
+    return;
+  }
+
+  let guncellenen = 0;
+  filtrelenmis.forEach(item => {
+    const u = topluStokVerileri[item._index];
+    if (!u) return;
+    const alis = parseFloat(u['Alis Fiyati'] || u['Alış Fiyatı']) || 0;
+    const yeniSatis = Math.round(alis * carpan * 100) / 100;
+    u['Satis Fiyati'] = u['Satış Fiyatı'] = yeniSatis;
+    guncellenen++;
+  });
+
+  showToast(`${guncellenen} ürüne Alış×${carpan} → Satış uygulandı.`, 'success');
+  document.getElementById('tsCarpan').value = '';
+  renderTopluStok();
+}
+
 async function topluStokOnayla() {
   const girilenler = topluStokVerileri.filter(u => (parseInt(u.Adet) || 0) > 0);
   if (girilenler.length === 0) {

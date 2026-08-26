@@ -173,7 +173,15 @@
                 </select>
               </div>
               <span id="topluStokFiltreSayac" style="font-size:0.75rem;color:var(--color-primary);font-weight:600;"></span>
-              <button class="btn btn-primary btn-sm" onclick="topluStokFiyatGuncelleAc()">💰 Filtrelenenlerin Fiyatını Güncelle</button>
+              <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Alış ₺</label>
+              <input type="number" id="tsTopluAlis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+              <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
+              <input type="number" id="tsTopluSatis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+              <button class="btn btn-primary btn-sm" onclick="tsTopluFiyatUygula()" style="white-space:nowrap;">Uygula</button>
+              <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;margin-left:4px;">Çarpan</label>
+              <input type="number" id="tsCarpan" step="0.01" min="0" placeholder="1.5" style="width:60px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
+              <button class="btn btn-warning btn-sm" onclick="tsCarpanUygula()" style="white-space:nowrap;">Alış×Çarpan→Satış</button>
+              <button class="btn btn-outline btn-sm" onclick="topluStokFiyatGuncelleAc()">💰 Detaylı Fiyat Güncelle</button>
             </div>
             <div id="topluStokOnayBolumu" style="padding: 16px; text-align: right; border-top: 1px solid var(--border); display: none; justify-content: space-between; align-items: center;">
               <button class="btn btn-success btn-sm" onclick="tumunuYazdir('toplustok')"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Tümünü Yazdır</button>
