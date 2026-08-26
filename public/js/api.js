@@ -130,10 +130,22 @@ window.api = {
   },
 
   // ===== YEDEKLEME =====
-  createBackup: () => apiFetch('/api/backup/olustur', { method: 'POST' }),
-  openBackupFolder: () => window.open('/data/yedekler', '_blank'),
+  createBackup: () => fetch('/api/backup/olustur', { method: 'POST' }).then(async r => {
+    if (r.status === 401) { window.location.href = '/login.html'; return null; }
+    const contentType = r.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) return await r.json();
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `yedek_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return { success: true };
+  }),
   getBackupList: () => apiFetch('/api/backup/liste'),
   restoreBackup: (filename) => apiFetch('/api/backup/geri-yukle', { method: 'POST', body: JSON.stringify({ filename }) }),
+  restoreBackupFromJson: (yedek) => apiFetch('/api/backup/yukle-geri-yukle', { method: 'POST', body: JSON.stringify({ yedek }) }),
 
   // ===== QR KOD =====
   qrGenerate: (text, size) => apiFetch(`/api/qr/${encodeURIComponent(text)}?size=${size || 150}`),

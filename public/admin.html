@@ -335,12 +335,15 @@
   <div id="backupModal" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title">💾 Yedek Yönetimi</h3>
+        <h3 class="modal-title">Yedek Yönetimi</h3>
         <button class="modal-close" onclick="closeBackupModal()">&times;</button>
       </div>
       <div class="btn-group" style="margin-bottom: 16px;">
         <button class="btn btn-primary btn-sm" onclick="createBackup()">+ Yeni Yedek Al</button>
-        <button class="btn btn-outline btn-sm" onclick="openBackupFolder()">📁 Klasörü Aç</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+          Yedek Yükle
+          <input type="file" accept=".json" style="display:none;" onchange="uploadBackup(event)">
+        </label>
       </div>
       <div id="backupList" class="table-container"></div>
     </div>

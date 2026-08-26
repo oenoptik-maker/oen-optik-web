@@ -1100,14 +1100,29 @@ function closeBackupModal() {
 }
 
 async function createBackup() {
-  const result = await window.api.createBackup();
-  if (result.success) {
-    showToast('Yedek başarıyla alındı.', 'success');
-    if (document.getElementById('backupModal').classList.contains('active')) {
-      await loadBackupList();
+  try {
+    const r = await fetch('/api/backup/olustur', { method: 'POST' });
+    const ct = r.headers.get('content-type');
+    if (ct && ct.includes('application/json')) {
+      const result = await r.json();
+      if (result.success) {
+        showToast('Yedek başarıyla alındı.', 'success');
+        await loadBackupList();
+      } else {
+        showToast('Yedek alma hatası: ' + result.message, 'error');
+      }
+    } else {
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `yedek_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Yedek dosyası indirildi.', 'success');
     }
-  } else {
-    showToast('Yedek alma hatası: ' + result.message, 'error');
+  } catch (err) {
+    showToast('Yedek alma hatası: ' + err.message, 'error');
   }
 }
 
@@ -1115,7 +1130,7 @@ async function loadBackupList() {
   const backups = await window.api.getBackupList();
   const container = document.getElementById('backupList');
   if (backups.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Henüz yedek bulunmuyor.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Henüz yedek bulunmuyor.<br><small>Yukarıdaki "Yeni Yedek Al" ile yedek oluşturabilir veya "Yedek Yükle" ile mevcut yedeği içe aktarabilirsiniz.</small></div></div>';
     return;
   }
   const rows = backups.map(b => {
@@ -1127,7 +1142,7 @@ async function loadBackupList() {
         <td>${b.name}</td>
         <td>${dateStr}</td>
         <td>${sizeStr}</td>
-        <td><button class="btn btn-outline btn-sm" onclick="restoreBackup('${b.path.replace(/\\/g, '\\\\')}')">Geri Yükle</button></td>
+        <td><button class="btn btn-outline btn-sm" onclick="restoreBackup('${b.filename.replace(/'/g, "\\'")}')">Geri Yükle</button></td>
       </tr>
     `;
   }).join('');
@@ -1139,9 +1154,9 @@ async function loadBackupList() {
   `;
 }
 
-async function restoreBackup(backupPath) {
-  if (!(await showConfirm('Bu yedekten geri yüklemek istediğinizden emin misiniz?', 'Yedek Geri Yükleme'))) return;
-  const result = await window.api.restoreBackup(backupPath);
+async function restoreBackup(filename) {
+  if (!(await showConfirm('Bu yedekten geri yüklemek istediğinizden emin misiniz?\nTüm mevcut veriler yedek ile değiştirilecek!', 'Yedek Geri Yükleme'))) return;
+  const result = await window.api.restoreBackup(filename);
   if (result.success) {
     showToast('Yedek geri yüklendi.', 'success');
     closeBackupModal();
@@ -1152,7 +1167,39 @@ async function restoreBackup(backupPath) {
   }
 }
 
-function openBackupFolder() { window.api.openBackupFolder(); }
+async function uploadBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  try {
+    const text = await file.text();
+    const yedek = JSON.parse(text);
+
+    const siparisSayisi = yedek.siparisler ? yedek.siparisler.length : 0;
+    const urunSayisi = yedek.urunler ? yedek.urunler.length : 0;
+    const kategoriSayisi = yedek.kategoriler ? yedek.kategoriler.length : 0;
+
+    if (!(await showConfirm(
+      `Bu yedeği yüklemek istediğinize emin misiniz?\n\n` +
+      `Yedek içeriği:\n- ${siparisSayisi} Sipariş\n- ${urunSayisi} Ürün\n- ${kategoriSayisi} Kategori\n\n` +
+      `Mevcut tüm veriler yedek ile değiştirilecek!`,
+      'Yedek Yükleme Onayı'
+    ))) return;
+
+    const result = await window.api.restoreBackupFromJson(yedek);
+    if (result.success) {
+      showToast('Yedek başarıyla yüklendi.', 'success');
+      closeBackupModal();
+      await loadKategoriler();
+      await loadUrunler();
+    } else {
+      showToast('Yükleme hatası: ' + result.message, 'error');
+    }
+  } catch (err) {
+    showToast('Yedek yükleme hatası: ' + err.message, 'error');
+  }
+}
 
 // ===== STOK SİLME =====
 let sifreOnaybekleyen = null;
