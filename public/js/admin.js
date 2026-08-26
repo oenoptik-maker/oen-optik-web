@@ -231,20 +231,18 @@ function renderUrunler() {
   const checkboxAll = `<th style="width:30px;text-align:center;"><input type="checkbox" id="tumuSecCheck" onchange="tumuSecKaldir(this.checked)" title="Tümünü Se/Kaldır"></th>`;
   const alisHeader = urunDetayGoster ? '<th>Alış Fiyatı (₺)</th>' : '';
   const rows = sayfaUrunleri.map(u => {
-    const fiyatInput = `<input type="number" min="0" step="1" value="${parseFloat(u.FIYAT) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;font-weight:600;" data-field="FIYAT" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">`;
-    const alisInput = urunDetayGoster ? `<input type="number" min="0" step="1" value="${parseFloat(u.ALIS_FIYATI) || 0}" style="width:75px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;" data-field="ALIS_FIYATI" data-id="${u.URUN_ID}" onchange="urunFiyatKaydet(${u.URUN_ID}, this)">` : '';
-    const alisCell = urunDetayGoster ? `<td>${alisInput}</td>` : '';
+    const alisCell = urunDetayGoster ? `<td style="text-align:right;">₺${parseFloat(u.ALIS_FIYATI || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>` : '';
     return `
     <tr>
       <td style="text-align:center;"><input type="checkbox" class="urun-sec-check" data-id="${u.URUN_ID}" ${seciliUrunler.has(u.URUN_ID) ? 'checked' : ''} onchange="urunSecKaldir(${u.URUN_ID}, this.checked)"></td>
       <td>${u.URUN_ID}</td>
       <td><span class="badge badge-pending">${u.KATEGORI_ADI}</span></td>
-      <td><input type="text" value="${u.KAREKOD || ''}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="karekodKaydet(${u.URUN_ID}, this.value)"></td>
+      <td style="font-size:0.78rem;">${u.KAREKOD || '-'}</td>
       <td><strong>${u.URUN_ADI}</strong></td>
       ${alisCell}
-      <td>${fiyatInput}</td>
+      <td style="text-align:right;font-weight:600;">₺${parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
       <td>${u.MENSEI || '-'}</td>
-      <td><input type="number" min="0" step="1" value="${parseInt(u.ADET) || 0}" style="width:60px;padding:4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);" onchange="urunAdetKaydet(${u.URUN_ID}, this.value)"></td>
+      <td style="text-align:center;">${parseInt(u.ADET) || 0}</td>
       <td>
         <button class="btn btn-success btn-sm" onclick="etiketModalAc(${u.URUN_ID})" title="Karekod Etiket Bas"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg></button>
         <button class="btn btn-outline btn-sm" onclick="editUrun(${u.URUN_ID})">✏️</button>
@@ -485,6 +483,7 @@ function openUrunModal(urun = null) {
     document.getElementById('urunId').value = urun.URUN_ID;
     document.getElementById('urunKategori').value = urun.KATEGORI_ADI;
     document.getElementById('urunAdi').value = urun.URUN_ADI;
+    document.getElementById('urunKarekod').value = urun.KAREKOD || '';
     document.getElementById('urunAlisFiyat').value = urun.ALIS_FIYATI || '';
     document.getElementById('urunFiyat').value = urun.FIYAT;
     document.getElementById('urunAdet').value = urun.ADET || '';
@@ -494,6 +493,7 @@ function openUrunModal(urun = null) {
     document.getElementById('urunId').value = '';
     document.getElementById('urunKategori').value = tumKategoriler.length > 0 ? tumKategoriler[0].KATEGORI_ADI : '';
     document.getElementById('urunAdi').value = '';
+    document.getElementById('urunKarekod').value = '';
     document.getElementById('urunAlisFiyat').value = '';
     document.getElementById('urunFiyat').value = '';
     document.getElementById('urunAdet').value = '';
@@ -514,6 +514,7 @@ async function saveUrun() {
   const id = document.getElementById('urunId').value;
   const kategori = document.getElementById('urunKategori').value;
   const adi = document.getElementById('urunAdi').value.trim();
+  const karekod = document.getElementById('urunKarekod').value.trim();
   const alisFiyat = document.getElementById('urunAlisFiyat').value;
   const fiyat = document.getElementById('urunFiyat').value;
   const adet = document.getElementById('urunAdet').value;
@@ -533,8 +534,7 @@ async function saveUrun() {
     urunId = await window.api.urunGetNextId();
   }
 
-  const existingUrun = id ? tumUrunlerAdmin.find(u => String(u.URUN_ID) === String(id)) : null;
-  const urun = { URUN_ID: urunId, KATEGORI_ADI: kategori, URUN_ADI: adi, ALIS_FIYATI: parseFloat(alisFiyat) || 0, FIYAT: parseFloat(fiyat) || 0, ADET: parseInt(adet) || 0, KAREKOD: existingUrun ? (existingUrun.KAREKOD || '') : '', MENSEI: mensei };
+  const urun = { URUN_ID: urunId, KATEGORI_ADI: kategori, URUN_ADI: adi, KAREKOD: karekod, ALIS_FIYATI: parseFloat(alisFiyat) || 0, FIYAT: parseFloat(fiyat) || 0, ADET: parseInt(adet) || 0, MENSEI: mensei };
   const result = await window.api.urunSave(urun);
 
   if (result) {
