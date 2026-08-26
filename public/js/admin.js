@@ -230,12 +230,13 @@ function renderUrunler() {
 
   const checkboxAll = `<th style="width:30px;text-align:center;"><input type="checkbox" id="tumuSecCheck" onchange="tumuSecKaldir(this.checked)" title="Tümünü Se/Kaldır"></th>`;
   const alisHeader = urunDetayGoster ? '<th>Alış Fiyatı (₺)</th>' : '';
-  const rows = sayfaUrunleri.map(u => {
+  const rows = sayfaUrunleri.map((u, idx) => {
+    const siraNo = (mevcutSayfa - 1) * sayfaBoyutu + idx + 1;
     const alisCell = urunDetayGoster ? `<td style="text-align:right;">₺${parseFloat(u.ALIS_FIYATI || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>` : '';
     return `
     <tr>
       <td style="text-align:center;"><input type="checkbox" class="urun-sec-check" data-id="${u.URUN_ID}" ${seciliUrunler.has(u.URUN_ID) ? 'checked' : ''} onchange="urunSecKaldir(${u.URUN_ID}, this.checked)"></td>
-      <td>${u.URUN_ID}</td>
+      <td>${siraNo}</td>
       <td><span class="badge badge-pending">${u.KATEGORI_ADI}</span></td>
       <td style="font-size:0.78rem;">${u.KAREKOD || '-'}</td>
       <td><strong>${u.URUN_ADI}</strong></td>
@@ -253,7 +254,7 @@ function renderUrunler() {
 
   container.innerHTML = `
     <table class="data-table">
-      <thead><tr>${checkboxAll}<th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th>${alisHeader}<th>Satış Fiyatı (₺)</th><th>Menşei</th><th>Adet</th><th>İşlem</th></tr></thead>
+      <thead><tr>${checkboxAll}<th>#</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th>${alisHeader}<th>Satış Fiyatı (₺)</th><th>Menşei</th><th>Adet</th><th>İşlem</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
