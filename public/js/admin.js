@@ -2645,8 +2645,10 @@ async function utsStogaKaydet() {
 
   function kategoriBelirle(urunAdi) {
     const ad = urunAdi.toLocaleLowerCase('tr').replace(/[\s\-_.]+/g, ' ').trim();
-    if (ad.includes('gözlük cam') || ad.includes('camı') || ad.includes('cam ') || ad.endsWith('cam')) return 'Gözlük Camı';
-    if (ad.includes('optik çerçeve') || ad.includes('optik gözlük çerçevesi') || ad.includes('çerçeve') || ad.includes('cerceve') || ad.includes('optik cerceve')) return 'Optik Çerçeve';
+    const camKelimeleri = ['gözlük cam', 'gözlük camı', 'camı', 'cam ', 'camı ', ' cam'];
+    const cerceveKelimeleri = ['optik çerçeve', 'optik gözlük çerçevesi', 'çerçeve', 'gözlük çerçevesi', 'cerceve', 'optik cerceve', 'gözlük cercevesi'];
+    if (camKelimeleri.some(k => ad.includes(k))) return 'Gözlük Camı';
+    if (cerceveKelimeleri.some(k => ad.includes(k))) return 'Optik Çerçeve';
     return 'UTS Ürünleri';
   }
 
