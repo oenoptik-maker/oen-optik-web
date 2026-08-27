@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           const order = JSON.parse(editData);
           eskiSiparisUrunleri = JSON.parse(order.SECILEN_URUNLER || '[]');
           setFormData(order);
+          urunToplamiGuncelle();
+          updateOdemeOzeti();
           duzenlemeModuAc(order.SIRA_NO);
           if (sessionStorage.getItem('editPaymentOnly') === 'true') {
             sessionStorage.removeItem('editPaymentOnly');
