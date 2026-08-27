@@ -685,6 +685,7 @@ function renderSeciliUrunler() {
 function urunToplamiGuncelle() {
   const toplamEl = document.getElementById('urunToplami');
   const indirimliToplamEl = document.getElementById('urunToplamiIndirimli');
+  const ortalamaIndirimEl = document.getElementById('ortalamaIndirim');
   const toplamInput = document.getElementById('toplam');
   const kalanInput = document.getElementById('kalan');
   const alinanInput = document.getElementById('alinan');
@@ -693,6 +694,7 @@ function urunToplamiGuncelle() {
   const urunToplami = seciliUrunlerListesi.reduce((sum, item) => sum + (item.FIYAT * item.ADET), 0);
   const toplamIndirim = seciliUrunlerListesi.reduce((sum, item) => sum + (item.INDIRIM_TL || 0), 0);
   const indirimliToplam = urunToplami - toplamIndirim;
+  const ortalamaIndirim = urunToplami > 0 ? ((toplamIndirim / urunToplami) * 100) : 0;
 
   if (seciliUrunlerListesi.length > 0) {
     toplamEl.textContent = urunToplami.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -705,6 +707,14 @@ function urunToplamiGuncelle() {
       indirimliToplamEl.textContent = indirimliToplam.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     } else {
       indirimliToplamEl.textContent = '0';
+    }
+  }
+
+  if (ortalamaIndirimEl) {
+    if (seciliUrunlerListesi.length > 0 && toplamIndirim > 0) {
+      ortalamaIndirimEl.textContent = `(Ort. İndirim: %${ortalamaIndirim.toFixed(1)})`;
+    } else {
+      ortalamaIndirimEl.textContent = '';
     }
   }
 
