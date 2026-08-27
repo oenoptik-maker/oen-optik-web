@@ -2785,6 +2785,7 @@ async function utsAlimListesiniYukle() {
 
 function utsAramaFiltre() {
   utsAramalar.urunTanimi = document.getElementById('utsAraUrunTanimi')?.value || '';
+  utsSeciliSatirlar.clear();
   utsTabloyuFiltrele();
 }
 
@@ -2854,15 +2855,18 @@ function utsSeciliGuncelle(index, checked) {
   }
   const sayac = document.getElementById('utsFiltreSayac');
   if (sayac) {
-    window.api.utsAlimOku().then(veriler => {
-      sayac.textContent = `${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}`;
-    });
+    sayac.textContent = `${utsFiltrelenmisIndexler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}`;
+  }
+  const tumCheck = document.getElementById('utsTumuSecCheck');
+  if (tumCheck) {
+    const filtrelenenHepSecili = utsFiltrelenmisIndexler.length > 0 && utsFiltrelenmisIndexler.every(i => utsSeciliSatirlar.has(i));
+    tumCheck.checked = filtrelenenHepSecili;
   }
 }
 
 function utsTumuSecKaldir(hepsiniSec) {
   if (typeof hepsiniSec === 'undefined') {
-    const filtrelenenHepSecili = utsFiltrelenmisIndexler.every(i => utsSeciliSatirlar.has(i));
+    const filtrelenenHepSecili = utsFiltrelenmisIndexler.length > 0 && utsFiltrelenmisIndexler.every(i => utsSeciliSatirlar.has(i));
     hepsiniSec = !filtrelenenHepSecili;
   }
 
@@ -2872,10 +2876,16 @@ function utsTumuSecKaldir(hepsiniSec) {
     utsFiltrelenmisIndexler.forEach(i => utsSeciliSatirlar.delete(i));
   }
 
-  document.querySelectorAll('.uts-sec-check').forEach(cb => {
-    const idx = parseInt(cb.dataset.index);
-    cb.checked = utsSeciliSatirlar.has(idx);
-  });
+  const tbody = document.querySelector('#utsAlimListesi tbody');
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const cb = tr.querySelector('.uts-sec-check');
+      if (cb) {
+        const idx = parseInt(cb.dataset.index);
+        cb.checked = utsSeciliSatirlar.has(idx);
+      }
+    });
+  }
 
   const tumCheck = document.getElementById('utsTumuSecCheck');
   if (tumCheck) {
@@ -2885,9 +2895,7 @@ function utsTumuSecKaldir(hepsiniSec) {
 
   const sayac = document.getElementById('utsFiltreSayac');
   if (sayac) {
-    window.api.utsAlimOku().then(veriler => {
-      sayac.textContent = `${utsFiltrelenmisIndexler.length} / ${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}`;
-    });
+    sayac.textContent = `${utsFiltrelenmisIndexler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}`;
   }
 }
 
