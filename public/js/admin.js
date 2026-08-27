@@ -976,6 +976,7 @@ function renderTopluStok() {
     const u = item;
     return `
     <tr>
+      <td><input type="checkbox" class="ts-secim" data-index="${i}" onchange="topluStokSecimGuncelle()"></td>
       <td>${u.ID || ''}</td>
       <td><span class="badge badge-pending">${u.Kategori || ''}</span></td>
       <td><input type="text" value="${u.KAREKOD || ''}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="topluStokKarekodKaydet(${i}, this.value)"></td>
@@ -998,11 +999,11 @@ function renderTopluStok() {
 
   container.innerHTML = `
     <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;">
-      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi${filtrelenmis.length < topluStokVerileri.length ? ` (filtre: <strong>${filtrelenmis.length}</strong>)` : ''}</span>
+      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi${filtrelenmis.length < topluStokVerileri.length ? ` (filtre: <strong>${filtrelenmis.length}</strong>)` : ''} <span id="topluStokSecimSayac" style="display:none;color:var(--color-primary);font-weight:600;"></span></span>
       <span>Toplam adet: <strong>${topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0)}</strong></span>
     </div>
     <table class="data-table">
-      <thead><tr><th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı</th><th>Satış Fiyatı</th><th>Menşei</th><th>Adet</th></tr></thead>
+      <thead><tr><th><input type="checkbox" onchange="topluStokTumuSec()" title="Tümünü Se/Çıkar"></th><th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı</th><th>Satış Fiyatı</th><th>Menşei</th><th>Adet</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -1012,10 +1013,39 @@ function topluStokAdetGuncelle(index, deger) {
   topluStokVerileri[index].Adet = parseInt(deger) || 0;
 }
 
+function topluStokSecilenleriAl() {
+  const checkboxes = document.querySelectorAll('.ts-secim:checked');
+  return Array.from(checkboxes).map(cb => {
+    const index = parseInt(cb.dataset.index);
+    return { ...topluStokVerileri[index], _index: index };
+  }).filter(u => u._index !== undefined);
+}
+
+function topluStokSecimGuncelle() {
+  const secilen = topluStokSecilenleriAl();
+  const sayac = document.getElementById('topluStokSecimSayac');
+  if (sayac) {
+    if (secilen.length > 0) {
+      sayac.textContent = `${secilen.length} ürün seçildi`;
+      sayac.style.display = 'inline';
+    } else {
+      sayac.textContent = '';
+      sayac.style.display = 'none';
+    }
+  }
+}
+
+function topluStokTumuSec() {
+  const checkboxes = document.querySelectorAll('.ts-secim');
+  const hepsiSecili = Array.from(checkboxes).every(cb => cb.checked);
+  checkboxes.forEach(cb => cb.checked = !hepsiSecili);
+  topluStokSecimGuncelle();
+}
+
 function tsTopluFiyatUygula() {
-  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
-  if (filtrelenmis.length === 0) {
-    showToast('Filtrelenmiş ürün bulunamadı.', 'warning');
+  const secilen = topluStokSecilenleriAl();
+  if (secilen.length === 0) {
+    showToast('Lütfen en az bir ürün seçin.', 'warning');
     return;
   }
 
@@ -1030,7 +1060,7 @@ function tsTopluFiyatUygula() {
   }
 
   let guncellenen = 0;
-  filtrelenmis.forEach(item => {
+  secilen.forEach(item => {
     const u = topluStokVerileri[item._index];
     if (!u) return;
     if (alisGecerli) u['Alis Fiyati'] = u['Alış Fiyatı'] = alisDeger;
@@ -1051,14 +1081,14 @@ function tsCarpanUygula() {
     return;
   }
 
-  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
-  if (filtrelenmis.length === 0) {
-    showToast('Filtrelenmiş ürün bulunamadı.', 'warning');
+  const secilen = topluStokSecilenleriAl();
+  if (secilen.length === 0) {
+    showToast('Lütfen en az bir ürün seçin.', 'warning');
     return;
   }
 
   let guncellenen = 0;
-  filtrelenmis.forEach(item => {
+  secilen.forEach(item => {
     const u = topluStokVerileri[item._index];
     if (!u) return;
     const alis = parseFloat(u['Alis Fiyati'] || u['Alış Fiyatı']) || 0;
@@ -1073,9 +1103,15 @@ function tsCarpanUygula() {
 }
 
 async function topluStokOnayla() {
-  const girilenler = topluStokVerileri.filter(u => (parseInt(u.Adet) || 0) > 0);
+  const secilen = topluStokSecilenleriAl();
+  if (secilen.length === 0) {
+    showToast('Lütfen en az bir ürün seçin.', 'warning');
+    return;
+  }
+
+  const girilenler = secilen.filter(u => (parseInt(u.Adet) || 0) > 0);
   if (girilenler.length === 0) {
-    showToast('En az bir ürün için adet giriniz.', 'error');
+    showToast('Seçilen ürünler için adet giriniz.', 'error');
     return;
   }
 
