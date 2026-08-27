@@ -2,6 +2,7 @@ let allOrders = [];
 let filteredOrders = [];
 let selectedOrders = new Set();
 let selectionMode = false;
+let listReady = false;
 
 let sifreResolve = null;
 function sifreSor() {
@@ -29,6 +30,8 @@ async function loadAllOrders() {
 }
 
 function filterOrders() {
+  if (!listReady) return;
+
   const searchInput = document.getElementById('searchInput');
   const dateFrom = document.getElementById('dateFrom');
   const dateTo = document.getElementById('dateTo');
@@ -405,6 +408,7 @@ async function deleteSelected() {
 async function loadOrders() {
   await loadAllOrders();
   renderOrderTable();
+  listReady = true;
 }
 
 function printDetail() {

@@ -80,15 +80,15 @@
       <div class="search-panel">
         <div class="form-group" style="flex: 2;">
           <label>Genel Arama</label>
-          <input type="text" id="searchInput" placeholder="İsim, telefon, e-mail veya TC ile ara..." oninput="filterOrders()">
+          <input type="text" id="searchInput" placeholder="İsim, telefon, e-mail veya TC ile ara..." oninput="filterOrders()" autocomplete="off">
         </div>
         <div class="form-group">
           <label>Başlangıç Tarihi</label>
-          <input type="date" id="dateFrom" onchange="filterOrders()">
+          <input type="date" id="dateFrom" onchange="filterOrders()" autocomplete="off">
         </div>
         <div class="form-group">
           <label>Bitiş Tarihi</label>
-          <input type="date" id="dateTo" onchange="filterOrders()">
+          <input type="date" id="dateTo" onchange="filterOrders()" autocomplete="off">
         </div>
         <div class="form-group">
           <label>Ödeme Tipi</label>
