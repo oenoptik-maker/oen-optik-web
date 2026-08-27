@@ -718,7 +718,7 @@ function urunToplamiGuncelle() {
     }
   }
 
-  if (toplamInput && !toplamInput.dataset.manuallyEdited) {
+  if (toplamInput) {
     if (seciliUrunlerListesi.length > 0) {
       toplamInput.value = indirimliToplam.toFixed(0);
     } else {
