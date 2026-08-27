@@ -2826,7 +2826,7 @@ function utsTabloyuFiltrele() {
       const dbIdx = v._dbIndex !== undefined ? v._dbIndex : i;
       return `
       <tr data-index="${i}">
-        <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" data-db-index="${dbIdx}" ${utsSeciliSatirlar.has(i) ? 'checked' : ''} onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
+      <td style="text-align:center;"><input type="checkbox" class="uts-sec-check" data-index="${i}" data-db-index="${dbIdx}" onchange="utsSeciliGuncelle(${i}, this.checked)"></td>
         <td>${i + 1}</td>
         <td style="font-size:0.7rem;">${v.URUN_NUMARASI || '-'}</td>
         <td style="font-size:0.7rem;">${v.LOT_BATCH_NO || '-'}</td>
