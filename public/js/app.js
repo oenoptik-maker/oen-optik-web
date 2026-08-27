@@ -98,8 +98,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             tumKategorilerForm.map(k => `<option value="${k.KATEGORI_ADI}">${k.KATEGORI_ADI}</option>`).join('');
         }
         filtreUrunleri();
-        const nextNo = await getNextSiraNo();
-        document.getElementById('siraNo').value = nextNo;
+        if (!duzenleniyor) {
+          const nextNo = await getNextSiraNo();
+          document.getElementById('siraNo').value = nextNo;
+        }
       });
 
       window.addEventListener('pagehide', () => {
