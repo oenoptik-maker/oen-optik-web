@@ -52,13 +52,17 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100dvh;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: var(--bg-secondary);
   color: var(--text-primary);
   line-height: 1.4;
   font-size: 12px;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -190,7 +194,7 @@ body {
   padding: 4px 2px;
   max-width: 100%;
   margin: 0;
-  max-height: calc(100vh - 60px);
+  max-height: calc(100dvh - 60px);
   overflow-y: auto;
 }
 
@@ -1008,8 +1012,8 @@ a.btn {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100dvh;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
   display: flex;
   align-items: center;
@@ -1178,8 +1182,8 @@ a.btn {
   body {
     overflow: auto;
     font-size: 14px;
-    height: auto;
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -1390,9 +1394,9 @@ a.btn {
 @media (max-width: 480px) {
   body {
     font-size: 14px;
-    height: auto;
+    height: 100dvh;
     overflow: auto;
-    min-height: 100vh;
+    min-height: 100dvh;
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
   }
