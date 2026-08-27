@@ -679,6 +679,7 @@ function renderSeciliUrunler() {
       <tbody>${rows}</tbody>
     </table>
   `;
+  urunToplamiGuncelle();
 }
 
 function urunToplamiGuncelle() {
@@ -761,6 +762,7 @@ function renderOdemeListesi() {
 
   if (odemeListesi.length === 0) {
     container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 12px; font-size: 13px;">Henüz ödeme eklenmedi</div>';
+    updateOdemeOzeti();
     return;
   }
 
@@ -780,6 +782,7 @@ function renderOdemeListesi() {
       <tbody>${rows}</tbody>
     </table>
   `;
+  updateOdemeOzeti();
 }
 
 function updateOdemeOzeti() {
