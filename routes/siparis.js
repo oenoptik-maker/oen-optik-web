@@ -109,6 +109,16 @@ router.delete('/:siraNo', async (req, res) => {
   try {
     await getDb();
     await dbRun('DELETE FROM siparisler WHERE SIRA_NO = ?', [parseInt(req.params.siraNo)]);
+
+    // SIRA_NO'ları yeniden numaralandır (1'den başlayarak)
+    const rows = await dbAll('SELECT SIRA_NO FROM siparisler ORDER BY SIRA_NO ASC');
+    for (let i = 0; i < rows.length; i++) {
+      const yeniNo = i + 1;
+      if (rows[i].SIRA_NO !== yeniNo) {
+        await dbRun('UPDATE siparisler SET SIRA_NO = ? WHERE SIRA_NO = ?', [yeniNo, rows[i].SIRA_NO]);
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

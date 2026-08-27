@@ -3,6 +3,25 @@ let filteredOrders = [];
 let selectedOrders = new Set();
 let selectionMode = false;
 
+let sifreResolve = null;
+function sifreSor() {
+  return new Promise(resolve => {
+    sifreResolve = resolve;
+    document.getElementById('sifreGiris').value = '';
+    document.getElementById('sifreModal').classList.add('active');
+    setTimeout(() => document.getElementById('sifreGiris').focus(), 100);
+  });
+}
+function sifreOnayla() {
+  const sifre = document.getElementById('sifreGiris').value.trim();
+  document.getElementById('sifreModal').classList.remove('active');
+  if (sifreResolve) { sifreResolve(sifre === '2516'); sifreResolve = null; }
+}
+function sifreIptal() {
+  document.getElementById('sifreModal').classList.remove('active');
+  if (sifreResolve) { sifreResolve(false); sifreResolve = null; }
+}
+
 async function loadAllOrders() {
   allOrders = await readExcel();
   filteredOrders = [...allOrders];
@@ -343,6 +362,7 @@ function editOrder(siraNo) {
 }
 
 async function deleteOrderByNo(siraNo) {
+  if (!(await sifreSor())) { showToast('Şifre hatalı!', 'error'); return; }
   if (!(await showConfirm(`${siraNo} nolu siparişi silmek istediğinizden emin misiniz?`, 'Sipariş Silme'))) return;
 
   const result = await deleteOrderFromExcel(siraNo);
@@ -359,6 +379,7 @@ async function deleteSelected() {
     showToast('Önce kayıt seçin.', 'warning');
     return;
   }
+  if (!(await sifreSor())) { showToast('Şifre hatalı!', 'error'); return; }
   if (!(await showConfirm(`${selectedOrders.size} adet siparişi silmek istediğinizden emin misiniz?`, 'Toplu Sipariş Silme'))) return;
 
   let successCount = 0;
