@@ -56,6 +56,12 @@ router.get('/ara', async (req, res) => {
     }
 
     const rows = await dbAll(query, params);
+    // ACIKLAMA_UZAK -> SIPARIS_DETAYLARI olarak döndür
+    rows.forEach(row => {
+      row.SIPARIS_DETAYLARI = row.ACIKLAMA_UZAK || '';
+      delete row.ACIKLAMA_UZAK;
+      delete row.ACIKLAMA_YAKIN;
+    });
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -66,6 +72,13 @@ router.post('/', async (req, res) => {
   try {
     await getDb();
     const orderData = req.body;
+
+    // SIPARIS_DETAYLARI -> ACIKLAMA_UZAK olarak kaydet
+    if (orderData.SIPARIS_DETAYLARI !== undefined) {
+      orderData.ACIKLAMA_UZAK = orderData.SIPARIS_DETAYLARI;
+      orderData.ACIKLAMA_YAKIN = '';
+      delete orderData.SIPARIS_DETAYLARI;
+    }
 
     const existing = await dbGet('SELECT SIRA_NO FROM siparisler WHERE SIRA_NO = ?', [orderData.SIRA_NO]);
 

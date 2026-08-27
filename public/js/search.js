@@ -293,10 +293,9 @@ function showDetail(siraNo) {
           <tr><td style="padding: 4px 0;">Alınan:</td><td>₺${formatNumber(order.ALINAN)}</td></tr>
           <tr><td style="padding: 4px 0;">Kalan:</td><td style="color: ${parseFloat(order.KALAN) > 0 ? 'var(--danger)' : 'var(--success)'}"><strong>₺${formatNumber(order.KALAN)}</strong></td></tr>
         </table>
-        ${order.ACIKLAMA_UZAK || order.ACIKLAMA_YAKIN ? `
-          <h4 style="margin: 12px 0 8px; color: var(--accent);">📝 Açıklamalar</h4>
-          ${order.ACIKLAMA_UZAK ? `<p><strong>Uzak:</strong> ${order.ACIKLAMA_UZAK}</p>` : ''}
-          ${order.ACIKLAMA_YAKIN ? `<p><strong>Yakın:</strong> ${order.ACIKLAMA_YAKIN}</p>` : ''}
+        ${order.SIPARIS_DETAYLARI ? `
+          <h4 style="margin: 12px 0 8px; color: var(--accent);">📝 Sipariş Detayları</h4>
+          <p>${order.SIPARIS_DETAYLARI}</p>
         ` : ''}
       </div>
     </div>

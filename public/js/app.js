@@ -1208,8 +1208,7 @@ async function yeniSatisMusteriBilgisiYukle(siparis) {
   ];
   gozAlanlari.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
-  document.getElementById('aciklamaUzak').value = '';
-  document.getElementById('aciklamaYakin').value = '';
+  document.getElementById('siparisDetaylari').value = '';
   document.getElementById('toplam').value = '';
   document.getElementById('toplam').dataset.manuallyEdited = 'true';
 

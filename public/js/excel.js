@@ -32,8 +32,7 @@ const FIELD_IDS = {
   CAP_SOL_UZAK: 'capSolUzak',
   CAP_SAG_YAKIN: 'capSagYakin',
   CAP_SOL_YAKIN: 'capSolYakin',
-  ACIKLAMA_UZAK: 'aciklamaUzak',
-  ACIKLAMA_YAKIN: 'aciklamaYakin',
+  SIPARIS_DETAYLARI: 'siparisDetaylari',
   ODEME_DETAYLARI: 'odemeDetaylari',
   SECILEN_URUNLER: 'secilenUrunler',
   TOPLAM: 'toplam',
@@ -59,7 +58,7 @@ function getFormData() {
 }
 
 const UPPER_FIELDS = new Set([
-  'AD_SOYAD', 'ADRES', 'ACIKLAMA_UZAK', 'ACIKLAMA_YAKIN',
+  'AD_SOYAD', 'ADRES', 'SIPARIS_DETAYLARI',
   'SAG_SPH_UZAK', 'SAG_CYL_UZAK', 'SAG_AXE_UZAK', 'SOL_SPH_UZAK', 'SOL_CYL_UZAK', 'SOL_AXE_UZAK',
   'SAG_SPH_YAKIN', 'SAG_CYL_YAKIN', 'SAG_AXE_YAKIN', 'SOL_SPH_YAKIN', 'SOL_CYL_YAKIN', 'SOL_AXE_YAKIN'
 ]);
