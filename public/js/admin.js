@@ -2492,10 +2492,16 @@ function utsGeciciFiltre() {
 }
 
 function utsApiSeciliGuncelle() {
+  const q = (document.getElementById('utsUrunAra')?.value || '').toLowerCase();
   const secili = document.querySelectorAll('.uts-api-sec:checked');
   const tumCheck = document.getElementById('utsApiTumuSec');
   if (tumCheck) {
-    const toplam = document.querySelectorAll('.uts-api-sec').length;
+    let toplam;
+    if (q) {
+      toplam = document.querySelectorAll('#utsGeciciTablo tbody tr:not([style*="display: none"]) .uts-api-sec').length;
+    } else {
+      toplam = document.querySelectorAll('.uts-api-sec').length;
+    }
     tumCheck.checked = toplam > 0 && secili.length === toplam;
   }
   utsApiSeciliAdetGuncelle();
@@ -2508,7 +2514,17 @@ function utsApiSeciliAdetGuncelle() {
 }
 
 function utsApiTumuSecKaldir(checked) {
-  document.querySelectorAll('.uts-api-sec').forEach(cb => { cb.checked = checked; });
+  const q = (document.getElementById('utsUrunAra')?.value || '').toLowerCase();
+  document.querySelectorAll('.uts-api-sec').forEach(cb => {
+    if (!q) {
+      cb.checked = checked;
+    } else {
+      const tr = cb.closest('tr');
+      if (tr && tr.style.display !== 'none') {
+        cb.checked = checked;
+      }
+    }
+  });
   utsApiSeciliGuncelle();
 }
 
