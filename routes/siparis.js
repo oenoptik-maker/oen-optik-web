@@ -18,6 +18,11 @@ router.get('/', async (req, res) => {
   try {
     await getDb();
     const rows = await dbAll('SELECT * FROM siparisler ORDER BY SIRA_NO DESC');
+    rows.forEach(row => {
+      row.SIPARIS_DETAYLARI = row.ACIKLAMA_UZAK || '';
+      delete row.ACIKLAMA_UZAK;
+      delete row.ACIKLAMA_YAKIN;
+    });
     res.json(rows);
   } catch (err) {
     console.error('Siparis okuma hatasi:', err);
