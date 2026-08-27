@@ -111,6 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           const nextNo = await getNextSiraNo();
           document.getElementById('siraNo').value = nextNo;
         }
+        if (seciliUrunlerListesi.length > 0) urunToplamiGuncelle();
+        if (odemeListesi.length > 0) updateOdemeOzeti();
       });
 
       window.addEventListener('pagehide', () => {
