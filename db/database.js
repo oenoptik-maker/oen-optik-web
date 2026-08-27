@@ -96,7 +96,8 @@ async function initTables() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       URUN_NUMARASI TEXT, LOT_BATCH_NO TEXT, SERI_SIRA_NO TEXT,
       URUN_TANIMI TEXT, GONDEREN_KURUM TEXT, ADET TEXT,
-      ALIS_FIYATI REAL DEFAULT 0, SATIS_FIYATI REAL DEFAULT 0, KAYIT_TARIHI TEXT
+      ALIS_FIYATI REAL DEFAULT 0, SATIS_FIYATI REAL DEFAULT 0, KAYIT_TARIHI TEXT,
+      MENSEI TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS etiket_tasarim (id INTEGER PRIMARY KEY CHECK (id = 1), design TEXT)`,
     `CREATE TABLE IF NOT EXISTS credentials (id INTEGER PRIMARY KEY CHECK (id = 1), tc TEXT, sifre TEXT)`,
@@ -114,12 +115,14 @@ async function initTables() {
     }
     try { await db.client.execute('ALTER TABLE credentials ADD COLUMN gkk TEXT'); } catch {}
     try { await db.client.execute('ALTER TABLE credentials ADD COLUMN worker_url TEXT'); } catch {}
+    try { await db.client.execute('ALTER TABLE uts_alimlar ADD COLUMN MENSEI TEXT'); } catch {}
   } else {
     for (const stmt of tables) {
       db.client.run(stmt);
     }
     try { db.client.run('ALTER TABLE credentials ADD COLUMN gkk TEXT'); } catch {}
     try { db.client.run('ALTER TABLE credentials ADD COLUMN worker_url TEXT'); } catch {}
+    try { db.client.run('ALTER TABLE uts_alimlar ADD COLUMN MENSEI TEXT'); } catch {}
     if (!IS_VERCEL) saveDb();
   }
 

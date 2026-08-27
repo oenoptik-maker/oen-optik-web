@@ -100,7 +100,11 @@ router.put('/alimlar/:index/fiyat', async (req, res) => {
     const { alan, deger } = req.body;
     const rows = await dbAll('SELECT id FROM uts_alimlar ORDER BY id');
     const row = rows[parseInt(req.params.index)];
-    if (row) await dbRun(`UPDATE uts_alimlar SET ${alan} = ? WHERE id = ?`, [parseFloat(deger) || 0, row.id]);
+    if (row) {
+      const textFields = ['MENSEI', 'URUN_TANIMI', 'GONDEREN_KURUM'];
+      const degerFinal = textFields.includes(alan) ? deger : (parseFloat(deger) || 0);
+      await dbRun(`UPDATE uts_alimlar SET ${alan} = ? WHERE id = ?`, [degerFinal, row.id]);
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -113,10 +117,12 @@ router.put('/alimlar/toplu-fiyat', async (req, res) => {
     const { guncellemeler, alan, deger } = req.body;
     const rows = await dbAll('SELECT id FROM uts_alimlar ORDER BY id');
     let basarili = 0;
+    const textFields = ['MENSEI', 'URUN_TANIMI', 'GONDEREN_KURUM'];
+    const degerFinal = textFields.includes(alan) ? deger : (parseFloat(deger) || 0);
     for (const idx of guncellemeler) {
       const row = rows[idx];
       if (row) {
-        await dbRun(`UPDATE uts_alimlar SET ${alan} = ? WHERE id = ?`, [parseFloat(deger) || 0, row.id]);
+        await dbRun(`UPDATE uts_alimlar SET ${alan} = ? WHERE id = ?`, [degerFinal, row.id]);
         basarili++;
       }
     }
