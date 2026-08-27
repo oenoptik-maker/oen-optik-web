@@ -1385,3 +1385,358 @@ a.btn {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ===== KÜÇÜK EKRAN (480px altı) ===== */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+    height: auto;
+    overflow: auto;
+    min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+
+  .container {
+    padding: 2px;
+    max-height: none;
+    overflow-y: visible;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .header {
+    padding: 4px 6px;
+    flex-wrap: wrap;
+  }
+
+  .header-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header-right {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .brand-name {
+    font-size: 0.7rem;
+  }
+
+  .brand-sub {
+    font-size: 0.45rem;
+  }
+
+  .nav {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 3px;
+    padding: 2px 0;
+  }
+
+  .nav::-webkit-scrollbar { display: none; }
+
+  .nav-btn {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    min-height: 32px;
+    flex-shrink: 0;
+  }
+
+  .card {
+    padding: 6px;
+    margin-bottom: 4px;
+    border-radius: var(--radius);
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-bottom: 4px;
+  }
+
+  .card-title {
+    font-size: 0.8rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .form-row-3 {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .form-group label {
+    font-size: 0.7rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px !important;
+    padding: 8px 10px;
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    min-height: 44px;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: var(--radius);
+  }
+
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .action-bar {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .action-bar .btn {
+    flex: 1 1 45%;
+    min-width: 0;
+  }
+
+  /* Tablolar */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100vw;
+  }
+
+  .data-table {
+    font-size: 0.7rem;
+    min-width: auto;
+  }
+
+  .eye-table {
+    font-size: 0.7rem;
+    min-width: 480px;
+  }
+
+  /* Eye section */
+  .eye-section {
+    grid-template-columns: 1fr;
+  }
+
+  .eye-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Category/product filter */
+  .category-filter {
+    flex-direction: column;
+  }
+
+  .category-filter select,
+  .category-filter input {
+    width: 100%;
+  }
+
+  .product-filter {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .product-filter select,
+  .product-filter input {
+    width: 100%;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    padding: 2px;
+  }
+
+  .modal {
+    margin: 2vh auto;
+    max-height: 96vh;
+  }
+
+  .modal-content,
+  .modal-overlay .modal {
+    width: 98vw !important;
+    max-width: 98vw !important;
+    margin: 1vh auto !important;
+    max-height: 98vh;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .modal-header {
+    padding: 6px 8px;
+  }
+
+  .modal-title {
+    font-size: 0.85rem;
+  }
+
+  /* Tab buttons */
+  .admin-tab-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-height: 36px;
+  }
+
+  /* Badge */
+  .badge {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    width: 36px;
+    height: 20px;
+  }
+
+  .theme-toggle::after {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+
+  [data-theme="dark"] .theme-toggle::after {
+    left: 17px;
+  }
+
+  /* Timer */
+  .timer {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  /* Search */
+  .search-input {
+    width: 100%;
+    font-size: 0.85rem;
+    min-height: 44px;
+  }
+
+  /* UTS table */
+  .uts-table {
+    font-size: 0.7rem;
+    min-width: 400px;
+  }
+
+  /* Logout */
+  .logout-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-height: 36px;
+  }
+
+  /* Alisveris gecmisi */
+  .alisveris-gecmisi-table {
+    font-size: 0.7rem;
+  }
+
+  /* Filter area */
+  .filter-area {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .filter-area input,
+  .filter-area select {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  /* Siparis tablosu */
+  .siparis-table {
+    font-size: 0.7rem;
+    min-width: 500px;
+  }
+
+  /* Kasa */
+  .kasa-toplam {
+    font-size: 1rem;
+  }
+
+  /* Toast */
+  .toast {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    max-width: 95vw;
+    left: 2.5vw;
+    right: 2.5vw;
+  }
+
+  /* Scrollbar gizle */
+  * {
+    scrollbar-width: thin;
+  }
+
+  /* Touch-friendly */
+  *:active,
+  *:focus {
+    outline: none;
+  }
+
+  input, select, textarea, button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: var(--radius);
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"] {
+    font-size: 16px !important;
+  }
+
+  /* Yedek modal */
+  .backup-list-table {
+    font-size: 0.7rem;
+  }
+
+  /* Sayfalama */
+  .pagination {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .page-btn {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 0.8rem;
+  }
+}
