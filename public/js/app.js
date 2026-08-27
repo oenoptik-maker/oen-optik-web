@@ -1172,7 +1172,7 @@ function adSoyadKontrol(input) {
 }
 
 // ===== SİPARİŞ ARAMA MODAL =====
-function siparisAramaModalGoster(siparis) {
+function siparisAramaModalGoster(siparis, tumSiparisler) {
   return new Promise((resolve) => {
     const modal = document.getElementById('siparisAramaModal');
     const icerik = document.getElementById('aramaModalIcerik');
@@ -1180,11 +1180,19 @@ function siparisAramaModalGoster(siparis) {
     const yeniSatisBtn = document.getElementById('aramaModalYeniSatis');
     const iptalBtn = document.getElementById('aramaModalIptal');
 
+    const sirali = (tumSiparisler || [siparis]).sort((a, b) => (parseInt(b.SIRA_NO) || 0) - (parseInt(a.SIRA_NO) || 0));
+
+    let siparisListesi = sirali.map(s =>
+      `<div style="padding:6px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">` +
+        `<span><strong>#${s.SIRA_NO}</strong> — ₺${parseFloat(s.TOPLAM || 0).toLocaleString('tr-TR')}</span>` +
+        `<span style="color:var(--text-secondary); font-size:0.82rem;">📅 ${formatDate(s.SIPARIS_TARIHI) || 'Tarihsiz'}</span>` +
+      `</div>`
+    ).join('');
+
     icerik.innerHTML =
-      `<strong>${siparis.AD_SOYAD}</strong> adına kayıtlı <strong>${siparis.SIRA_NO}</strong> nolu sipariş bulundu.<br><br>` +
-      `Telefon: ${siparis.TELEFON || '-'}<br>` +
-      `Tarih: ${siparis.SIPARIS_TARIHI || '-'}<br>` +
-      `Toplam: ₺${parseFloat(siparis.TOPLAM || 0).toFixed(0)}`;
+      `<strong>${siparis.AD_SOYAD}</strong> adına kayıtlı <strong>${sirali.length}</strong> sipariş bulundu.<br><br>` +
+      `Telefon: ${siparis.TELEFON || '-'}<br><br>` +
+      `<div style="max-height:200px; overflow-y:auto;">${siparisListesi}</div>`;
 
     modal.classList.add('active');
 
@@ -1223,7 +1231,7 @@ async function siparisAra(alan, deger) {
   if (arananSiparisId === String(enYeni.SIRA_NO)) return;
   arananSiparisId = String(enYeni.SIRA_NO);
 
-  const sonuc = await siparisAramaModalGoster(enYeni);
+    const sonuc = await siparisAramaModalGoster(enYeni, bulunanlar);
 
   if (sonuc === 'duzenle') {
     duzenleniyor = true;
