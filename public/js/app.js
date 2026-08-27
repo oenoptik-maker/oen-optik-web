@@ -761,10 +761,38 @@ function odemeEkle() {
   showToast(`${tip} - ₺${tutar.toLocaleString('tr-TR')} eklendi.`, 'success');
 }
 
+let odemeSifreResolver = null;
+let odemeSifreIndex = -1;
+
 function odemeCikar(index) {
-  odemeListesi.splice(index, 1);
+  odemeSifreIndex = index;
+  document.getElementById('odemeSifreGiris').value = '';
+  document.getElementById('odemeSifreModal').classList.add('active');
+  setTimeout(() => document.getElementById('odemeSifreGiris').focus(), 100);
+}
+
+function odemeSifreOnayla() {
+  const sifre = document.getElementById('odemeSifreGiris').value.trim();
+  if (sifre === '') {
+    showToast('Lütfen şifre girin.', 'error');
+    return;
+  }
+  if (sifre !== '2516') {
+    showToast('Şifre hatalı!', 'error');
+    document.getElementById('odemeSifreGiris').value = '';
+    document.getElementById('odemeSifreGiris').focus();
+    return;
+  }
+  document.getElementById('odemeSifreModal').classList.remove('active');
+  odemeListesi.splice(odemeSifreIndex, 1);
   renderOdemeListesi();
   updateOdemeOzeti();
+  showToast('Ödeme silindi.', 'success');
+}
+
+function odemeSifreIptal() {
+  document.getElementById('odemeSifreModal').classList.remove('active');
+  odemeSifreIndex = -1;
 }
 
 function renderOdemeListesi() {
