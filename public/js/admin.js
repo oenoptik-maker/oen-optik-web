@@ -2687,7 +2687,7 @@ async function utsStogaKaydet() {
       FIYAT: veri._satisFiyat || 0,
       ADET: parseInt(veri.adet) || 1,
       KAREKOD: veri.urunNo || '',
-      MENSEI: veri.gonderenKurum || ''
+      MENSEI: veri._mensei || ''
     }));
     eklenen++;
   }
