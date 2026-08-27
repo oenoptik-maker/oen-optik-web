@@ -81,6 +81,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           eskiSiparisUrunleri = JSON.parse(order.SECILEN_URUNLER || '[]');
           setFormData(order);
           duzenlemeModuAc(order.SIRA_NO);
+          if (sessionStorage.getItem('editPaymentOnly') === 'true') {
+            sessionStorage.removeItem('editPaymentOnly');
+            setTimeout(() => {
+              const odemeSection = document.querySelector('[id="yeniOdemeTipi"]')?.closest('.card');
+              if (odemeSection) odemeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+          }
         } catch (err) { clearFormData(); }
       }
 

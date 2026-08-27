@@ -314,6 +314,16 @@ function editOrderFromDetail() {
   if (siraNo) editOrder(siraNo);
 }
 
+function editPaymentFromDetail() {
+  const siraNo = document.getElementById('detailModal').dataset.siraNo;
+  if (!siraNo) return;
+  const order = allOrders.find(o => String(o.SIRA_NO) === String(siraNo));
+  if (!order) return;
+  sessionStorage.setItem('editOrder', JSON.stringify(order));
+  sessionStorage.setItem('editPaymentOnly', 'true');
+  window.location.href = 'index.html';
+}
+
 async function deleteOrderFromDetail() {
   const siraNo = document.getElementById('detailModal').dataset.siraNo;
   if (siraNo) {
