@@ -11,6 +11,10 @@ let aramaTimer = null;
 let onizlemeTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (window.self !== window.top) {
+    document.documentElement.classList.add('in-iframe');
+    document.body.classList.add('in-iframe');
+  }
   await loadKategoriler();
   await loadUrunler();
 });
