@@ -727,6 +727,7 @@ function urunToplamiGuncelle() {
   if (toplamIndirimEl) {
     toplamIndirimEl.textContent = toplamIndirim.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
+  updateOdemeOzeti();
 }
 
 // ===== ÖDEME DETAYLARI =====
@@ -762,7 +763,6 @@ function renderOdemeListesi() {
 
   if (odemeListesi.length === 0) {
     container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 12px; font-size: 13px;">Henüz ödeme eklenmedi</div>';
-    updateOdemeOzeti();
     return;
   }
 
@@ -782,7 +782,6 @@ function renderOdemeListesi() {
       <tbody>${rows}</tbody>
     </table>
   `;
-  updateOdemeOzeti();
 }
 
 function updateOdemeOzeti() {
