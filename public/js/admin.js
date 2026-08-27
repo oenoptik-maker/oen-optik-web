@@ -2644,9 +2644,9 @@ async function utsStogaKaydet() {
   }
 
   function kategoriBelirle(urunAdi) {
-    const ad = urunAdi.toLowerCase();
-    if (ad.includes('gözlük camı')) return 'Gözlük Camı';
-    if (ad.includes('optik çerçeve') || ad.includes('optik gözlük çerçevesi')) return 'Optik Çerçeve';
+    const ad = urunAdi.toLocaleLowerCase('tr');
+    if (ad.includes('gözlük camı') || ad.includes('gözlük cam') || ad.includes('camı')) return 'Gözlük Camı';
+    if (ad.includes('optik çerçeve') || ad.includes('optik gözlük çerçevesi') || ad.includes('çerçeve') || ad.includes('cerceve')) return 'Optik Çerçeve';
     return 'UTS Ürünleri';
   }
 
