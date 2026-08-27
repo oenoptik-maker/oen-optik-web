@@ -73,13 +73,13 @@ async function kategoriNormallestir() {
 
 function renderKategoriler() {
   const container = document.getElementById('kategoriListesi');
-  if (tumKategoriler.length === 0) {
+  const filtrelenmis = tumKategoriler.filter(k => k.KATEGORI_ADI !== 'UTS ÜRÜNLERİ');
+  if (filtrelenmis.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Henüz kategori eklenmemiş.</div></div>';
     return;
   }
-  const rows = tumKategoriler.map(k => `
+  const rows = filtrelenmis.map(k => `
     <tr>
-      <td>${k.KATEGORI_ID}</td>
       <td><strong>${k.KATEGORI_ADI}</strong></td>
       <td>
         <button class="btn btn-outline btn-sm" onclick="editKategori(${k.KATEGORI_ID})">✏️</button>
@@ -88,7 +88,7 @@ function renderKategoriler() {
   `).join('');
   container.innerHTML = `
     <table class="data-table">
-      <thead><tr><th>ID</th><th>Kategori Adı</th><th>İşlem</th></tr></thead>
+      <thead><tr><th>Kategori Adı</th><th>İşlem</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
@@ -98,7 +98,8 @@ function updateKategoriSelects() {
   const filtreSelect = document.getElementById('kategoriFiltre');
   const urunKategoriSelect = document.getElementById('urunKategori');
 
-  const options = tumKategoriler.map(k => `<option value="${k.KATEGORI_ADI}">${k.KATEGORI_ADI}</option>`).join('');
+  const filtrelenmis = tumKategoriler.filter(k => k.KATEGORI_ADI !== 'UTS ÜRÜNLERİ');
+  const options = filtrelenmis.map(k => `<option value="${k.KATEGORI_ADI}">${k.KATEGORI_ADI}</option>`).join('');
 
   if (filtreSelect) {
     const currentVal = filtreSelect.value;
