@@ -3,6 +3,7 @@ let filteredOrders = [];
 let selectedOrders = new Set();
 let selectionMode = false;
 let listReady = false;
+let _lastLoadedCount = 0;
 
 let sifreResolve = null;
 function sifreSor() {
@@ -24,13 +25,26 @@ function sifreIptal() {
 }
 
 async function loadAllOrders() {
-  allOrders = await readExcel();
+  try {
+    const data = await readExcel();
+    if (Array.isArray(data) && data.length > 0) {
+      allOrders = data;
+    } else if (Array.isArray(data) && data.length === 0) {
+      allOrders = [];
+    } else {
+      console.error('[search.js] readExcel gecersiz veri:', data);
+    }
+  } catch (err) {
+    console.error('[search.js] loadAllOrders hatasi:', err);
+  }
   filteredOrders = [...allOrders];
+  _lastLoadedCount = allOrders.length;
   return filteredOrders;
 }
 
 function filterOrders() {
   if (!listReady) return;
+  if (!Array.isArray(allOrders) || allOrders.length === 0) return;
 
   const searchInput = document.getElementById('searchInput');
   const dateFrom = document.getElementById('dateFrom');
@@ -90,10 +104,14 @@ function parseDate(dateStr) {
 }
 
 function clearFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('dateFrom').value = '';
-  document.getElementById('dateTo').value = '';
-  document.getElementById('filterOdeme').value = '';
+  const si = document.getElementById('searchInput');
+  const df = document.getElementById('dateFrom');
+  const dt = document.getElementById('dateTo');
+  const fo = document.getElementById('filterOdeme');
+  if (si) si.value = '';
+  if (df) df.value = '';
+  if (dt) dt.value = '';
+  if (fo) fo.value = '';
   filteredOrders = [...allOrders];
   renderOrderTable();
 }
@@ -160,6 +178,11 @@ function renderOrderTable() {
   const recordCount = document.getElementById('recordCount');
 
   if (!tbody) return;
+
+  // Guvenlik: filteredOrders bos ama allOrders dolu ise → filtre hatasi, geri yukle
+  if (filteredOrders.length === 0 && allOrders.length > 0) {
+    filteredOrders = [...allOrders];
+  }
 
   if (filteredOrders.length === 0) {
     tbody.innerHTML = '';
@@ -409,6 +432,8 @@ async function loadOrders() {
   await loadAllOrders();
   renderOrderTable();
   listReady = true;
+  const si = document.getElementById('searchInput');
+  if (si && si.value) { si.value = ''; filteredOrders = [...allOrders]; renderOrderTable(); }
 }
 
 function printDetail() {

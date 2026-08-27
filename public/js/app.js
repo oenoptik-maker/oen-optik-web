@@ -124,6 +124,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       await initListPage();
       const loadingOverlay = document.getElementById('loadingOverlay');
       if (loadingOverlay) loadingOverlay.classList.add('hidden');
+
+      // bfcache: sayfa geri geldiginde veriyi yenile
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) { loadOrders(); }
+      });
     } else {
       // Admin sayfası
       tumUrunler = await window.api.urunRead();
