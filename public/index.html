@@ -326,23 +326,21 @@
 
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">📝 Sipariş Detayları</h2>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="width:100%;">
-              <textarea id="siparisDetaylari" rows="4" placeholder="Sipariş detaylarını buraya yazabilirsiniz..." oninput="turkceBuyukHarf(this)" style="width:100%;"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
             <h2 class="card-title">📋 ALIŞVERİŞ GEÇMİŞİ</h2>
           </div>
           <div id="alisverisGecmisi" style="font-size: 0.8rem;">
             <div style="text-align: center; color: var(--text-muted); padding: 12px;">Müşteri bilgisi girildiğinde geçmiş siparişler burada gösterilecek</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin:4px 2px;">
+      <div class="card-header">
+        <h2 class="card-title">📝 Sipariş Detayları</h2>
+      </div>
+      <div class="form-group" style="width:100%;padding:0 12px 12px;">
+        <textarea id="siparisDetaylari" rows="4" placeholder="Sipariş detaylarını buraya yazabilirsiniz..." oninput="turkceBuyukHarf(this)" style="width:100%;resize:both;min-height:80px;"></textarea>
       </div>
     </div>
 
