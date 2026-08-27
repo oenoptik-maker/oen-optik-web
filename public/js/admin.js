@@ -41,25 +41,25 @@ async function kategoriNormallestir() {
   let birlestirildi = false;
 
   for (const [key, kategoriler] of Object.entries(gruplar)) {
+    const kategoriAdi = key.toLocaleUpperCase('tr-TR');
     if (kategoriler.length <= 1) {
-      if (kategoriler[0].KATEGORI_ADI !== key) {
-        await window.api.kategoriSave({ KATEGORI_ID: kategoriler[0].KATEGORI_ID, KATEGORI_ADI: key });
+      if (kategoriler[0].KATEGORI_ADI !== kategoriAdi) {
+        await window.api.kategoriSave({ KATEGORI_ID: kategoriler[0].KATEGORI_ID, KATEGORI_ADI: kategoriAdi });
         birlestirildi = true;
       }
       continue;
     }
 
     const tutucu = kategoriler[0];
-    const tutucuYeniAd = key;
-    if (tutucu.KATEGORI_ADI !== tutucuYeniAd) {
-      await window.api.kategoriSave({ KATEGORI_ID: tutucu.KATEGORI_ID, KATEGORI_ADI: tutucuYeniAd });
+    if (tutucu.KATEGORI_ADI !== kategoriAdi) {
+      await window.api.kategoriSave({ KATEGORI_ID: tutucu.KATEGORI_ID, KATEGORI_ADI: kategoriAdi });
     }
 
     for (let j = 1; j < kategoriler.length; j++) {
       const eski = kategoriler[j];
       const ayniKategoridekiUrunler = mevcutUrunler.filter(u => u.KATEGORI_ADI === eski.KATEGORI_ADI);
       for (const u of ayniKategoridekiUrunler) {
-        await window.api.urunSave({ ...u, KATEGORI_ADI: tutucuYeniAd });
+        await window.api.urunSave({ ...u, KATEGORI_ADI: kategoriAdi });
       }
       await window.api.kategoriDelete(eski.KATEGORI_ID);
       birlestirildi = true;
@@ -548,7 +548,7 @@ async function saveUrun() {
     urunId = await window.api.urunGetNextId();
   }
 
-  const urun = { URUN_ID: urunId, KATEGORI_ADI: kategori, URUN_ADI: adi, KAREKOD: karekod, ALIS_FIYATI: parseFloat(alisFiyat) || 0, FIYAT: parseFloat(fiyat) || 0, ADET: parseInt(adet) || 0, MENSEI: mensei };
+  const urun = { URUN_ID: urunId, KATEGORI_ADI: kategori.toLocaleUpperCase('tr-TR'), URUN_ADI: adi, KAREKOD: karekod, ALIS_FIYATI: parseFloat(alisFiyat) || 0, FIYAT: parseFloat(fiyat) || 0, ADET: parseInt(adet) || 0, MENSEI: mensei };
   const result = await window.api.urunSave(urun);
 
   if (result) {
@@ -2635,7 +2635,7 @@ async function utsStogaKaydet() {
   if (!(await showConfirm(`${seciliCheckboxes.length} seçili UTS ürününü stoğa eklemek istediğinize emin misiniz?`, 'UTS Stoğa Kaydet'))) return;
 
   const mevcutKategoriler = await window.api.kategoriRead();
-  const kategoriIsimleri = ['UTS Ürünleri', 'Gözlük Camı', 'Optik Çerçeve'];
+  const kategoriIsimleri = ['UTS ÜRÜNLERİ', 'GÖZLÜK CAMI', 'OPTİK ÇERÇEVE'];
   let nextKatId = mevcutKategoriler.length > 0 ? Math.max(...mevcutKategoriler.map(k => parseInt(k.KATEGORI_ID) || 0)) + 1 : 1;
   for (const isim of kategoriIsimleri) {
     if (!mevcutKategoriler.some(k => k.KATEGORI_ADI === isim)) {
@@ -2647,9 +2647,9 @@ async function utsStogaKaydet() {
     const ad = urunAdi.toLocaleLowerCase('tr').replace(/[\s\-_.]+/g, ' ').trim();
     const camKelimeleri = ['gözlük cam', 'gözlük camı', 'camı', 'cam ', 'camı ', ' cam'];
     const cerceveKelimeleri = ['optik çerçeve', 'optik gözlük çerçevesi', 'çerçeve', 'gözlük çerçevesi', 'cerceve', 'optik cerceve', 'gözlük cercevesi'];
-    if (camKelimeleri.some(k => ad.includes(k))) return 'Gözlük Camı';
-    if (cerceveKelimeleri.some(k => ad.includes(k))) return 'Optik Çerçeve';
-    return 'UTS Ürünleri';
+    if (camKelimeleri.some(k => ad.includes(k))) return 'GÖZLÜK CAMI';
+    if (cerceveKelimeleri.some(k => ad.includes(k))) return 'OPTİK ÇERÇEVE';
+    return 'UTS ÜRÜNLERİ';
   }
 
   const mevcutUrunler = await window.api.urunRead();
