@@ -93,20 +93,9 @@ router.post('/', async (req, res) => {
       values.push(orderData.SIRA_NO);
       await dbRun(`UPDATE siparisler SET ${setClauses.join(', ')} WHERE SIRA_NO = ?`, values);
     } else {
-      // SIRA_NO yoksa, TC_KIMLIK + SIPARIS_TARIHI eslesmesi kontrol et (yeniden numaralandirmadan sonra)
-      const duplicate = await dbGet('SELECT SIRA_NO FROM siparisler WHERE TC_KIMLIK = ? AND SIPARIS_TARIHI = ?', [orderData.TC_KIMLIK, orderData.SIPARIS_TARIHI]);
-      if (duplicate) {
-        // Mevcut kaydi guncelle, yeni SIRA_NO ata
-        orderData.SIRA_NO = duplicate.SIRA_NO;
-        const setClauses = ORDER_COLUMNS.filter(c => c !== 'SIRA_NO').map(c => `${c} = ?`);
-        const values = ORDER_COLUMNS.filter(c => c !== 'SIRA_NO').map(c => orderData[c] || '');
-        values.push(orderData.SIRA_NO);
-        await dbRun(`UPDATE siparisler SET ${setClauses.join(', ')} WHERE SIRA_NO = ?`, values);
-      } else {
-        const placeholders = ORDER_COLUMNS.map(() => '?').join(', ');
-        const values = ORDER_COLUMNS.map(c => orderData[c] || '');
-        await dbRun(`INSERT INTO siparisler (${ORDER_COLUMNS.join(', ')}) VALUES (${placeholders})`, values);
-      }
+      const placeholders = ORDER_COLUMNS.map(() => '?').join(', ');
+      const values = ORDER_COLUMNS.map(c => orderData[c] || '');
+      await dbRun(`INSERT INTO siparisler (${ORDER_COLUMNS.join(', ')}) VALUES (${placeholders})`, values);
     }
 
     res.json({ success: true });
@@ -120,16 +109,6 @@ router.delete('/:siraNo', async (req, res) => {
   try {
     await getDb();
     await dbRun('DELETE FROM siparisler WHERE SIRA_NO = ?', [parseInt(req.params.siraNo)]);
-
-    // SIRA_NO'ları yeniden numaralandır (1'den başlayarak)
-    const rows = await dbAll('SELECT SIRA_NO FROM siparisler ORDER BY SIRA_NO ASC');
-    for (let i = 0; i < rows.length; i++) {
-      const yeniNo = i + 1;
-      if (rows[i].SIRA_NO !== yeniNo) {
-        await dbRun('UPDATE siparisler SET SIRA_NO = ? WHERE SIRA_NO = ?', [yeniNo, rows[i].SIRA_NO]);
-      }
-    }
-
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
