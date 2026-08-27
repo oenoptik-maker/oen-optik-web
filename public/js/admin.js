@@ -2427,6 +2427,7 @@ function utsBekleyenUrunleriGoster(urunler) {
     const tanim = u.urunTanimi || u.TANIM || '';
     const adet = u.adet || u.ADET || '1';
     const gonderen = u.gonderenKurum || '';
+    const mensei = u._mensei || '';
 
     return `
     <tr data-idx="${i}">
@@ -2434,6 +2435,7 @@ function utsBekleyenUrunleriGoster(urunler) {
       <td>${i + 1}</td>
       <td style="font-size:0.7rem;white-space:nowrap;">${uno}</td>
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
+      <td><input type="text" value="${mensei}" placeholder="ülke" style="width:100px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="utsBekleyenAlanGuncelle(${i}, '_mensei', this.value)"></td>
       <td style="font-size:0.65rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${gonderen}">${gonderen}</td>
       <td style="text-align:center;">${adet}</td>
       <td><input type="number" step="0.01" min="0" value="${u._alisFiyat || 0}" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;" class="uts-alis-fiyat" onchange="utsBekleyenAlanGuncelle(${i}, '_alisFiyat', this.value)"></td>
@@ -2447,6 +2449,8 @@ function utsBekleyenUrunleriGoster(urunler) {
         <input type="text" id="utsUrunAra" placeholder="🔍 Ürün adı veya numara ara..." oninput="utsGeciciFiltre()" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.8rem;">
       </div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Menşe</label>
+        <input type="text" id="utsTopluMensei" placeholder="ülke" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;">
         <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Alış ₺</label>
         <input type="number" id="utsTopluAlis" step="0.01" min="0" placeholder="₺" style="width:80px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.75rem;text-align:right;">
         <label style="font-size:0.7rem;color:var(--text-secondary);white-space:nowrap;">Satış ₺</label>
@@ -2464,6 +2468,7 @@ function utsBekleyenUrunleriGoster(urunler) {
           <th style="width:30px;">#</th>
           <th>Ürün No</th>
           <th>Ürün Tanımı</th>
+          <th>Menşe</th>
           <th>Gönderen Kurum</th>
           <th style="width:40px;">Adet</th>
           <th style="width:90px;">Alış ₺</th>
@@ -2543,13 +2548,15 @@ function utsBekleyenAlanGuncelle(index, alan, deger) {
 }
 
 function utsBekleyenTopluFiyatGuncelle() {
+  const menseiDeger = document.getElementById('utsTopluMensei')?.value?.trim() || '';
   const alisDeger = parseFloat(document.getElementById('utsTopluAlis')?.value);
   const satisDeger = parseFloat(document.getElementById('utsTopluSatis')?.value);
   const alisGecerli = !isNaN(alisDeger) && alisDeger >= 0;
   const satisGecerli = !isNaN(satisDeger) && satisDeger >= 0;
+  const menseiGecerli = menseiDeger.length > 0;
 
-  if (!alisGecerli && !satisGecerli) {
-    showToast('En az bir fiyat girin.', 'warning');
+  if (!alisGecerli && !satisGecerli && !menseiGecerli) {
+    showToast('En az bir değer girin (Menşe, Alış veya Satış).', 'warning');
     return;
   }
 
@@ -2562,6 +2569,7 @@ function utsBekleyenTopluFiyatGuncelle() {
   secili.forEach(cb => {
     const idx = parseInt(cb.dataset.index);
     if (utsBekleyenUrunler[idx]) {
+      if (menseiGecerli) utsBekleyenUrunler[idx]._mensei = menseiDeger;
       if (alisGecerli) utsBekleyenUrunler[idx]._alisFiyat = alisDeger;
       if (satisGecerli) utsBekleyenUrunler[idx]._satisFiyat = satisDeger;
     }
@@ -2571,23 +2579,25 @@ function utsBekleyenTopluFiyatGuncelle() {
     const idx = parseInt(cb.dataset.index);
     const tr = cb.closest('tr');
     if (tr) {
+      const menseiInput = tr.querySelector('input[type="text"]');
       const alisInput = tr.querySelector('.uts-alis-fiyat');
       const satisInput = tr.querySelector('.uts-satis-fiyat');
+      if (menseiGecerli && menseiInput) menseiInput.value = menseiDeger;
       if (alisGecerli && alisInput) alisInput.value = alisDeger;
       if (satisGecerli && satisInput) satisInput.value = satisDeger;
     }
   });
 
-  const satinAlisInput = document.getElementById('utsTopluAlis');
-  const satinSatisInput = document.getElementById('utsTopluSatis');
-  if (alisGecerli && satinAlisInput) satinAlisInput.value = '';
-  if (satisGecerli && satinSatisInput) satinSatisInput.value = '';
+  document.getElementById('utsTopluMensei').value = '';
+  document.getElementById('utsTopluAlis').value = '';
+  document.getElementById('utsTopluSatis').value = '';
   utsBekleyenleriKaydet();
 
   let msg = `${secili.length} ürüne `;
-  if (alisGecerli && satisGecerli) msg += `Alış: ₺${alisDeger.toLocaleString('tr-TR')}, Satış: ₺${satisDeger.toLocaleString('tr-TR')}`;
-  else if (alisGecerli) msg += `Alış: ₺${alisDeger.toLocaleString('tr-TR')}`;
-  else msg += `Satış: ₺${satisDeger.toLocaleString('tr-TR')}`;
+  if (menseiGecerli) msg += `Menşe: ${menseiDeger}`;
+  if (alisGecerli && satisGecerli) msg += ` Alış: ₺${alisDeger.toLocaleString('tr-TR')}, Satış: ₺${satisDeger.toLocaleString('tr-TR')}`;
+  else if (alisGecerli) msg += ` Alış: ₺${alisDeger.toLocaleString('tr-TR')}`;
+  else if (satisGecerli) msg += ` Satış: ₺${satisDeger.toLocaleString('tr-TR')}`;
   msg += ' uygulandı.';
   showToast(msg, 'success');
 }
