@@ -145,6 +145,12 @@
 
   <script>
     (function() {
+      if (window.self !== window.top) {
+        document.documentElement.classList.add('in-iframe');
+        document.body.classList.add('in-iframe');
+        document.documentElement.classList.add('login-page');
+        document.body.classList.add('login-page');
+      }
       var token = localStorage.getItem('oken_token');
       if (!token) return;
       // Token'i dogrula, gecerliyse yonlendir

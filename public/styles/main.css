@@ -1744,3 +1744,41 @@ a.btn {
     font-size: 0.8rem;
   }
 }
+
+/* ===== IFRAME MODE (Google Sites icin) ===== */
+html.in-iframe,
+html.in-iframe body {
+  height: 100% !important;
+  min-height: 100% !important;
+  overflow: auto !important;
+}
+
+html.in-iframe body {
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+html.in-iframe .container {
+  max-height: none !important;
+  overflow-y: visible !important;
+  padding-bottom: 20px;
+}
+
+html.in-iframe .loading-overlay {
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+/* Login page iframe mode */
+html.in-iframe.login-page body,
+html.in-iframe.login-page {
+  min-height: 100% !important;
+  height: auto !important;
+  align-items: flex-start !important;
+  padding-top: 15vh !important;
+  overflow: auto !important;
+}
+
+html.in-iframe .login-card {
+  margin-bottom: 20px;
+}
