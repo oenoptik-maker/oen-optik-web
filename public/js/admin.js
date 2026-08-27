@@ -2429,7 +2429,7 @@ function utsBekleyenUrunleriGoster(urunler) {
 
     return `
     <tr data-idx="${i}">
-      <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" checked onchange="utsApiSeciliGuncelle()"></td>
+      <td style="text-align:center;"><input type="checkbox" class="uts-api-sec" data-index="${i}" onchange="utsApiSeciliGuncelle()"></td>
       <td>${i + 1}</td>
       <td style="font-size:0.7rem;white-space:nowrap;">${uno}</td>
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;" title="${tanim}">${tanim}</td>
@@ -2459,7 +2459,7 @@ function utsBekleyenUrunleriGoster(urunler) {
     <div style="overflow-x:auto;">
       <table class="data-table" id="utsGeciciTablo">
         <thead><tr>
-          <th style="width:30px;text-align:center;"><input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)" checked></th>
+          <th style="width:30px;text-align:center;"><input type="checkbox" id="utsApiTumuSec" onchange="utsApiTumuSecKaldir(this.checked)"></th>
           <th style="width:30px;">#</th>
           <th>Ürün No</th>
           <th>Ürün Tanımı</th>
@@ -2484,11 +2484,17 @@ function utsGeciciFiltre() {
     const text = tr.textContent.toLowerCase();
     const eslesse = !q || text.includes(q);
     tr.style.display = eslesse ? '' : 'none';
-    if (eslesse) goster++;
+    if (eslesse) {
+      goster++;
+      const cb = tr.querySelector('.uts-api-sec');
+      if (cb) cb.checked = false;
+    }
   });
-  const secili = document.querySelectorAll('.uts-api-sec:checked').length;
+  const tumCheck = document.getElementById('utsApiTumuSec');
+  if (tumCheck) tumCheck.checked = false;
   const label = document.getElementById('utsApiSeciliAdet');
   if (label) label.textContent = goster + ' ürün' + (q ? ' bulundu' : '');
+  utsApiSeciliAdetGuncelle();
 }
 
 function utsApiSeciliGuncelle() {
