@@ -8,20 +8,43 @@ let _lastLoadedCount = 0;
 let sifreResolve = null;
 function sifreSor() {
   return new Promise(resolve => {
-    sifreResolve = resolve;
-    document.getElementById('sifreGiris').value = '';
-    document.getElementById('sifreModal').classList.add('active');
-    setTimeout(() => document.getElementById('sifreGiris').focus(), 100);
+    try {
+      const modal = document.getElementById('sifreModal');
+      const giris = document.getElementById('sifreGiris');
+      if (!modal || !giris) {
+        console.error('[search.js] sifreModal veya sifreGiris elementi bulunamadi');
+        resolve(false);
+        return;
+      }
+      sifreResolve = resolve;
+      giris.value = '';
+      modal.classList.add('active');
+      setTimeout(() => { try { giris.focus(); } catch(e) {} }, 100);
+    } catch (err) {
+      console.error('[search.js] sifreSor hatasi:', err);
+      resolve(false);
+    }
   });
 }
 function sifreOnayla() {
-  const sifre = document.getElementById('sifreGiris').value.trim();
-  document.getElementById('sifreModal').classList.remove('active');
-  if (sifreResolve) { sifreResolve(sifre === '2516'); sifreResolve = null; }
+  try {
+    const modal = document.getElementById('sifreModal');
+    const giris = document.getElementById('sifreGiris');
+    const sifre = giris ? giris.value.trim() : '';
+    if (modal) modal.classList.remove('active');
+    if (sifreResolve) { sifreResolve(sifre === '2516'); sifreResolve = null; }
+  } catch (err) {
+    console.error('[search.js] sifreOnayla hatasi:', err);
+  }
 }
 function sifreIptal() {
-  document.getElementById('sifreModal').classList.remove('active');
-  if (sifreResolve) { sifreResolve(false); sifreResolve = null; }
+  try {
+    const modal = document.getElementById('sifreModal');
+    if (modal) modal.classList.remove('active');
+    if (sifreResolve) { sifreResolve(false); sifreResolve = null; }
+  } catch (err) {
+    console.error('[search.js] sifreIptal hatasi:', err);
+  }
 }
 
 async function loadAllOrders() {
@@ -388,15 +411,22 @@ function editOrder(siraNo) {
 }
 
 async function deleteOrderByNo(siraNo) {
-  if (!(await sifreSor())) { showToast('Şifre hatalı!', 'error'); return; }
-  if (!(await showConfirm(`${siraNo} nolu siparişi silmek istediğinizden emin misiniz?`, 'Sipariş Silme'))) return;
+  try {
+    const sifre = await sifreSor();
+    if (!sifre) { showToast('Şifre hatalı!', 'error'); return; }
+    const onay = await showConfirm(`${siraNo} nolu siparişi silmek istediğinizden emin misiniz?`, 'Sipariş Silme');
+    if (!onay) return;
 
-  const result = await deleteOrderFromExcel(siraNo);
-  if (result) {
-    showToast('Sipariş başarıyla silindi.', 'success');
-    await loadOrders();
-  } else {
-    showToast('Silme hatası!', 'error');
+    const result = await deleteOrderFromExcel(siraNo);
+    if (result) {
+      showToast('Sipariş başarıyla silindi.', 'success');
+      await loadOrders();
+    } else {
+      showToast('Silme hatası!', 'error');
+    }
+  } catch (err) {
+    console.error('[search.js] deleteOrderByNo hatasi:', err);
+    showToast('Silme işleminde hata oluştu.', 'error');
   }
 }
 
@@ -405,8 +435,11 @@ async function deleteSelected() {
     showToast('Önce kayıt seçin.', 'warning');
     return;
   }
-  if (!(await sifreSor())) { showToast('Şifre hatalı!', 'error'); return; }
-  if (!(await showConfirm(`${selectedOrders.size} adet siparişi silmek istediğinizden emin misiniz?`, 'Toplu Sipariş Silme'))) return;
+  try {
+    const sifre = await sifreSor();
+    if (!sifre) { showToast('Şifre hatalı!', 'error'); return; }
+    const onay = await showConfirm(`${selectedOrders.size} adet siparişi silmek istediğinizden emin misiniz?`, 'Toplu Sipariş Silme');
+    if (!onay) return;
 
   let successCount = 0;
   const toDelete = [...selectedOrders];
@@ -425,6 +458,10 @@ async function deleteSelected() {
         loadOrders();
       }
     });
+  }
+  } catch (err) {
+    console.error('[search.js] deleteSelected hatasi:', err);
+    showToast('Toplu silme işleminde hata oluştu.', 'error');
   }
 }
 
