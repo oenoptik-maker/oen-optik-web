@@ -1,6 +1,9 @@
 let tumKategoriler = [];
 let tumUrunlerAdmin = [];
 let topluStokVerileri = [];
+let topluStokSeciliSet = new Set();
+let topluStokSayfa = 0;
+const TOPLU_STOK_SAYFA_BOYUTU = 500;
 let urunDetayGoster = false;
 let seciliUrunler = new Set();
 
@@ -866,9 +869,13 @@ function adminTabAc(tab) {
 }
 
 async function loadTopluStok() {
-  topluStokVerileri = await window.api.topluStokRead();
-  renderTopluStok();
-  initTopluStokDragDrop();
+  try {
+    topluStokVerileri = await window.api.topluStokRead();
+    renderTopluStok();
+    initTopluStokDragDrop();
+  } catch (err) {
+    showToast('Toplu stok verileri yüklenemedi: ' + err.message, 'error');
+  }
 }
 
 function initTopluStokDragDrop() {
@@ -904,6 +911,9 @@ async function topluStokDosyaYukle(dosya) {
   const durumBar = document.getElementById('topluStokDurumBar');
   const durumProgress = document.getElementById('topluStokDurumProgress');
   const dz = document.getElementById('topluStokDropZone');
+
+  topluStokSeciliSet.clear();
+  topluStokSayfa = 0;
 
   durumDiv.style.display = 'block';
   durumBar.style.display = 'block';
@@ -957,13 +967,14 @@ function renderTopluStok() {
     container.innerHTML = '';
     if (onayBolumu) onayBolumu.style.display = 'none';
     if (filtreAlani) filtreAlani.style.display = 'none';
+    topluStokSeciliSet.clear();
+    topluStokSayfa = 0;
     return;
   }
 
   if (onayBolumu) onayBolumu.style.display = 'flex';
   if (filtreAlani) filtreAlani.style.display = 'flex';
 
-  // Kategori filtresini doldur
   const kategoriSelect = document.getElementById('topluStokKategoriFiltre');
   if (kategoriSelect && kategoriSelect.options.length <= 1) {
     const kategoriler = [...new Set(topluStokVerileri.map(u => u.Kategori).filter(Boolean))];
@@ -971,16 +982,22 @@ function renderTopluStok() {
   }
 
   const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  const toplamSayfa = Math.ceil(filtrelenmis.length / TOPLU_STOK_SAYFA_BOYUTU);
+  if (topluStokSayfa >= toplamSayfa) topluStokSayfa = Math.max(0, toplamSayfa - 1);
+  const baslangic = topluStokSayfa * TOPLU_STOK_SAYFA_BOYUTU;
+  const gorunen = filtrelenmis.slice(baslangic, baslangic + TOPLU_STOK_SAYFA_BOYUTU);
+  const seciliAdet = topluStokSeciliSet.size;
 
-  const rows = filtrelenmis.map((item) => {
+  const rows = gorunen.map((item) => {
     const i = item._index;
     const u = item;
+    const checked = topluStokSeciliSet.has(i) ? 'checked' : '';
     return `
     <tr>
-      <td><input type="checkbox" class="ts-secim" data-index="${i}" onchange="topluStokSecimGuncelle()"></td>
+      <td><input type="checkbox" class="ts-secim" data-index="${i}" ${checked} onchange="topluStokTekSecim(${i}, this.checked)"></td>
       <td>${u.ID || ''}</td>
       <td><span class="badge badge-pending">${u.Kategori || ''}</span></td>
-      <td><input type="text" value="${u.KAREKOD || ''}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="topluStokKarekodKaydet(${i}, this.value)"></td>
+      <td><input type="text" value="${(u.KAREKOD || '').replace(/"/g, '&quot;')}" style="width:90px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);font-size:0.7rem;" onchange="topluStokKarekodKaydet(${i}, this.value)"></td>
       <td><strong>${u['Urun Adi'] || u['Ürün Adı'] || ''}</strong></td>
       <td>₺${parseFloat(u['Alis Fiyati'] || u['Alış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
       <td>₺${parseFloat(u['Satis Fiyati'] || u['Satış Fiyatı'] || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
@@ -998,49 +1015,81 @@ function renderTopluStok() {
     }
   }
 
+  let sayfalamaHtml = '';
+  if (toplamSayfa > 1) {
+    sayfalamaHtml = `
+    <div style="padding:8px 16px;display:flex;justify-content:center;align-items:center;gap:8px;background:var(--bg-secondary);border-top:1px solid var(--border);flex-wrap:wrap;">
+      <button class="btn btn-outline btn-sm" onclick="topluStokSayfayaGit(0)" ${topluStokSayfa === 0 ? 'disabled' : ''}>« İlk</button>
+      <button class="btn btn-outline btn-sm" onclick="topluStokSayfayaGit(${topluStokSayfa - 1})" ${topluStokSayfa === 0 ? 'disabled' : ''}>‹ Önceki</button>
+      <span style="font-size:0.8rem;color:var(--text-secondary);">Sayfa ${topluStokSayfa + 1} / ${toplamSayfa}</span>
+      <button class="btn btn-outline btn-sm" onclick="topluStokSayfayaGit(${topluStokSayfa + 1})" ${topluStokSayfa >= toplamSayfa - 1 ? 'disabled' : ''}>Sonraki ›</button>
+      <button class="btn btn-outline btn-sm" onclick="topluStokSayfayaGit(${toplamSayfa - 1})" ${topluStokSayfa >= toplamSayfa - 1 ? 'disabled' : ''}>Son »</button>
+      <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">(${filtrelenmis.length} kayıt)</span>
+    </div>`;
+  }
+
   container.innerHTML = `
-    <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;">
-      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi${filtrelenmis.length < topluStokVerileri.length ? ` (filtre: <strong>${filtrelenmis.length}</strong>)` : ''} <span id="topluStokSecimSayac" style="display:none;color:var(--color-primary);font-weight:600;"></span></span>
-      <span>Toplam adet: <strong>${topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0)}</strong></span>
+    <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+      <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi${filtrelenmis.length < topluStokVerileri.length ? ` (filtre: <strong>${filtrelenmis.length}</strong>)` : ''}</span>
+      <span>${seciliAdet > 0 ? `☑️ <strong>${seciliAdet}</strong> seçili` : ''} ${seciliAdet > 0 ? '|' : ''} Toplam adet: <strong>${topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0)}</strong></span>
     </div>
     <table class="data-table">
       <thead><tr><th><input type="checkbox" onchange="topluStokTumuSec()" title="Tümünü Se/Çıkar"></th><th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı</th><th>Satış Fiyatı</th><th>Menşei</th><th>Adet</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
+    ${sayfalamaHtml}
   `;
+}
+
+function topluStokSayfayaGit(sayfa) {
+  topluStokSayfa = sayfa;
+  renderTopluStok();
 }
 
 function topluStokAdetGuncelle(index, deger) {
   topluStokVerileri[index].Adet = parseInt(deger) || 0;
 }
 
+function topluStokTekSecim(index, checked) {
+  if (checked) {
+    topluStokSeciliSet.add(index);
+  } else {
+    topluStokSeciliSet.delete(index);
+  }
+  const sayac = document.getElementById('topluStokSecimSayac');
+  if (sayac) {
+    const adet = topluStokSeciliSet.size;
+    sayac.textContent = adet > 0 ? `${adet} ürün seçildi` : '';
+    sayac.style.display = adet > 0 ? 'inline' : 'none';
+  }
+}
+
 function topluStokSecilenleriAl() {
-  const checkboxes = document.querySelectorAll('.ts-secim:checked');
-  return Array.from(checkboxes).map(cb => {
-    const index = parseInt(cb.dataset.index);
+  return Array.from(topluStokSeciliSet).map(index => {
     return { ...topluStokVerileri[index], _index: index };
-  }).filter(u => u._index !== undefined);
+  }).filter(u => topluStokVerileri[u._index] !== undefined);
 }
 
 function topluStokSecimGuncelle() {
-  const secilen = topluStokSecilenleriAl();
+  const adet = topluStokSeciliSet.size;
   const sayac = document.getElementById('topluStokSecimSayac');
   if (sayac) {
-    if (secilen.length > 0) {
-      sayac.textContent = `${secilen.length} ürün seçildi`;
-      sayac.style.display = 'inline';
-    } else {
-      sayac.textContent = '';
-      sayac.style.display = 'none';
-    }
+    sayac.textContent = adet > 0 ? `${adet} ürün seçildi` : '';
+    sayac.style.display = adet > 0 ? 'inline' : 'none';
   }
 }
 
 function topluStokTumuSec() {
-  const checkboxes = document.querySelectorAll('.ts-secim');
-  const hepsiSecili = Array.from(checkboxes).every(cb => cb.checked);
-  checkboxes.forEach(cb => cb.checked = !hepsiSecili);
-  topluStokSecimGuncelle();
+  const filtrelenmis = topluStokFiltrelenmisUrunleriAl();
+  const tumIndexler = filtrelenmis.map(u => u._index);
+  const hepsiSecili = tumIndexler.every(i => topluStokSeciliSet.has(i));
+
+  if (hepsiSecili) {
+    tumIndexler.forEach(i => topluStokSeciliSet.delete(i));
+  } else {
+    tumIndexler.forEach(i => topluStokSeciliSet.add(i));
+  }
+  renderTopluStok();
 }
 
 function tsTopluFiyatUygula() {
@@ -1118,15 +1167,53 @@ async function topluStokOnayla() {
 
   if (!(await showConfirm(`${girilenler.length} ürün için toplu stok girişini onaylamak istediğinize emin misiniz?`, 'Toplu Stok'))) return;
 
-  const result = await window.api.topluStokOnayla(girilenler);
-  if (result.success) {
-    showToast(`Toplu stok girişi tamamlandı: ${result.eklenen} yeni ürün eklendi, ${result.guncellenen} ürün güncellendi.`, 'success');
+  const onayBtn = document.querySelector('[onclick="topluStokOnayla()"]');
+  const durumDiv = document.getElementById('topluStokYuklemeDurum');
+  const durumText = document.getElementById('topluStokDurumText');
+  const durumBar = document.getElementById('topluStokDurumBar');
+  const durumProgress = document.getElementById('topluStokDurumProgress');
+
+  if (onayBtn) { onayBtn.disabled = true; onayBtn.textContent = 'İşleniyor...'; }
+  if (durumDiv) durumDiv.style.display = 'block';
+  if (durumBar) durumBar.style.display = 'block';
+  if (durumText) durumText.innerHTML = `⏳ <strong>${girilenler.length}</strong> ürün işleniyor...`;
+  if (durumProgress) { durumProgress.style.width = '10%'; durumProgress.style.background = 'var(--color-primary)'; }
+
+  try {
+    const CHUNK_SIZE = 2000;
+    const toplamParca = Math.ceil(girilenler.length / CHUNK_SIZE);
+    let toplamEklenen = 0, toplamGuncellenen = 0;
+
+    for (let p = 0; p < toplamParca; p++) {
+      const chunk = girilenler.slice(p * CHUNK_SIZE, (p + 1) * CHUNK_SIZE);
+      const oran = Math.round(((p + 1) / toplamParca) * 90) + 10;
+      if (durumProgress) durumProgress.style.width = oran + '%';
+      if (durumText) durumText.innerHTML = `⏳ Parça ${p + 1}/${toplamParca} işleniyor... (${chunk.length} ürün)`;
+
+      const result = await window.api.topluStokOnayla(chunk);
+      if (!result.success) throw new Error(result.message || 'Bilinmeyen hata');
+      toplamEklenen += result.eklenen || 0;
+      toplamGuncellenen += result.guncellenen || 0;
+    }
+
+    if (durumProgress) durumProgress.style.width = '100%';
+    if (durumText) durumText.innerHTML = `✅ <strong>Tamamlandı!</strong> ${toplamEklenen} yeni ürün eklendi, ${toplamGuncellenen} ürün güncellendi.`;
+    showToast(`Toplu stok girişi tamamlandı: ${toplamEklenen} yeni ürün, ${toplamGuncellenen} güncelleme.`, 'success');
     topluStokVerileri = [];
     renderTopluStok();
     await loadUrunler();
-    adminTabAc('urunler');
-  } else {
-    showToast('Toplu stok onaylama hatası: ' + result.message, 'error');
+    setTimeout(() => adminTabAc('urunler'), 1500);
+  } catch (err) {
+    if (durumProgress) { durumProgress.style.width = '100%'; durumProgress.style.background = '#ef4444'; }
+    if (durumText) durumText.innerHTML = `❌ <strong>Hata:</strong> ${err.message}`;
+    showToast('Toplu stok onaylama hatası: ' + err.message, 'error');
+  } finally {
+    if (onayBtn) { onayBtn.disabled = false; onayBtn.textContent = 'Stok Girişi Yap'; }
+    setTimeout(() => {
+      if (durumDiv) durumDiv.style.display = 'none';
+      if (durumBar) durumBar.style.display = 'none';
+      if (durumProgress) { durumProgress.style.width = '0%'; durumProgress.style.background = 'var(--color-primary)'; }
+    }, 5000);
   }
 }
 
@@ -3292,6 +3379,7 @@ async function stokSayimiEsitle() {
 
 // ===== TOPLU STOK FİLTRELEME =====
 function topluStokFiltrele() {
+  topluStokSayfa = 0;
   renderTopluStok();
 }
 

@@ -64,8 +64,8 @@ router.post('/toplu-onayla', async (req, res) => {
 
       if (mevcut) {
         statements.push({
-          sql: 'UPDATE urunler SET ADET = ADET + ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
-          params: [item.Adet, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
+          sql: 'UPDATE urunler SET ADET = ADET + ?, ALIS_FIYATI = ?, FIYAT = ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
+          params: [item.Adet, item.AlisFiyati, item.SatisFiyati, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
         });
         guncellenen++;
       } else {
@@ -77,14 +77,66 @@ router.post('/toplu-onayla', async (req, res) => {
       }
     }
 
-    // BUYUK VERI SETLERI ICIN: 500'erli parcalar halinde calistir
-    const CHUNK_SIZE = 500;
+    // BUYUK VERI SETLERI ICIN: 1000'erli parcalar halinde calistir
+    const CHUNK_SIZE = 1000;
     for (let i = 0; i < statements.length; i += CHUNK_SIZE) {
       const chunk = statements.slice(i, i + CHUNK_SIZE);
       await dbBatch(chunk);
     }
 
-    res.json({ success: true, guncellenen, eklenen });
+    res.json({ success: true, guncellenen, eklenen, toplam: statements.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/toplu-onayla-parcali', async (req, res) => {
+  try {
+    await getDb();
+    const { stokVerileri, parcaNo, toplamParca } = req.body;
+
+    const urunMap = new Map();
+    const mevcutUrunler = await dbAll('SELECT URUN_ID, URUN_ADI, KATEGORI_ADI FROM urunler');
+    for (const u of mevcutUrunler) {
+      urunMap.set(u.URUN_ADI + '|' + (u.KATEGORI_ADI || ''), u);
+    }
+
+    const maxRow = await dbGet('SELECT MAX(URUN_ID) as maxId FROM urunler');
+    let nextId = (maxRow && maxRow.maxId ? maxRow.maxId : 0) + 1;
+
+    let guncellenen = 0;
+    let eklenen = 0;
+    const statements = [];
+
+    for (const raw of stokVerileri) {
+      const item = normalizeItem(raw);
+      if (item.Adet <= 0) continue;
+
+      const key = item.UrunAdi + '|' + item.Kategori;
+      const mevcut = urunMap.get(key);
+
+      if (mevcut) {
+        statements.push({
+          sql: 'UPDATE urunler SET ADET = ADET + ?, ALIS_FIYATI = ?, FIYAT = ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
+          params: [item.Adet, item.AlisFiyati, item.SatisFiyati, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
+        });
+        guncellenen++;
+      } else {
+        statements.push({
+          sql: 'INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          params: [nextId++, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]
+        });
+        eklenen++;
+      }
+    }
+
+    const CHUNK_SIZE = 1000;
+    for (let i = 0; i < statements.length; i += CHUNK_SIZE) {
+      const chunk = statements.slice(i, i + CHUNK_SIZE);
+      await dbBatch(chunk);
+    }
+
+    res.json({ success: true, guncellenen, eklenen, parcaNo, toplamParca });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

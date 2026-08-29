@@ -193,7 +193,11 @@
             </div>
             <div id="topluStokListesi" class="table-container"></div>
             <div id="topluStokOnayBolumu" style="padding: 16px; text-align: right; border-top: 1px solid var(--border); display: none; justify-content: space-between; align-items: center;">
-              <button class="btn btn-success btn-sm" onclick="tumunuYazdir('toplustok')"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Tümünü Yazdır</button>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-success btn-sm" onclick="tumunuYazdir('toplustok')"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg> Tümünü Yazdır</button>
+                <button class="btn btn-outline btn-sm" onclick="topluStokTumuSec()">☑️ Tümünü Seç</button>
+                <span id="topluStokSecimSayac" style="font-size:0.8rem;color:var(--color-primary);font-weight:600;display:none;"></span>
+              </div>
               <div style="display:flex;gap:8px;align-items:center;">
                 <button class="btn btn-outline btn-sm" onclick="topluStokTemizle()">🗑️ Tabloyu Temizle</button>
                 <button class="btn btn-primary" onclick="topluStokOnayla()">✅ Toplu Stok Girişini Onayla</button>
