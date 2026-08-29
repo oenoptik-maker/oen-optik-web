@@ -20,12 +20,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('in-iframe');
   }
   const [kategoriler] = await Promise.all([
-    window.api.kategoriRead()
+    window.api.kategoriRead(),
+    loadUrunler()
   ]);
   tumKategoriler = kategoriler;
   renderKategoriler();
   updateKategoriSelects();
-  await loadUrunler();
 });
 
 // ===== KATEGORİ İŞLEMLERİ =====
@@ -160,7 +160,14 @@ async function saveKategori() {
   if (result) {
     showToast('Kategori kaydedildi.', 'success');
     closeKategoriModal();
-    await loadKategoriler();
+    const mevcut = tumKategoriler.find(k => String(k.KATEGORI_ID) === String(kategoriId));
+    if (mevcut) {
+      mevcut.KATEGORI_ADI = adi;
+    } else {
+      tumKategoriler.push(kategori);
+    }
+    renderKategoriler();
+    updateKategoriSelects();
   } else {
     showToast('Kaydetme hatası!', 'error');
   }
@@ -181,7 +188,9 @@ async function deleteKategori(id) {
   const result = await window.api.kategoriDelete(id);
   if (result) {
     showToast('Kategori silindi.', 'success');
-    await loadKategoriler();
+    tumKategoriler = tumKategoriler.filter(k => String(k.KATEGORI_ID) !== String(id));
+    renderKategoriler();
+    updateKategoriSelects();
   }
 }
 
@@ -411,9 +420,10 @@ async function seciliUrunleriYazdir() {
   let tumEtiketler = '';
 
   if (yaziciTipi === 'termal') {
-    for (const u of seciliUrunVerileri) {
-      const karekodDegeri = u.KAREKOD || u.URUN_ID.toString();
-      const qrDataUrl = await generateQRDataUrl(karekodDegeri, 150);
+    const qrUrls = await Promise.all(seciliUrunVerileri.map(u => generateQRDataUrl(u.KAREKOD || u.URUN_ID.toString(), 150)));
+    for (let i = 0; i < seciliUrunVerileri.length; i++) {
+      const u = seciliUrunVerileri[i];
+      const qrDataUrl = qrUrls[i];
       let tekHTML = '';
       for (const eleman of tasarim.elemanlar) {
         tekHTML += elemanHTML(eleman, u, qrDataUrl, bugun);
@@ -430,9 +440,10 @@ async function seciliUrunleriYazdir() {
     const dikeyAdet = Math.floor((sayfaY + 5) / (yukseklik + 5));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
     let tumEtiketlerDuz = [];
-    for (const u of seciliUrunVerileri) {
-      const karekodDegeri = u.KAREKOD || u.URUN_ID.toString();
-      const qrDataUrl = await generateQRDataUrl(karekodDegeri, 150);
+    const qrUrls = await Promise.all(seciliUrunVerileri.map(u => generateQRDataUrl(u.KAREKOD || u.URUN_ID.toString(), 150)));
+    for (let i = 0; i < seciliUrunVerileri.length; i++) {
+      const u = seciliUrunVerileri[i];
+      const qrDataUrl = qrUrls[i];
       let tekHTML = '';
       for (const eleman of tasarim.elemanlar) {
         tekHTML += elemanHTML(eleman, u, qrDataUrl, bugun);
@@ -555,7 +566,14 @@ async function saveUrun() {
   if (result) {
     showToast('Ürün kaydedildi.', 'success');
     closeUrunModal();
-    await loadUrunler();
+    const mevcut = tumUrunlerAdmin.find(u => String(u.URUN_ID) === String(urunId));
+    if (mevcut) {
+      Object.assign(mevcut, urun);
+    } else {
+      tumUrunlerAdmin.unshift(urun);
+      toplamUrunSayisi++;
+    }
+    renderUrunler();
   } else {
     showToast('Kaydetme hatası!', 'error');
   }
@@ -566,7 +584,9 @@ async function deleteUrun(id) {
   const result = await window.api.urunDelete(id);
   if (result) {
     showToast('Ürün silindi.', 'success');
-    await loadUrunler();
+    tumUrunlerAdmin = tumUrunlerAdmin.filter(u => String(u.URUN_ID) !== String(id));
+    toplamUrunSayisi = Math.max(0, toplamUrunSayisi - 1);
+    renderUrunler();
   }
 }
 
@@ -868,6 +888,7 @@ function adminTabAc(tab) {
 async function loadTopluStok() {
   try {
     topluStokVerileri = await window.api.topluStokRead();
+    topluStokToplamAdet = topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0);
     renderTopluStok();
     initTopluStokDragDrop();
   } catch (err) {
@@ -952,6 +973,7 @@ async function topluStokDosyaYukle(dosya) {
 
 function topluStokTemizle() {
   topluStokVerileri = [];
+  topluStokToplamAdet = 0;
   renderTopluStok();
   showToast('Tablo temizlendi.', 'info');
 }
@@ -978,6 +1000,7 @@ async function mukerrerTemizle() {
   }
 }
 
+let topluStokToplamAdet = 0;
 function renderTopluStok() {
   const container = document.getElementById('topluStokListesi');
   const onayBolumu = document.getElementById('topluStokOnayBolumu');
@@ -988,6 +1011,7 @@ function renderTopluStok() {
     if (filtreAlani) filtreAlani.style.display = 'none';
     topluStokSeciliSet.clear();
     topluStokSayfa = 0;
+    topluStokToplamAdet = 0;
     return;
   }
 
@@ -1050,7 +1074,7 @@ function renderTopluStok() {
   container.innerHTML = `
     <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;">
       <span>📊 <strong>${topluStokVerileri.length}</strong> ürün yüklendi${filtrelenmis.length < topluStokVerileri.length ? ` (filtre: <strong>${filtrelenmis.length}</strong>)` : ''}</span>
-      <span>${seciliAdet > 0 ? `☑️ <strong>${seciliAdet}</strong> seçili` : ''} ${seciliAdet > 0 ? '|' : ''} Toplam adet: <strong>${topluStokVerileri.reduce((s, u) => s + (parseInt(u.Adet) || 0), 0)}</strong></span>
+      <span>${seciliAdet > 0 ? `☑️ <strong>${seciliAdet}</strong> seçili` : ''} ${seciliAdet > 0 ? '|' : ''} Toplam adet: <strong id="topluStokAdetToplam">${topluStokToplamAdet}</strong></span>
     </div>
     <table class="data-table">
       <thead><tr><th><input type="checkbox" onchange="topluStokTumuSec()" title="Tümünü Se/Çıkar"></th><th>ID</th><th>Kategori</th><th>Karekod</th><th>Ürün Adı</th><th>Alış Fiyatı</th><th>Satış Fiyatı</th><th>Menşei</th><th>Adet</th></tr></thead>
@@ -1066,7 +1090,12 @@ function topluStokSayfayaGit(sayfa) {
 }
 
 function topluStokAdetGuncelle(index, deger) {
-  topluStokVerileri[index].Adet = parseInt(deger) || 0;
+  const eskiAdet = parseInt(topluStokVerileri[index].Adet) || 0;
+  const yeniAdet = parseInt(deger) || 0;
+  topluStokVerileri[index].Adet = yeniAdet;
+  topluStokToplamAdet += (yeniAdet - eskiAdet);
+  const sayac = document.getElementById('topluStokAdetToplam');
+  if (sayac) sayac.textContent = topluStokToplamAdet;
 }
 
 function topluStokTekSecim(index, checked) {
@@ -1219,6 +1248,7 @@ async function topluStokOnayla() {
     if (durumText) durumText.innerHTML = `✅ <strong>Tamamlandı!</strong> ${toplamEklenen} yeni ürün eklendi, ${toplamGuncellenen} ürün güncellendi.`;
     showToast(`Toplu stok girişi tamamlandı: ${toplamEklenen} yeni ürün, ${toplamGuncellenen} güncelleme.`, 'success');
     topluStokVerileri = [];
+    topluStokToplamAdet = 0;
     renderTopluStok();
     await loadUrunler();
     setTimeout(() => adminTabAc('urunler'), 1500);
@@ -2362,9 +2392,10 @@ async function tumunuYazdir(kaynak) {
   let tumEtiketler = '';
 
   if (yaziciTipi === 'termal') {
+    const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150)));
     for (let i = 0; i < urunler.length; i++) {
       const u = urunler[i];
-      const qrUrl = await generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150);
+      const qrUrl = qrUrls[i];
       let icerik = '';
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
@@ -2378,8 +2409,10 @@ async function tumunuYazdir(kaynak) {
     const dikeyAdet = Math.floor((sayfaY + 5) / (yukseklik + 5));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
     let tumEtiketlerDuz = [];
-    for (const u of urunler) {
-      const qrUrl = await generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150);
+    const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150)));
+    for (let i = 0; i < urunler.length; i++) {
+      const u = urunler[i];
+      const qrUrl = qrUrls[i];
       let icerik = '';
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
@@ -2587,26 +2620,30 @@ function utsBekleyenUrunleriGoster(urunler) {
   utsApiSeciliAdetGuncelle();
 }
 
+let utsFiltreTimer = null;
 function utsGeciciFiltre() {
-  const q = (document.getElementById('utsUrunAra')?.value || '').toLowerCase();
-  const tbody = document.querySelector('#utsGeciciTablo tbody');
-  if (!tbody) return;
-  let goster = 0;
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const text = tr.textContent.toLowerCase();
-    const eslesse = !q || text.includes(q);
-    tr.style.display = eslesse ? '' : 'none';
-    if (eslesse) {
-      goster++;
-      const cb = tr.querySelector('.uts-api-sec');
-      if (cb) cb.checked = false;
-    }
-  });
-  const tumCheck = document.getElementById('utsApiTumuSec');
-  if (tumCheck) tumCheck.checked = false;
-  const label = document.getElementById('utsApiSeciliAdet');
-  if (label) label.textContent = goster + ' ürün' + (q ? ' bulundu' : '');
-  utsApiSeciliAdetGuncelle();
+  clearTimeout(utsFiltreTimer);
+  utsFiltreTimer = setTimeout(() => {
+    const q = (document.getElementById('utsUrunAra')?.value || '').toLowerCase();
+    const tbody = document.querySelector('#utsGeciciTablo tbody');
+    if (!tbody) return;
+    let goster = 0;
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const text = tr.textContent.toLowerCase();
+      const eslesse = !q || text.includes(q);
+      tr.style.display = eslesse ? '' : 'none';
+      if (eslesse) {
+        goster++;
+        const cb = tr.querySelector('.uts-api-sec');
+        if (cb) cb.checked = false;
+      }
+    });
+    const tumCheck = document.getElementById('utsApiTumuSec');
+    if (tumCheck) tumCheck.checked = false;
+    const label = document.getElementById('utsApiSeciliAdet');
+    if (label) label.textContent = goster + ' ürün' + (q ? ' bulundu' : '');
+    utsApiSeciliAdetGuncelle();
+  }, 200);
 }
 
 function utsApiSeciliGuncelle() {
@@ -2819,6 +2856,7 @@ let utsSeciliSatirlar = new Set();
 let utsFiltrelenmisIndexler = [];
 
 async function utsAlimListesiniYukle() {
+  utsTabloVerileriCache = null;
   const bekleyen = utsBekleyenleriYukle();
   if (bekleyen.length > 0) {
     utsBekleyenUrunler = bekleyen;
@@ -2911,14 +2949,19 @@ async function utsAlimListesiniYukle() {
   `;
 }
 
+let utsAramaTimer = null;
 function utsAramaFiltre() {
-  utsAramalar.urunTanimi = document.getElementById('utsAraUrunTanimi')?.value || '';
-  utsSeciliSatirlar.clear();
-  utsTabloyuFiltrele();
+  clearTimeout(utsAramaTimer);
+  utsAramaTimer = setTimeout(() => {
+    utsAramalar.urunTanimi = document.getElementById('utsAraUrunTanimi')?.value || '';
+    utsSeciliSatirlar.clear();
+    utsTabloyuFiltrele();
+  }, 300);
 }
 
+let utsTabloVerileriCache = null;
 function utsTabloyuFiltrele() {
-  window.api.utsAlimOku().then(veriler => {
+  const renderFiltre = (veriler) => {
     const tbody = document.querySelector('#utsAlimListesi tbody');
     if (!tbody) return;
 
@@ -2971,9 +3014,18 @@ function utsTabloyuFiltrele() {
       tumCheck.checked = filtrelenenHepSecili;
     }
 
-    const sayac = document.getElementById('utsFiltreSayac');
+      const sayac = document.getElementById('utsFiltreSayac');
     if (sayac) sayac.textContent = `${filtrelenmis.length} / ${veriler.length} ürün${utsSeciliSatirlar.size > 0 ? ' • ' + utsSeciliSatirlar.size + ' seçili' : ''}`;
-  });
+  };
+
+  if (utsTabloVerileriCache) {
+    renderFiltre(utsTabloVerileriCache);
+  } else {
+    window.api.utsAlimOku().then(veriler => {
+      utsTabloVerileriCache = veriler;
+      renderFiltre(veriler);
+    });
+  }
 }
 
 function utsSeciliGuncelle(index, checked) {
@@ -3132,12 +3184,14 @@ async function utsVerileriTemizle() {
   if (!(await showConfirm(`${veriler.length} kaydı silmek istediğinize emin misiniz?`, 'UTS Veri Temizleme'))) return;
 
   await window.api.utsAlimTemizle();
+  utsTabloVerileriCache = null;
   showToast('Tüm veriler silindi.', 'success');
   await utsAlimListesiniYukle();
 }
 
 async function utsAlanGuncelle(index, alan, deger, sessiz) {
   const result = await window.api.utsAlimFiyatGuncelle({ index, alan, deger });
+  utsTabloVerileriCache = null;
   if (!sessiz) {
     if (result.success) {
       showToast('Güncellendi.', 'success');
@@ -3397,9 +3451,13 @@ async function stokSayimiEsitle() {
 }
 
 // ===== TOPLU STOK FİLTRELEME =====
+let topluStokFilterTimer = null;
 function topluStokFiltrele() {
-  topluStokSayfa = 0;
-  renderTopluStok();
+  clearTimeout(topluStokFilterTimer);
+  topluStokFilterTimer = setTimeout(() => {
+    topluStokSayfa = 0;
+    renderTopluStok();
+  }, 300);
 }
 
 function topluStokFiltrelenmisUrunleriAl() {
