@@ -144,34 +144,30 @@ async function initTables() {
     console.log('Varsayilan admin kullanici olusturuldu: oguzhan / Oguzhanemel123');
   }
 
-  // Mekrer urun temizligi (ayni karekod + urun adi)
+  // Mekrer urun temizligi - tek SQL ile hizli temizlik
   try {
-    const dupGruplar = await dbAll(`
-      SELECT KAREKOD, URUN_ADI, COUNT(*) as adet
-      FROM urunler
-      WHERE KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
-      GROUP BY KAREKOD, URUN_ADI
-      HAVING adet > 1
+    // Adetleri birlestir: en buyuk ID'yi koru, digerlerinin adedini ekle
+    await dbRun(`
+      UPDATE urunler SET ADET = ADET + (
+        SELECT SUM(u2.ADET) FROM urunler u2
+        WHERE u2.KAREKOD = urunler.KAREKOD AND u2.URUN_ADI = urunler.URUN_ADI AND u2.URUN_ID != urunler.URUN_ID AND u2.ADET > 0
+      )
+      WHERE urunler.URUN_ID IN (
+        SELECT MAX(URUN_ID) FROM urunler
+        WHERE KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
+        GROUP BY KAREKOD, URUN_ADI HAVING COUNT(*) > 1
+      )
     `);
-    if (dupGruplar.length > 0) {
-      let toplamSilinen = 0;
-      for (const g of dupGruplar) {
-        const tum = await dbAll(
-          'SELECT URUN_ID, ADET, FIYAT FROM urunler WHERE KAREKOD = ? AND URUN_ADI = ? ORDER BY FIYAT DESC, URUN_ID DESC',
-          [g.KAREKOD, g.URUN_ADI]
-        );
-        if (tum.length <= 1) continue;
-        const korunacak = tum[0];
-        const silinecekler = tum.slice(1);
-        const toplamAdet = silinecekler.reduce((s, u) => s + (parseInt(u.ADET) || 0), 0);
-        if (toplamAdet > 0) await dbRun('UPDATE urunler SET ADET = ADET + ? WHERE URUN_ID = ?', [toplamAdet, korunacak.URUN_ID]);
-        for (const s of silinecekler) {
-          await dbRun('DELETE FROM urunler WHERE URUN_ID = ?', [s.URUN_ID]);
-          toplamSilinen++;
-        }
-      }
-      console.log('Mekrer temizligi: ' + toplamSilinen + ' urun silindi, ' + dupGruplar.length + ' grupta birlestirildi');
-    }
+
+    // Mekrerleri sil: her grupta en buyuk ID haricindekileri sil
+    const silSonuc = await dbRun(`
+      DELETE FROM urunler WHERE URUN_ID NOT IN (
+        SELECT MAX(URUN_ID) FROM urunler
+        WHERE KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
+        GROUP BY KAREKOD, URUN_ADI
+      ) AND KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
+    `);
+    console.log('Mekrer temizligi tamamlandi');
   } catch (e) {
     console.error('Mekrer temizlik hatasi:', e.message);
   }

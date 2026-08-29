@@ -155,59 +155,30 @@ router.post('/mukerrer-temizle', async (req, res) => {
   try {
     await getDb();
 
-    const gruplar = await dbAll(`
-      SELECT KAREKOD, URUN_ADI, COUNT(*) as adet
-      FROM urunler
-      WHERE KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
-      GROUP BY KAREKOD, URUN_ADI
-      HAVING adet > 1
+    // Tek SQL ile adetleri birlestir
+    await dbRun(`
+      UPDATE urunler SET ADET = ADET + (
+        SELECT COALESCE(SUM(u2.ADET), 0) FROM urunler u2
+        WHERE u2.KAREKOD = urunler.KAREKOD AND u2.URUN_ADI = urunler.URUN_ADI
+        AND u2.URUN_ID != urunler.URUN_ID AND u2.ADET > 0
+      )
+      WHERE urunler.URUN_ID IN (
+        SELECT MAX(URUN_ID) FROM urunler
+        WHERE KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
+        GROUP BY KAREKOD, URUN_ADI HAVING COUNT(*) > 1
+      )
     `);
 
-    let silinen = 0;
-    let birlestirilen = 0;
-    const silinecekIdler = [];
-    const guncellemeSatırlari = [];
+    // Tek SQL ile mekrerleri sil
+    await dbRun(`
+      DELETE FROM urunler WHERE URUN_ID NOT IN (
+        SELECT MAX(URUN_ID) FROM urunler
+        WHERE KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
+        GROUP BY KAREKOD, URUN_ADI
+      ) AND KAREKOD != '' AND KAREKOD IS NOT NULL AND KAREKOD != '0'
+    `);
 
-    for (const g of gruplar) {
-      const tumUrunler = await dbAll(
-        'SELECT URUN_ID, ALIS_FIYATI, FIYAT, ADET FROM urunler WHERE KAREKOD = ? AND URUN_ADI = ? ORDER BY FIYAT DESC, ALIS_FIYATI DESC, URUN_ID DESC',
-        [g.KAREKOD, g.URUN_ADI]
-      );
-
-      if (tumUrunler.length <= 1) continue;
-
-      const enYuksek = tumUrunler[0];
-      const silinecekler = tumUrunler.slice(1);
-      const toplamAdet = silinecekler.reduce((s, u) => s + (u.ADET || 0), 0);
-
-      if (toplamAdet > 0) {
-        guncellemeSatırlari.push({
-          sql: 'UPDATE urunler SET ADET = ADET + ? WHERE URUN_ID = ?',
-          params: [toplamAdet, enYuksek.URUN_ID]
-        });
-      }
-
-      for (const s of silinecekler) {
-        silinecekIdler.push(s.URUN_ID);
-        silinen++;
-      }
-      birlestirilen++;
-    }
-
-    for (const satir of guncellemeSatırlari) {
-      await dbRun(satir.sql, satir.params);
-    }
-
-    if (silinecekIdler.length > 0) {
-      const CHUNK = 500;
-      for (let i = 0; i < silinecekIdler.length; i += CHUNK) {
-        const chunk = silinecekIdler.slice(i, i + CHUNK);
-        const placeholders = chunk.map(() => '?').join(',');
-        await dbRun(`DELETE FROM urunler WHERE URUN_ID IN (${placeholders})`, chunk);
-      }
-    }
-
-    res.json({ success: true, silinen, birlestirilen, toplamGrup: gruplar.length });
+    res.json({ success: true, message: 'Mekrer urunler temizlendi' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
