@@ -7,34 +7,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'oen-optik-jwt-secret-2024';
 
 router.post('/kayit', async (req, res) => {
-  try {
-    await getDb();
-    const { username, password, fullname } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Kullanici adi ve sifre gerekli' });
-    }
-
-    const existing = await dbGet('SELECT id FROM users WHERE username = ?', [username]);
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'Bu kullanici adi zaten mevcut' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await dbRun('INSERT INTO users (username, password, fullname) VALUES (?, ?, ?)', [username, hashedPassword, fullname || username]);
-
-    const user = await dbGet('SELECT id FROM users WHERE username = ?', [username]);
-    const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '30m' });
-
-    if (req.session) {
-      req.session.userId = user.id;
-      req.session.username = username;
-    }
-
-    res.json({ success: true, userId: user.id, token });
-  } catch (err) {
-    console.error('Kayit hatasi:', err.message, err.stack);
-    res.status(500).json({ success: false, message: 'Kayit hatasi: ' + err.message });
-  }
+  return res.status(403).json({ success: false, message: 'Kayit islemi devre disi birakilmistir. Yeni hesaplar sadece admin tarafindan olusturulabilir.' });
 });
 
 router.post('/giris', async (req, res) => {
