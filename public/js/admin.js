@@ -220,7 +220,7 @@ function filterUrunler() {
 function toggleUrunDetay() {
   if (!urunDetayGoster) {
     const sifre = prompt('Ürün detaylarını görmek için şifre girin:');
-    if (sifre !== 'oguzhan') {
+    if (sifre !== '2516') {
       if (sifre !== null) showToast('Yanlış şifre!', 'error');
       return;
     }
