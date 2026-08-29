@@ -14,9 +14,13 @@ function getVal(item, ...keys) {
 }
 
 function normalizeItem(item) {
+  const rawKarekod = getVal(item, 'KAREKOD', 'karekod', 'Barkod', 'barkod', 'Kod');
+  let karekod = String(rawKarekod).trim();
+  if (/^\d+\.0+$/.test(karekod)) karekod = karekod.replace(/\.0+$/, '');
+
   return {
     Kategori: (getVal(item, 'Kategori', 'KATEGORI', 'kategori', 'Category') || '').toLocaleUpperCase('tr-TR').trim(),
-    KAREKOD: getVal(item, 'KAREKOD', 'karekod', 'Barkod', 'barkod', 'Kod'),
+    KAREKOD: karekod,
     UrunAdi: getVal(item, 'Urun Adi', 'Ürün Adı', 'URUN_ADI', 'urun_adi', 'UrunAdi', 'ÜrünAdı', 'Product'),
     AlisFiyati: parseFloat(getVal(item, 'Alis Fiyati', 'Alış Fiyatı', 'ALIS_FIYATI', 'alis_fiyati', 'AlisFiyati', 'AlışFiyatı', 'Cost')) || 0,
     SatisFiyati: parseFloat(getVal(item, 'Satis Fiyati', 'Satış Fiyatı', 'SATIS_FIYATI', 'satis_fiyati', 'SatisFiyati', 'SatışFiyatı', 'Price')) || 0,
