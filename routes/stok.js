@@ -15,7 +15,7 @@ function getVal(item, ...keys) {
 
 function normalizeItem(item) {
   return {
-    Kategori: (getVal(item, 'Kategori', 'KATEGORI', 'kategori', 'Category') || '').toLocaleUpperCase('tr-TR'),
+    Kategori: (getVal(item, 'Kategori', 'KATEGORI', 'kategori', 'Category') || '').toLocaleUpperCase('tr-TR').trim(),
     KAREKOD: getVal(item, 'KAREKOD', 'karekod', 'Barkod', 'barkod', 'Kod'),
     UrunAdi: getVal(item, 'Urun Adi', 'Ürün Adı', 'URUN_ADI', 'urun_adi', 'UrunAdi', 'ÜrünAdı', 'Product'),
     AlisFiyati: parseFloat(getVal(item, 'Alis Fiyati', 'Alış Fiyatı', 'ALIS_FIYATI', 'alis_fiyati', 'AlisFiyati', 'AlışFiyatı', 'Cost')) || 0,
@@ -23,6 +23,20 @@ function normalizeItem(item) {
     Mensei: getVal(item, 'Mensei', 'Menşei', 'MENSEI', 'mensei', 'Origin'),
     Adet: parseInt(getVal(item, 'Adet', 'ADET', 'adet', 'Quantity')) || 0,
   };
+}
+
+function normalizeText(text) {
+  return (text || '').trim().toLocaleUpperCase('tr-TR')
+    .replace(/İ/g, 'I').replace(/I/g, 'I')
+    .replace(/ü/g, 'U').replace(/Ü/g, 'U')
+    .replace(/ö/g, 'O').replace(/Ö/g, 'O')
+    .replace(/ş/g, 'S').replace(/Ş/g, 'S')
+    .replace(/ç/g, 'C').replace(/Ç/g, 'C')
+    .replace(/ğ/g, 'G').replace(/Ğ/g, 'G');
+}
+
+function buildMatchKey(urunAdi, kategori) {
+  return normalizeText(urunAdi) + '|' + normalizeText(kategori);
 }
 
 router.get('/toplu', async (req, res) => {
@@ -35,56 +49,59 @@ router.get('/toplu', async (req, res) => {
   }
 });
 
+async function stokOnaylaIsle(stokVerileri) {
+  await getDb();
+
+  const urunMap = new Map();
+  const mevcutUrunler = await dbAll('SELECT URUN_ID, URUN_ADI, KATEGORI_ADI FROM urunler');
+  for (const u of mevcutUrunler) {
+    urunMap.set(buildMatchKey(u.URUN_ADI, u.KATEGORI_ADI), u);
+  }
+
+  const maxRow = await dbGet('SELECT MAX(URUN_ID) as maxId FROM urunler');
+  let nextId = (maxRow && maxRow.maxId ? maxRow.maxId : 0) + 1;
+
+  let guncellenen = 0;
+  let eklenen = 0;
+  const statements = [];
+
+  for (const raw of stokVerileri) {
+    const item = normalizeItem(raw);
+    if (item.Adet <= 0) continue;
+
+    const key = buildMatchKey(item.UrunAdi, item.Kategori);
+    const mevcut = urunMap.get(key);
+
+    if (mevcut) {
+      statements.push({
+        sql: 'UPDATE urunler SET ADET = ADET + ?, ALIS_FIYATI = ?, FIYAT = ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
+        params: [item.Adet, item.AlisFiyati, item.SatisFiyati, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
+      });
+      guncellenen++;
+    } else {
+      statements.push({
+        sql: 'INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        params: [nextId, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]
+      });
+      urunMap.set(key, { URUN_ID: nextId, URUN_ADI: item.UrunAdi, KATEGORI_ADI: item.Kategori });
+      nextId++;
+      eklenen++;
+    }
+  }
+
+  const CHUNK_SIZE = 1000;
+  for (let i = 0; i < statements.length; i += CHUNK_SIZE) {
+    const chunk = statements.slice(i, i + CHUNK_SIZE);
+    await dbBatch(chunk);
+  }
+
+  return { guncellenen, eklenen, toplam: statements.length };
+}
+
 router.post('/toplu-onayla', async (req, res) => {
   try {
-    await getDb();
-    const stokVerileri = req.body;
-
-    // Map ile HIZLI arama: O(1) - .find() yerine Map.get()
-    const urunMap = new Map();
-    const mevcutUrunler = await dbAll('SELECT URUN_ID, URUN_ADI, KATEGORI_ADI FROM urunler');
-    for (const u of mevcutUrunler) {
-      urunMap.set(u.URUN_ADI + '|' + (u.KATEGORI_ADI || ''), u);
-    }
-
-    // Sonraki ID'yi SQL ile al (tüm tabloyu yüklemeye gerek yok)
-    const maxRow = await dbGet('SELECT MAX(URUN_ID) as maxId FROM urunler');
-    let nextId = (maxRow && maxRow.maxId ? maxRow.maxId : 0) + 1;
-
-    let guncellenen = 0;
-    let eklenen = 0;
-    const statements = [];
-
-    for (const raw of stokVerileri) {
-      const item = normalizeItem(raw);
-      if (item.Adet <= 0) continue;
-
-      const key = item.UrunAdi + '|' + item.Kategori;
-      const mevcut = urunMap.get(key);
-
-      if (mevcut) {
-        statements.push({
-          sql: 'UPDATE urunler SET ADET = ADET + ?, ALIS_FIYATI = ?, FIYAT = ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
-          params: [item.Adet, item.AlisFiyati, item.SatisFiyati, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
-        });
-        guncellenen++;
-      } else {
-        statements.push({
-          sql: 'INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          params: [nextId++, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]
-        });
-        eklenen++;
-      }
-    }
-
-    // BUYUK VERI SETLERI ICIN: 1000'erli parcalar halinde calistir
-    const CHUNK_SIZE = 1000;
-    for (let i = 0; i < statements.length; i += CHUNK_SIZE) {
-      const chunk = statements.slice(i, i + CHUNK_SIZE);
-      await dbBatch(chunk);
-    }
-
-    res.json({ success: true, guncellenen, eklenen, toplam: statements.length });
+    const result = await stokOnaylaIsle(req.body);
+    res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -92,51 +109,9 @@ router.post('/toplu-onayla', async (req, res) => {
 
 router.post('/toplu-onayla-parcali', async (req, res) => {
   try {
-    await getDb();
     const { stokVerileri, parcaNo, toplamParca } = req.body;
-
-    const urunMap = new Map();
-    const mevcutUrunler = await dbAll('SELECT URUN_ID, URUN_ADI, KATEGORI_ADI FROM urunler');
-    for (const u of mevcutUrunler) {
-      urunMap.set(u.URUN_ADI + '|' + (u.KATEGORI_ADI || ''), u);
-    }
-
-    const maxRow = await dbGet('SELECT MAX(URUN_ID) as maxId FROM urunler');
-    let nextId = (maxRow && maxRow.maxId ? maxRow.maxId : 0) + 1;
-
-    let guncellenen = 0;
-    let eklenen = 0;
-    const statements = [];
-
-    for (const raw of stokVerileri) {
-      const item = normalizeItem(raw);
-      if (item.Adet <= 0) continue;
-
-      const key = item.UrunAdi + '|' + item.Kategori;
-      const mevcut = urunMap.get(key);
-
-      if (mevcut) {
-        statements.push({
-          sql: 'UPDATE urunler SET ADET = ADET + ?, ALIS_FIYATI = ?, FIYAT = ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
-          params: [item.Adet, item.AlisFiyati, item.SatisFiyati, item.KAREKOD, item.Mensei, item.UrunAdi, item.Kategori]
-        });
-        guncellenen++;
-      } else {
-        statements.push({
-          sql: 'INSERT INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          params: [nextId++, item.Kategori, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Adet, item.KAREKOD, item.Mensei]
-        });
-        eklenen++;
-      }
-    }
-
-    const CHUNK_SIZE = 1000;
-    for (let i = 0; i < statements.length; i += CHUNK_SIZE) {
-      const chunk = statements.slice(i, i + CHUNK_SIZE);
-      await dbBatch(chunk);
-    }
-
-    res.json({ success: true, guncellenen, eklenen, parcaNo, toplamParca });
+    const result = await stokOnaylaIsle(stokVerileri);
+    res.json({ success: true, ...result, parcaNo, toplamParca });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -151,10 +126,8 @@ router.post('/toplu-yukle', upload.single('file'), async (req, res) => {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
-    // Onceki verileri temizle
     await dbRun('DELETE FROM toplu_stok');
 
-    // BUYUK VERI SETLERI ICIN: 500'erli parcalar halinde yukle
     const CHUNK_SIZE = 500;
     for (let i = 0; i < data.length; i += CHUNK_SIZE) {
       const chunk = data.slice(i, i + CHUNK_SIZE);
