@@ -193,12 +193,18 @@ router.post('/karekod-temizle', async (req, res) => {
     if (dbObj.type === 'turso') {
       const rows = await dbObj.client.execute("SELECT URUN_ID, KAREKOD FROM urunler WHERE KAREKOD LIKE '%.0%'");
       let guncellenen = 0;
+      const statements = [];
       for (const row of rows.rows || []) {
         const temiz = row.KAREKOD.replace(/\.0+$/, '');
         if (temiz !== row.KAREKOD) {
-          await dbObj.client.execute({ sql: 'UPDATE urunler SET KAREKOD = ? WHERE URUN_ID = ?', args: [temiz, row.URUN_ID] });
+          statements.push({ sql: 'UPDATE urunler SET KAREKOD = ? WHERE URUN_ID = ?', args: [temiz, row.URUN_ID] });
           guncellenen++;
         }
+      }
+      // 500'erli batch'ler halinde guncelle
+      for (let i = 0; i < statements.length; i += 500) {
+        const batch = statements.slice(i, i + 500);
+        await dbObj.client.batch(batch);
       }
       res.json({ success: true, guncellenen, toplam: (rows.rows || []).length });
     } else {
