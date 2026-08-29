@@ -1639,7 +1639,7 @@ async function satisTarihiUrunleri() {
 
 // ===== UTS ÜRÜNLERİ EŞİTLE =====
 async function utsPenceresiAc() {
-  window.open('https://utsuygulama.saglik.gov.tr/UTS', '_blank');
+  window.open('https://utsuygulama.saglik.gov.tr/UTS/tibbiCihaz#/topluAlmaBildirimiEkle', '_blank');
 }
 
 // UTS durum güncellemelerini dinle

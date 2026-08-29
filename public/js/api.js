@@ -154,7 +154,7 @@ window.api = {
 
   // ===== UTS İŞLEMLERİ =====
   utsPencereAc: () => {
-    window.open('https://utsuygulama.saglik.gov.tr/UTS', '_blank');
+    window.open('https://utsuygulama.saglik.gov.tr/UTS/tibbiCihaz#/topluAlmaBildirimiEkle', '_blank');
     return Promise.resolve({ success: true });
   },
   utsDurumDinle: (callback) => {
