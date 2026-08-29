@@ -39,17 +39,29 @@ router.post('/toplu-onayla', async (req, res) => {
   try {
     await getDb();
     const stokVerileri = req.body;
-    let allProducts = await dbAll('SELECT * FROM urunler');
-    let nextId = allProducts.length > 0 ? Math.max(...allProducts.map(r => parseInt(r.URUN_ID) || 0)) + 1 : 1;
+
+    // Map ile HIZLI arama: O(1) - .find() yerine Map.get()
+    const urunMap = new Map();
+    const mevcutUrunler = await dbAll('SELECT URUN_ID, URUN_ADI, KATEGORI_ADI FROM urunler');
+    for (const u of mevcutUrunler) {
+      urunMap.set(u.URUN_ADI + '|' + (u.KATEGORI_ADI || ''), u);
+    }
+
+    // Sonraki ID'yi SQL ile al (tüm tabloyu yüklemeye gerek yok)
+    const maxRow = await dbGet('SELECT MAX(URUN_ID) as maxId FROM urunler');
+    let nextId = (maxRow && maxRow.maxId ? maxRow.maxId : 0) + 1;
+
     let guncellenen = 0;
     let eklenen = 0;
-
     const statements = [];
+
     for (const raw of stokVerileri) {
       const item = normalizeItem(raw);
       if (item.Adet <= 0) continue;
 
-      const mevcut = allProducts.find(p => p.URUN_ADI === item.UrunAdi && p.KATEGORI_ADI === item.Kategori);
+      const key = item.UrunAdi + '|' + item.Kategori;
+      const mevcut = urunMap.get(key);
+
       if (mevcut) {
         statements.push({
           sql: 'UPDATE urunler SET ADET = ADET + ?, KAREKOD = ?, MENSEI = ? WHERE URUN_ADI = ? AND KATEGORI_ADI = ?',
@@ -65,9 +77,13 @@ router.post('/toplu-onayla', async (req, res) => {
       }
     }
 
-    if (statements.length > 0) {
-      await dbBatch(statements);
+    // BUYUK VERI SETLERI ICIN: 500'erli parcalar halinde calistir
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < statements.length; i += CHUNK_SIZE) {
+      const chunk = statements.slice(i, i + CHUNK_SIZE);
+      await dbBatch(chunk);
     }
+
     res.json({ success: true, guncellenen, eklenen });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -83,18 +99,23 @@ router.post('/toplu-yukle', upload.single('file'), async (req, res) => {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
-    const statements = [
-      { sql: 'DELETE FROM toplu_stok', params: [] }
-    ];
-    for (const raw of data) {
-      const item = normalizeItem(raw);
-      statements.push({
-        sql: 'INSERT INTO toplu_stok (KATEGORI, KAREKOD, URUN_ADI, ALIS_FIYATI, SATIS_FIYATI, MENSEI, ADET) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        params: [item.Kategori, item.KAREKOD, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Mensei, item.Adet]
+    // Onceki verileri temizle
+    await dbRun('DELETE FROM toplu_stok');
+
+    // BUYUK VERI SETLERI ICIN: 500'erli parcalar halinde yukle
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      const statements = chunk.map(raw => {
+        const item = normalizeItem(raw);
+        return {
+          sql: 'INSERT INTO toplu_stok (KATEGORI, KAREKOD, URUN_ADI, ALIS_FIYATI, SATIS_FIYATI, MENSEI, ADET) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          params: [item.Kategori, item.KAREKOD, item.UrunAdi, item.AlisFiyati, item.SatisFiyati, item.Mensei, item.Adet]
+        };
       });
+      await dbBatch(statements);
     }
 
-    await dbBatch(statements);
     res.json({ success: true, count: data.length });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
