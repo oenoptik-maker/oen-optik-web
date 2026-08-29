@@ -132,7 +132,7 @@
         </div>
         <div class="form-group">
           <label for="password">Şifre</label>
-          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Şifrenizi girin">
+          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Şifrenizi girin" oncontextmenu="return false">
         </div>
         <button type="submit" class="btn-login" id="loginBtn">Giriş Yap</button>
       </form>
@@ -144,6 +144,30 @@
   </div>
 
   <script>
+    // Sifre koruma: type degisikligini engelle
+    (function() {
+      var pwd = document.getElementById('password');
+      if (!pwd) return;
+      var orijinalDeger = '';
+      pwd.addEventListener('input', function() { orijinalDeger = this.value; });
+      var gozlemci = new MutationObserver(function() {
+        if (pwd.type !== 'password') { pwd.type = 'password'; pwd.value = orijinalDeger; }
+      });
+      gozlemci.observe(pwd, { attributes: true, attributeFilter: ['type'] });
+      Object.defineProperty(pwd, 'type', {
+        get: function() { return 'password'; },
+        set: function(v) { /* type degisikligi engellendi */ }
+      });
+      document.addEventListener('contextmenu', function(e) {
+        if (e.target === pwd || e.target.closest('#password')) { e.preventDefault(); return false; }
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c'))) {
+          if (document.activeElement === pwd) { e.preventDefault(); return false; }
+        }
+      });
+    })();
+
     (function() {
       if (window.self !== window.top) {
         document.documentElement.classList.add('in-iframe');
