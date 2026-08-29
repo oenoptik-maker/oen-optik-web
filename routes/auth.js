@@ -6,9 +6,38 @@ const jwt = require('jsonwebtoken');
 const { generateCode, sendSMS, IS_TEST_MODE } = require('./sms');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'oen-optik-jwt-secret-2024';
+const SMS_ENABLED = process.env.SMS_ENABLED === 'true';
 
 router.post('/kayit', async (req, res) => {
   return res.status(403).json({ success: false, message: 'Kayit islemi devre disi birakilmistir. Yeni hesaplar sadece admin tarafindan olusturulabilir.' });
+});
+
+// Eski giris endpoint - backward compatibility
+router.post('/giris', async (req, res) => {
+  try {
+    await getDb();
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Kullanici adi ve sifre gerekli' });
+    }
+
+    const user = await dbGet('SELECT * FROM users WHERE username = ?', [username]);
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Gecersiz kullanici adi veya sifre' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ success: false, message: 'Gecersiz kullanici adi veya sifre' });
+    }
+
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30m' });
+    res.cookie('oken_token', token, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'none', secure: true, path: '/' });
+    res.json({ success: true, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
+  } catch (err) {
+    console.error('Giris hatasi:', err.message);
+    res.status(500).json({ success: false, message: 'Giris hatasi: ' + err.message });
+  }
 });
 
 // SMS kodu gonder
@@ -31,6 +60,13 @@ router.post('/gonder-kod', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Gecersiz kullanici adi veya sifre' });
     }
 
+    // SMS devre disiysa direkt token ver
+    if (!SMS_ENABLED) {
+      const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30m' });
+      res.cookie('oken_token', token, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'none', secure: true, path: '/' });
+      return res.json({ success: true, sms_required: false, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
+    }
+
     // Cihaz guvenli mi kontrol et
     if (device_fingerprint) {
       const trusted = await dbGet(
@@ -39,32 +75,22 @@ router.post('/gonder-kod', async (req, res) => {
       );
       
       if (trusted) {
-        // Guvenilir cihaz - token ver, SMS gereksiz
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30m' });
         res.cookie('oken_token', token, { httpOnly: false, maxAge: 30 * 60 * 1000, sameSite: 'none', secure: true, path: '/' });
-        return res.json({ 
-          success: true, 
-          sms_required: false, 
-          user: { id: user.id, username: user.username, fullname: user.fullname }, 
-          token 
-        });
+        return res.json({ success: true, sms_required: false, user: { id: user.id, username: user.username, fullname: user.fullname }, token });
       }
     }
 
     // Yeni cihaz - SMS kodu gonder
     const code = generateCode();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 dakika
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     
-    // Onceki kullanilmamis kodlari temizle
     await dbRun('DELETE FROM sms_codes WHERE user_id = ? AND used = 0', [user.id]);
-    
-    // Yeni kod kaydet
     await dbRun(
       'INSERT INTO sms_codes (user_id, code, phone, expires_at) VALUES (?, ?, ?, ?)',
       [user.id, code, user.username, expiresAt]
     );
 
-    // SMS gonder (test modunda sadece log'a yazar)
     await sendSMS(user.username, code);
 
     res.json({ 
