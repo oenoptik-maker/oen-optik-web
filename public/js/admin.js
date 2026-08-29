@@ -218,6 +218,13 @@ function filterUrunler() {
 }
 
 function toggleUrunDetay() {
+  if (!urunDetayGoster) {
+    const sifre = prompt('Ürün detaylarını görmek için şifre girin:');
+    if (sifre !== 'oguzhan') {
+      if (sifre !== null) showToast('Yanlış şifre!', 'error');
+      return;
+    }
+  }
   urunDetayGoster = !urunDetayGoster;
   const btn = document.getElementById('urunDetayToggleBtn');
   if (btn) {
