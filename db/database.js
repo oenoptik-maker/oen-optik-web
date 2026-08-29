@@ -106,6 +106,22 @@ async function initTables() {
       KATEGORI TEXT, KAREKOD TEXT, URUN_ADI TEXT,
       ALIS_FIYATI REAL DEFAULT 0, SATIS_FIYATI REAL DEFAULT 0,
       MENSEI TEXT, ADET INTEGER DEFAULT 0
+    )`,
+    `CREATE TABLE IF NOT EXISTS trusted_devices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      device_fingerprint TEXT,
+      device_name TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS sms_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      code TEXT,
+      phone TEXT,
+      expires_at DATETIME,
+      used INTEGER DEFAULT 0,
+      attempts INTEGER DEFAULT 0
     )`
   ];
 

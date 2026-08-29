@@ -126,15 +126,30 @@
       <div id="errorMessage" class="error-message" style="display:none;"></div>
 
       <form id="loginForm" onsubmit="return handleLogin(event)">
-        <div class="form-group">
-          <label for="username">Kullanıcı Adı</label>
-          <input type="text" id="username" name="username" required autocomplete="username" placeholder="Kullanıcı adınızı girin">
+        <div id="step1">
+          <div class="form-group">
+            <label for="username">Kullanıcı Adı</label>
+            <input type="text" id="username" name="username" required autocomplete="username" placeholder="Kullanıcı adınızı girin">
+          </div>
+          <div class="form-group">
+            <label for="password">Şifre</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Şifrenizi girin" oncontextmenu="return false">
+          </div>
+          <button type="submit" class="btn-login" id="loginBtn">Giriş Yap</button>
         </div>
-        <div class="form-group">
-          <label for="password">Şifre</label>
-          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Şifrenizi girin" oncontextmenu="return false">
+        
+        <div id="step2" style="display:none;">
+          <div class="sms-info" style="background:#e0f2fe; padding:12px; border-radius:8px; margin-bottom:16px; font-size:0.85rem; color:#0369a1;">
+            📱 Telefonunuza 6 haneli kod gönderildi
+          </div>
+          <div class="form-group">
+            <label for="smsCode">Doğrulama Kodu</label>
+            <input type="text" id="smsCode" name="smsCode" required maxlength="6" pattern="[0-9]{6}" placeholder="6 haneli kodu girin" style="text-align:center; font-size:1.5rem; letter-spacing:8px;">
+          </div>
+          <button type="submit" class="btn-login" id="verifyBtn">Doğrula ve Giriş Yap</button>
+          <button type="button" class="btn-login" id="backBtn" style="background:#6b7280; margin-top:8px;">← Geri Dön</button>
+          <div id="testCode" style="display:none; background:#fef3c7; padding:12px; border-radius:8px; margin-top:12px; font-size:0.85rem; color:#92400e;"></div>
         </div>
-        <button type="submit" class="btn-login" id="loginBtn">Giriş Yap</button>
       </form>
 
       <div class="login-footer">
@@ -195,8 +210,15 @@
 
     async function handleLogin(e) {
       e.preventDefault();
-      const btn = document.getElementById('loginBtn');
       const errorDiv = document.getElementById('errorMessage');
+      
+      // Step 2: SMS kodu dogrulama
+      if (document.getElementById('step2').style.display !== 'none') {
+        return verifyCode(e);
+      }
+      
+      // Step 1: Kullanici adi ve sifre
+      const btn = document.getElementById('loginBtn');
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
 
@@ -206,22 +228,37 @@
         return false;
       }
 
-      btn.textContent = 'Giriş yapılıyor...';
+      btn.textContent = 'Kontrol ediliyor...';
       btn.disabled = true;
       errorDiv.style.display = 'none';
 
       try {
-        const response = await fetch('/api/auth/giris', {
+        const fingerprint = generateFingerprint();
+        const response = await fetch('/api/auth/gonder-kod', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password, device_fingerprint: fingerprint })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          if (data.token) localStorage.setItem('oken_token', data.token);
-          window.location.href = '/index.html' + (data.token ? '?token=' + encodeURIComponent(data.token) : '');
+          if (data.sms_required) {
+            // SMS kodu gerekli - step 2'yi goster
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+            document.getElementById('smsCode').focus();
+            
+            if (data.test_mode && data.message) {
+              const testDiv = document.getElementById('testCode');
+              testDiv.textContent = '🧪 ' + data.message;
+              testDiv.style.display = 'block';
+            }
+          } else {
+            // Guvenilir cihaz - direkt giris
+            if (data.token) localStorage.setItem('oken_token', data.token);
+            window.location.href = '/index.html' + (data.token ? '?token=' + encodeURIComponent(data.token) : '');
+          }
         } else {
           errorDiv.textContent = data.message || 'Giriş başarısız';
           errorDiv.style.display = 'block';
@@ -235,6 +272,95 @@
       btn.disabled = false;
       return false;
     }
+
+    async function verifyCode(e) {
+      e.preventDefault();
+      const btn = document.getElementById('verifyBtn');
+      const errorDiv = document.getElementById('errorMessage');
+      const username = document.getElementById('username').value.trim();
+      const code = document.getElementById('smsCode').value.trim();
+
+      if (!code || code.length !== 6) {
+        errorDiv.textContent = '6 haneli kodu girin';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+
+      btn.textContent = 'Doğrulanıyor...';
+      btn.disabled = true;
+      errorDiv.style.display = 'none';
+
+      try {
+        const fingerprint = generateFingerprint();
+        const response = await fetch('/api/auth/dogrula-kod', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, code, device_fingerprint: fingerprint, device_name: getDeviceName() })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.token) localStorage.setItem('oken_token', data.token);
+          window.location.href = '/index.html' + (data.token ? '?token=' + encodeURIComponent(data.token) : '');
+        } else {
+          errorDiv.textContent = data.message || 'Doğrulama başarısız';
+          errorDiv.style.display = 'block';
+          document.getElementById('smsCode').value = '';
+          document.getElementById('smsCode').focus();
+        }
+      } catch (err) {
+        errorDiv.textContent = 'Bağlantı hatası: ' + err.message;
+        errorDiv.style.display = 'block';
+      }
+
+      btn.textContent = 'Doğrula ve Giriş Yap';
+      btn.disabled = false;
+      return false;
+    }
+
+    function generateFingerprint() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillText('OEN Optik', 2, 2);
+      
+      const data = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        screen.colorDepth,
+        new Date().getTimezoneOffset(),
+        canvas.toDataURL()
+      ].join('|');
+      
+      let hash = 0;
+      for (let i = 0; i < data.length; i++) {
+        const char = data.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return 'fp_' + Math.abs(hash).toString(36);
+    }
+
+    function getDeviceName() {
+      const ua = navigator.userAgent;
+      if (/android/i.test(ua)) return 'Android Cihaz';
+      if (/iPad|iPhone|iPod/.test(ua)) return 'iOS Cihaz';
+      if (/Windows/.test(ua)) return 'Windows PC';
+      if (/Mac/.test(ua)) return 'Mac';
+      if (/Linux/.test(ua)) return 'Linux';
+      return 'Bilinmeyen Cihaz';
+    }
+
+    // Back button
+    document.getElementById('backBtn').addEventListener('click', function() {
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('smsCode').value = '';
+      document.getElementById('testCode').style.display = 'none';
+    });
   </script>
 </body>
 </html>
