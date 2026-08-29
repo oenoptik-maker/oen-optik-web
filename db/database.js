@@ -126,13 +126,22 @@ async function initTables() {
     if (!IS_VERCEL) saveDb();
   }
 
+  // Admin kullanici guncelle (yeni bilgilerle)
+  const adminUser = await dbGet('SELECT id FROM users WHERE username = ?', ['admin']);
+  if (adminUser) {
+    const bcrypt = require('bcryptjs');
+    const newHash = await bcrypt.hash('Oguzhanemel123', 10);
+    await dbRun('UPDATE users SET username = ?, password = ?, fullname = ? WHERE username = ?', ['oguzhan', newHash, 'Oguzhan', 'admin']);
+    console.log('Admin kullanici guncellendi: oguzhan / Oguzhanemel123');
+  }
+
   // Ilk acilis: admin kullanici olustur
   const existingUser = await dbAll('SELECT id FROM users LIMIT 1');
   if (existingUser.length === 0) {
     const bcrypt = require('bcryptjs');
-    const hash = await bcrypt.hash('admin123', 10);
-    await dbRun('INSERT INTO users (username, password, fullname, role) VALUES (?, ?, ?, ?)', ['admin', hash, 'Admin', 'admin']);
-    console.log('Varsayilan admin kullanici olusturuldu: admin / admin123');
+    const hash = await bcrypt.hash('Oguzhanemel123', 10);
+    await dbRun('INSERT INTO users (username, password, fullname, role) VALUES (?, ?, ?, ?)', ['oguzhan', hash, 'Oguzhan', 'admin']);
+    console.log('Varsayilan admin kullanici olusturuldu: oguzhan / Oguzhanemel123');
   }
 }
 
