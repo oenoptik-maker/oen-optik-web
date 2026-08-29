@@ -111,6 +111,7 @@
             </div>
             <div id="tabUrunlerBtns" style="display: flex; gap: 4px;">
               <button class="btn btn-outline btn-sm" onclick="mukerrerTemizle()" style="color:#f59e0b;border-color:#f59e0b;">🧹 Mükerrer Sil</button>
+              <button class="btn btn-outline btn-sm" onclick="karekodTemizle()" style="color:#8b5cf6;border-color:#8b5cf6;">🔢 .0 Temizle</button>
               <button id="urunDetayToggleBtn" class="btn btn-outline btn-sm" onclick="toggleUrunDetay()">📋 Ürün Detayları</button>
               <button class="btn btn-primary btn-sm" onclick="openUrunModal()">+ Yeni Ürün</button>
             </div>
@@ -170,9 +171,10 @@
                   <div id="topluStokDurumProgress" style="height:100%;background:var(--color-primary);width:0%;transition:width 0.3s;border-radius:2px;"></div>
                 </div>
               </div>
-              <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+              <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button class="btn btn-outline btn-sm" onclick="mukerrerTemizle()" style="color:#f59e0b;border-color:#f59e0b;">🧹 Mükerrer Ürünleri Temizle</button>
-                <span style="font-size:0.7rem;color:var(--text-secondary);">Aynı barkod + ürün adına sahip tekrarları siler, en yüksek fiyatlı olanı korur</span>
+                <button class="btn btn-outline btn-sm" onclick="karekodTemizle()" style="color:#8b5cf6;border-color:#8b5cf6;">🔢 .0 Temizle</button>
+                <span style="font-size:0.7rem;color:var(--text-secondary);">Karekod sonundaki ".0" ekini temizler</span>
               </div>
             </div>
             <div id="topluStokFiltreAlani" style="display:none;padding:8px 16px;background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;align-items:center;">

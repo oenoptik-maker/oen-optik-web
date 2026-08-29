@@ -184,4 +184,38 @@ router.post('/mukerrer-temizle', async (req, res) => {
   }
 });
 
+router.post('/karekod-temizle', async (req, res) => {
+  try {
+    await getDb();
+    const database = require('../db/database');
+    const dbObj = await database.getDb();
+    
+    if (dbObj.type === 'turso') {
+      const rows = await dbObj.client.execute("SELECT URUN_ID, KAREKOD FROM urunler WHERE KAREKOD LIKE '%.0%'");
+      let guncellenen = 0;
+      for (const row of rows.rows || []) {
+        const temiz = row.KAREKOD.replace(/\.0+$/, '');
+        if (temiz !== row.KAREKOD) {
+          await dbObj.client.execute({ sql: 'UPDATE urunler SET KAREKOD = ? WHERE URUN_ID = ?', args: [temiz, row.URUN_ID] });
+          guncellenen++;
+        }
+      }
+      res.json({ success: true, guncellenen, toplam: (rows.rows || []).length });
+    } else {
+      const rows = await dbAll("SELECT rowid, KAREKOD FROM urunler WHERE KAREKOD LIKE '%.0%'");
+      let guncellenen = 0;
+      for (const row of rows) {
+        const temiz = row.KAREKOD.replace(/\.0+$/, '');
+        if (temiz !== row.KAREKOD) {
+          await dbRun('UPDATE urunler SET KAREKOD = ? WHERE rowid = ?', [temiz, row.rowid]);
+          guncellenen++;
+        }
+      }
+      res.json({ success: true, guncellenen, toplam: rows.length });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

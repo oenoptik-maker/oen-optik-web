@@ -1000,6 +1000,28 @@ async function mukerrerTemizle() {
   }
 }
 
+async function karekodTemizle() {
+  if (!confirm('Karekod alanında ".0" ile biten kayıtlar temizlenecektir. Devam etmek istiyor musunuz?')) return;
+
+  try {
+    showToast('Karekodlar temizleniyor...', 'info');
+    const result = await window.api.karekodTemizle();
+    if (result && result.success) {
+      if (result.guncellenen > 0) {
+        showToast(result.guncellenen + ' karekod temizlendi.', 'success');
+        await loadUrunler();
+      } else {
+        showToast('Temizlenecek karekod bulunamadı.', 'info');
+      }
+    } else {
+      showToast('Temizleme hatası: ' + (result ? result.message : 'Bilinmeyen hata'), 'error');
+    }
+  } catch (err) {
+    console.error('Karekod temizleme hatasi:', err);
+    showToast('Temizleme hatası: ' + err.message, 'error');
+  }
+}
+
 let topluStokToplamAdet = 0;
 function renderTopluStok() {
   const container = document.getElementById('topluStokListesi');
