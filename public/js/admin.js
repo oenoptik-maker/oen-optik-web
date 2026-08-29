@@ -9,7 +9,7 @@ let seciliUrunler = new Set();
 
 // Sayfalama (Pagination)
 let mevcutSayfa = 1;
-let sayfaBoyutu = 100;
+let sayfaBoyutu = 10;
 let toplamUrunSayisi = 0;
 let aramaTimer = null;
 let onizlemeTimer = null;
