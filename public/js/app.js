@@ -99,8 +99,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Arka planda ürün ve kategori yükle (sayfa gösterildikten sonra)
       requestAnimationFrame(async () => {
-        tumUrunler = await window.api.urunRead();
-        tumKategorilerForm = await window.api.kategoriRead();
+        const [urunler, kategoriler] = await Promise.all([
+          window.api.urunRead(),
+          window.api.kategoriRead()
+        ]);
+        tumUrunler = urunler;
+        tumKategorilerForm = kategoriler;
+        
         const kategoriSelect = document.getElementById('urunKategoriFiltre');
         if (kategoriSelect) {
           kategoriSelect.innerHTML = '<option value="">Tüm Kategoriler</option>' +

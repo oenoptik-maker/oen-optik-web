@@ -10,6 +10,7 @@ let seciliUrunler = new Set();
 // Sayfalama (Pagination)
 let mevcutSayfa = 1;
 let sayfaBoyutu = 100;
+let toplamUrunSayisi = 0;
 let aramaTimer = null;
 let onizlemeTimer = null;
 
@@ -18,14 +19,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.documentElement.classList.add('in-iframe');
     document.body.classList.add('in-iframe');
   }
-  await loadKategoriler();
+  const [kategoriler] = await Promise.all([
+    window.api.kategoriRead()
+  ]);
+  tumKategoriler = kategoriler;
+  renderKategoriler();
+  updateKategoriSelects();
   await loadUrunler();
 });
 
 // ===== KATEGORİ İŞLEMLERİ =====
 async function loadKategoriler() {
-  tumKategoriler = await window.api.kategoriRead();
-  await kategoriNormallestir();
   tumKategoriler = await window.api.kategoriRead();
   renderKategoriler();
   updateKategoriSelects();
@@ -183,13 +187,25 @@ async function deleteKategori(id) {
 
 // ===== ÜRÜN İŞLEMLERİ =====
 async function loadUrunler() {
-  tumUrunlerAdmin = await window.api.urunRead();
+  const kategoriFiltre = document.getElementById('kategoriFiltre') ? document.getElementById('kategoriFiltre').value : '';
+  const arama = document.getElementById('urunArama') ? document.getElementById('urunArama').value : '';
+  
+  const sonuc = await window.api.urunRead({ sayfa: mevcutSayfa, boyut: sayfaBoyutu, arama, kategori: kategoriFiltre });
+  
+  if (sonuc && sonuc.urunler) {
+    tumUrunlerAdmin = sonuc.urunler;
+    toplamUrunSayisi = sonuc.toplam;
+  } else {
+    tumUrunlerAdmin = sonuc || [];
+    toplamUrunSayisi = tumUrunlerAdmin.length;
+  }
+  
   renderUrunler();
 }
 
 function filterUrunler() {
   mevcutSayfa = 1;
-  renderUrunler();
+  loadUrunler();
 }
 
 function toggleUrunDetay() {
@@ -205,40 +221,21 @@ function toggleUrunDetay() {
 
 function renderUrunler() {
   const container = document.getElementById('urunListesi');
-  const kategoriFiltre = document.getElementById('kategoriFiltre') ? document.getElementById('kategoriFiltre').value : '';
-  const arama = document.getElementById('urunArama') ? document.getElementById('urunArama').value.toLowerCase() : '';
 
-  let filtrelenmis = tumUrunlerAdmin;
-
-  if (kategoriFiltre) {
-    filtrelenmis = filtrelenmis.filter(u => u.KATEGORI_ADI === kategoriFiltre);
-  }
-  if (arama) {
-    filtrelenmis = filtrelenmis.filter(u => {
-      const urunAdi = (u.URUN_ADI || '').toLowerCase();
-      const karekod = (u.KAREKOD || '').toLowerCase();
-      return urunAdi.includes(arama) || karekod.includes(arama);
-    });
-  }
-
-  const toplamUrun = filtrelenmis.length;
+  const toplamUrun = toplamUrunSayisi;
   const toplamSayfa = Math.ceil(toplamUrun / sayfaBoyutu);
 
   if (mevcutSayfa > toplamSayfa && toplamSayfa > 0) mevcutSayfa = toplamSayfa;
 
-  if (filtrelenmis.length === 0) {
+  if (tumUrunlerAdmin.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Ürün bulunamadı.</div></div>';
     renderUrunPagination(0, 0);
     return;
   }
 
-  const baslangic = (mevcutSayfa - 1) * sayfaBoyutu;
-  const bitis = Math.min(baslangic + sayfaBoyutu, toplamUrun);
-  const sayfaUrunleri = filtrelenmis.slice(baslangic, bitis);
-
   const checkboxAll = `<th style="width:30px;text-align:center;"><input type="checkbox" id="tumuSecCheck" onchange="tumuSecKaldir(this.checked)" title="Tümünü Se/Kaldır"></th>`;
   const alisHeader = urunDetayGoster ? '<th>Alış Fiyatı (₺)</th>' : '';
-  const rows = sayfaUrunleri.map((u, idx) => {
+  const rows = tumUrunlerAdmin.map((u, idx) => {
     const siraNo = (mevcutSayfa - 1) * sayfaBoyutu + idx + 1;
     const alisCell = urunDetayGoster ? `<td style="text-align:right;">₺${parseFloat(u.ALIS_FIYATI || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>` : '';
     return `
@@ -319,7 +316,7 @@ function renderUrunPagination(toplamUrun, toplamSayfa) {
 
 function sayfaDegistir(sayfa) {
   mevcutSayfa = sayfa;
-  renderUrunler();
+  loadUrunler();
   document.getElementById('urunListesi').scrollTop = 0;
 }
 
@@ -328,7 +325,7 @@ function sayfaBoyutuDegistir() {
   if (select) {
     sayfaBoyutu = parseInt(select.value) || 100;
     mevcutSayfa = 1;
-    renderUrunler();
+    loadUrunler();
   }
 }
 
@@ -489,7 +486,7 @@ function debouncedFilterUrunler() {
   clearTimeout(aramaTimer);
   aramaTimer = setTimeout(() => {
     mevcutSayfa = 1;
-    renderUrunler();
+    loadUrunler();
   }, 300);
 }
 

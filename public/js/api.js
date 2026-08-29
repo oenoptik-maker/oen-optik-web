@@ -84,7 +84,17 @@ window.api = {
   kategoriGetNextId: () => apiFetch('/api/kategoriler/sonraki-id'),
 
   // ===== ÜRÜN İŞLEMLERİ =====
-  urunRead: () => apiFetch('/api/urunler'),
+  urunRead: (opts) => {
+    if (opts && opts.sayfa) {
+      const params = new URLSearchParams();
+      params.set('sayfa', opts.sayfa);
+      params.set('boyut', opts.boyut || 100);
+      if (opts.arama) params.set('arama', opts.arama);
+      if (opts.kategori) params.set('kategori', opts.kategori);
+      return apiFetch('/api/urunler?' + params.toString());
+    }
+    return apiFetch('/api/urunler');
+  },
   urunSave: (urun) => apiFetch('/api/urunler', { method: 'POST', body: JSON.stringify(urun) }),
   urunDelete: (id) => apiFetch(`/api/urunler/${id}`, { method: 'DELETE' }),
   urunDeleteBulk: (idler) => apiFetch('/api/urunler/toplu-sil', { method: 'POST', body: JSON.stringify({ idler }) }),

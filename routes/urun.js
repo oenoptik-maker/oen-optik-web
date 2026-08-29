@@ -5,6 +5,35 @@ const { getDb, dbAll, dbGet, dbRun } = require('../db/database');
 router.get('/', async (req, res) => {
   try {
     await getDb();
+    const { sayfa, boyut, arama, kategori, saharekkayit } = req.query;
+    
+    if (sayfa && boyut) {
+      const limit = parseInt(boyut) || 100;
+      const offset = ((parseInt(sayfa) || 1) - 1) * limit;
+      
+      let where = '1=1';
+      let params = [];
+      
+      if (arama) {
+        where += ' AND (URUN_ADI LIKE ? OR KAREKOD LIKE ?)';
+        params.push('%' + arama + '%', '%' + arama + '%');
+      }
+      if (kategori) {
+        where += ' AND KATEGORI_ADI = ?';
+        params.push(kategori);
+      }
+      if (saharekkayit === '1') {
+        where += ' AND (SILINDI = 0 OR SILINDI IS NULL)';
+      }
+      
+      const countRow = await dbGet(`SELECT COUNT(*) as toplam FROM urunler WHERE ${where}`, params);
+      const toplam = countRow ? countRow.toplam : 0;
+      
+      const rows = await dbAll(`SELECT * FROM urunler WHERE ${where} ORDER BY URUN_ID DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+      
+      return res.json({ urunler: rows, toplam, sayfa: parseInt(sayfa) || 1, boyut: limit });
+    }
+    
     const rows = await dbAll('SELECT * FROM urunler ORDER BY URUN_ID');
     res.json(rows);
   } catch (err) {
@@ -72,12 +101,28 @@ router.put('/stok-guncelle', async (req, res) => {
   try {
     await getDb();
     const urunler = req.body;
-    for (const item of urunler) {
-      const urun = await dbGet('SELECT ADET FROM urunler WHERE URUN_ID = ?', [item.URUN_ID]);
-      if (urun) {
-        let yeniAdet = (parseInt(urun.ADET) || 0) + (parseInt(item.ADET) || 0);
-        if (yeniAdet < 0) yeniAdet = 0;
-        await dbRun('UPDATE urunler SET ADET = ? WHERE URUN_ID = ?', [yeniAdet, item.URUN_ID]);
+    const { getDb: getDbFn } = require('../db/database');
+    const db = await getDbFn();
+    
+    if (db.type === 'turso') {
+      const statements = [];
+      for (const item of urunler) {
+        statements.push({
+          sql: 'UPDATE urunler SET ADET = MAX(0, ADET + ?) WHERE URUN_ID = ?',
+          args: [parseInt(item.ADET) || 0, item.URUN_ID]
+        });
+      }
+      for (const stmt of statements) {
+        await db.client.execute(stmt);
+      }
+    } else {
+      for (const item of urunler) {
+        const urun = await dbGet('SELECT ADET FROM urunler WHERE URUN_ID = ?', [item.URUN_ID]);
+        if (urun) {
+          let yeniAdet = (parseInt(urun.ADET) || 0) + (parseInt(item.ADET) || 0);
+          if (yeniAdet < 0) yeniAdet = 0;
+          await dbRun('UPDATE urunler SET ADET = ? WHERE URUN_ID = ?', [yeniAdet, item.URUN_ID]);
+        }
       }
     }
     res.json({ success: true });
