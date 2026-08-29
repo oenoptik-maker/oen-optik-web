@@ -151,4 +151,46 @@ router.post('/toplu-yukle', upload.single('file'), async (req, res) => {
   }
 });
 
+router.post('/mukerrer-temizle', async (req, res) => {
+  try {
+    await getDb();
+
+    const gruplar = await dbAll(`
+      SELECT KAREKOD, URUN_ADI, COUNT(*) as adet
+      FROM urunler
+      WHERE KAREKOD != '' AND KAREKOD IS NOT NULL
+      GROUP BY KAREKOD, URUN_ADI
+      HAVING adet > 1
+    `);
+
+    let silinen = 0;
+    let birlestirilen = 0;
+
+    for (const g of gruplar) {
+      const tumUrunler = await dbAll(
+        'SELECT URUN_ID, ALIS_FIYATI, FIYAT, ADET FROM urunler WHERE KAREKOD = ? AND URUN_ADI = ? ORDER BY FIYAT DESC, ALIS_FIYATI DESC',
+        [g.KAREKOD, g.URUN_ADI]
+      );
+
+      if (tumUrunler.length <= 1) continue;
+
+      const enYuksek = tumUrunler[0];
+      const silinecekler = tumUrunler.slice(1);
+      const toplamAdet = silinecekler.reduce((s, u) => s + (u.ADET || 0), 0);
+
+      await dbRun('UPDATE urunler SET ADET = ADET + ? WHERE URUN_ID = ?', [toplamAdet, enYuksek.URUN_ID]);
+
+      for (const s of silinecekler) {
+        await dbRun('DELETE FROM urunler WHERE URUN_ID = ?', [s.URUN_ID]);
+        silinen++;
+      }
+      birlestirilen++;
+    }
+
+    res.json({ success: true, silinen, birlestirilen, toplamGrup: gruplar.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

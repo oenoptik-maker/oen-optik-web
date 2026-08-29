@@ -959,6 +959,26 @@ function topluStokTemizle() {
   showToast('Tablo temizlendi.', 'info');
 }
 
+async function mukerrerTemizle() {
+  if (!(await showConfirm('Aynı barkod + ürün adına sahip mükerrer ürünler silinecektir. En yüksek fiyatlı olan korunacak, diğerleri silinecek. Adetler birleştirilecek. Devam etmek istiyor musunuz?', 'Mükerrer Temizle'))) return;
+
+  try {
+    showToast('Mükerrer ürünler temizleniyor...', 'info');
+    const result = await window.api.mukerrerTemizle();
+    if (result.success) {
+      if (result.silinen > 0) {
+        showToast(`${result.silinen} mükerrer ürün silindi, ${result.birlestirilen} grupta adetler birleştirildi.`, 'success');
+      } else {
+        showToast('Mükerrer ürün bulunamadı.', 'info');
+      }
+    } else {
+      showToast('Temizleme hatası: ' + result.message, 'error');
+    }
+  } catch (err) {
+    showToast('Temizleme hatası: ' + err.message, 'error');
+  }
+}
+
 function renderTopluStok() {
   const container = document.getElementById('topluStokListesi');
   const onayBolumu = document.getElementById('topluStokOnayBolumu');
