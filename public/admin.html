@@ -343,11 +343,16 @@
         <h3 class="modal-title">Yedek Yönetimi</h3>
         <button class="modal-close" onclick="closeBackupModal()">&times;</button>
       </div>
-      <div class="btn-group" style="margin-bottom: 16px;">
-        <button class="btn btn-primary btn-sm" onclick="createBackup()">+ Yeni Yedek Al</button>
+      <div class="btn-group" style="margin-bottom: 16px; flex-wrap: wrap; gap: 6px;">
+        <button class="btn btn-primary btn-sm" onclick="createBackup()">📄 JSON Yedek Al</button>
+        <button class="btn btn-primary btn-sm" onclick="createBackupExcel()">📊 Excel Yedek Al</button>
         <label class="btn btn-outline btn-sm" style="cursor:pointer;">
-          Yedek Yükle
+          📄 JSON Yükle
           <input type="file" accept=".json" style="display:none;" onchange="uploadBackup(event)">
+        </label>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+          📊 Excel Yükle
+          <input type="file" accept=".xlsx,.xls" style="display:none;" onchange="uploadBackupExcel(event)">
         </label>
       </div>
       <div id="backupList" class="table-container"></div>

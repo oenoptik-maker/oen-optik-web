@@ -3,6 +3,9 @@ const router = express.Router();
 const { getDb, dbAll, dbBatch } = require('../db/database');
 const fs = require('fs');
 const path = require('path');
+const XLSX = require('xlsx');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 const IS_VERCEL = !!process.env.VERCEL;
 const BACKUP_DIR = path.join(__dirname, '../../data/yedekler');
@@ -160,5 +163,133 @@ async function importYedek(yedek) {
     await dbBatch(batches);
   }
 }
+
+// ===== EXCEL EXPORT =====
+router.post('/excel-export', async (req, res) => {
+  try {
+    await getDb();
+    const [siparisler, urunler, kategoriler] = await Promise.all([
+      dbAll('SELECT * FROM siparisler'),
+      dbAll('SELECT * FROM urunler'),
+      dbAll('SELECT * FROM kategoriler')
+    ]);
+
+    const wb = XLSX.utils.book_new();
+
+    if (kategoriler.length > 0) {
+      const wsK = XLSX.utils.json_to_sheet(kategoriler);
+      XLSX.utils.book_append_sheet(wb, wsK, 'Kategoriler');
+    }
+    if (urunler.length > 0) {
+      const wsU = XLSX.utils.json_to_sheet(urunler);
+      XLSX.utils.book_append_sheet(wb, wsU, 'Urunler');
+    }
+    if (siparisler.length > 0) {
+      const wsS = XLSX.utils.json_to_sheet(siparisler);
+      XLSX.utils.book_append_sheet(wb, wsS, 'Siparisler');
+    }
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="yedek_${new Date().toISOString().slice(0,10)}.xlsx"`);
+    res.send(Buffer.from(buf));
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ===== EXCEL IMPORT =====
+router.post('/excel-import', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'Dosya yuklenemedi' });
+    await getDb();
+
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const batches = [];
+
+    const sheetNames = wb.SheetNames;
+
+    for (const name of sheetNames) {
+      const lower = name.toLocaleLowerCase('tr-TR').trim();
+      const data = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' });
+      if (data.length === 0) continue;
+
+      if (lower.includes('kategori')) {
+        batches.push({ sql: 'DELETE FROM kategoriler' });
+        for (const k of data) {
+          const adi = k.KATEGORI_ADI || k['Kategori Adı'] || k['kategori_adi'] || '';
+          if (!adi) continue;
+          batches.push({
+            sql: 'INSERT OR REPLACE INTO kategoriler (KATEGORI_ADI) VALUES (?)',
+            params: [adi]
+          });
+        }
+      } else if (lower.includes('urun')) {
+        batches.push({ sql: 'DELETE FROM urunler' });
+        for (const u of data) {
+          const cols = Object.keys(u);
+          const get = (...keys) => {
+            for (const k of keys) {
+              const found = cols.find(c => c.toLocaleUpperCase('tr-TR') === k.toLocaleUpperCase('tr-TR'));
+              if (found !== undefined && u[found] !== '' && u[found] !== null && u[found] !== undefined) return u[found];
+            }
+            return '';
+          };
+          batches.push({
+            sql: 'INSERT OR REPLACE INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?,?,?,?,?,?,?,?)',
+            params: [
+              parseInt(get('URUN_ID', 'ID')) || null,
+              get('KATEGORI_ADI', 'Kategori', 'kategori_adi'),
+              get('URUN_ADI', 'Urun Adi', 'Ürün Adı', 'urun_adi'),
+              parseFloat(get('ALIS_FIYATI', 'Alis Fiyati', 'Alış Fiyatı')) || 0,
+              parseFloat(get('FIYAT', 'Satis Fiyati', 'Satış Fiyatı', 'Fiyat')) || 0,
+              parseInt(get('ADET', 'Adet')) || 0,
+              get('KAREKOD', 'Barkod'),
+              get('MENSEI', 'Menşei', 'mensei')
+            ]
+          });
+        }
+      } else if (lower.includes('siparis')) {
+        batches.push({ sql: 'DELETE FROM siparisler' });
+        const cols = Object.keys(data[0] || {});
+        const sipCols = [
+          'SIRA_NO', 'AD_SOYAD', 'TC_KIMLIK', 'TELEFON', 'SIPARIS_TARIHI', 'TESLIM_TARIHI',
+          'EMAIL', 'ADRES', 'SAG_SPH_UZAK', 'SAG_CYL_UZAK', 'SAG_AXE_UZAK',
+          'SOL_SPH_UZAK', 'SOL_CYL_UZAK', 'SOL_AXE_UZAK', 'SAG_SPH_YAKIN', 'SAG_CYL_YAKIN',
+          'SAG_AXE_YAKIN', 'SOL_SPH_YAKIN', 'SOL_CYL_YAKIN', 'SOL_AXE_YAKIN',
+          'ADD_DEGER', 'PD_SAG_UZAK', 'PD_SOL_UZAK', 'PD_SAG_YAKIN', 'PD_SOL_YAKIN',
+          'YUKSEKLIK_SAG_UZAK', 'YUKSEKLIK_SOL_UZAK', 'YUKSEKLIK_SAG_YAKIN', 'YUKSEKLIK_SOL_YAKIN',
+          'CAP_SAG_UZAK', 'CAP_SOL_UZAK', 'CAP_SAG_YAKIN', 'CAP_SOL_YAKIN',
+          'ACIKLAMA_UZAK', 'ACIKLAMA_YAKIN', 'ODEME_DETAYLARI', 'SECILEN_URUNLER',
+          'TOPLAM', 'ALINAN', 'KALAN', 'INDIRIM', 'INDIRIM_NOTU'
+        ];
+        const placeholders = sipCols.map(() => '?').join(',');
+        const colStr = sipCols.join(', ');
+        for (const s of data) {
+          batches.push({
+            sql: `INSERT OR REPLACE INTO siparisler (${colStr}) VALUES (${placeholders})`,
+            params: sipCols.map(c => {
+              const found = cols.find(cl => cl.toLocaleUpperCase('tr-TR') === c.toLocaleUpperCase('tr-TR'));
+              return found !== undefined ? s[found] : null;
+            })
+          });
+        }
+      }
+    }
+
+    if (batches.length === 0) {
+      return res.status(400).json({ success: false, message: 'Gecerli sayfa bulunamadi (Kategoriler, Urunler, Siparisler)' });
+    }
+
+    const CHUNK = 500;
+    for (let i = 0; i < batches.length; i += CHUNK) {
+      await dbBatch(batches.slice(i, i + CHUNK));
+    }
+
+    res.json({ success: true, message: `${batches.length - (sheetNames.length)} kayit import edildi` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;

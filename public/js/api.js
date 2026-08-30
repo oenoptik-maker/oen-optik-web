@@ -156,6 +156,31 @@ window.api = {
     URL.revokeObjectURL(url);
     return { success: true };
   }),
+  createBackupExcel: () => fetch('/api/backup/excel-export', { method: 'POST' }).then(async r => {
+    if (r.status === 401) { window.location.href = '/login.html'; return null; }
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'Sunucu hatası'); }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `yedek_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return { success: true };
+  }),
+  importBackupExcel: (dosya) => {
+    const formData = new FormData();
+    formData.append('file', dosya);
+    const token = getAuthToken();
+    const url = '/api/backup/excel-import' + (token ? '?token=' + encodeURIComponent(token) : '');
+    const headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return fetch(url, { method: 'POST', headers, body: formData })
+      .then(async r => {
+        if (r.status === 401) { clearAuthToken(); window.location.href = '/login.html'; return null; }
+        return await r.json();
+      });
+  },
   getBackupList: () => apiFetch('/api/backup/liste'),
   restoreBackup: (filename) => apiFetch('/api/backup/geri-yukle', { method: 'POST', body: JSON.stringify({ filename }) }),
   restoreBackupFromJson: (yedek) => apiFetch('/api/backup/yukle-geri-yukle', { method: 'POST', body: JSON.stringify({ yedek }) }),

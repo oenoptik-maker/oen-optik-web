@@ -1392,6 +1392,42 @@ async function uploadBackup(event) {
   }
 }
 
+async function createBackupExcel() {
+  try {
+    showToast('Excel yedek alınıyor...', 'info');
+    await window.api.createBackupExcel();
+    showToast('Excel yedek başarıyla indirildi.', 'success');
+  } catch (err) {
+    showToast('Excel yedek alma hatası: ' + err.message, 'error');
+  }
+}
+
+async function uploadBackupExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  try {
+    if (!(await showConfirm(
+      `"${file.name}" dosyasından veriler yüklenecek.\n\nMevcut tüm veriler (ürünler, kategoriler, siparişler) Excel'deki verilerle değiştirilecek!\n\nDevam etmek istiyor musunuz?`,
+      'Excel Yükleme Onayı'
+    ))) return;
+
+    showToast('Excel dosyası yükleniyor...', 'info');
+    const result = await window.api.importBackupExcel(file);
+    if (result && result.success) {
+      showToast('Excel yedek başarıyla yüklendi.', 'success');
+      closeBackupModal();
+      await loadKategoriler();
+      await loadUrunler();
+    } else {
+      showToast('Yükleme hatası: ' + (result ? result.message : 'Bilinmeyen hata'), 'error');
+    }
+  } catch (err) {
+    showToast('Excel yükleme hatası: ' + err.message, 'error');
+  }
+}
+
 // ===== STOK SİLME =====
 let sifreOnaybekleyen = null;
 let stokSilindi = false;
