@@ -1,4 +1,4 @@
-﻿(function() {
+(function() {
   if (document.getElementById('oen-utss-btn')) return;
   var isUtsPage = location.href.includes('utsuygulama.saglik.gov.tr');
 

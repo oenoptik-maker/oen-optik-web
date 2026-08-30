@@ -901,6 +901,7 @@ function updateOdemeOzeti() {
 }
 
 // ===== ALIŞVERİŞ GEÇMİŞİ =====
+let gecmisSonArama = '';
 async function alisverisGecmisiYukle() {
   const container = document.getElementById('alisverisGecmisi');
   if (!container) return;
@@ -908,6 +909,10 @@ async function alisverisGecmisiYukle() {
   const tc = document.getElementById('tcKimlik')?.value?.trim();
   const telefon = document.getElementById('telefon')?.value?.trim();
   const adSoyad = document.getElementById('adSoyad')?.value?.trim();
+
+  const aramaAnahtari = `${tc}|${telefon}|${adSoyad}`;
+  if (aramaAnahtari === gecmisSonArama) return;
+  gecmisSonArama = aramaAnahtari;
 
   if (!tc && !telefon && !adSoyad) {
     container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Müşteri bilgisi girildiğinde geçmiş siparişler burada gösterilecek</div>';
@@ -918,6 +923,13 @@ async function alisverisGecmisiYukle() {
   if (tc && tc.length === 11) params.tc = tc;
   if (telefon && telefon.length === 11) params.telefon = telefon;
   if (adSoyad && adSoyad.length >= 3) params.adSoyad = adSoyad;
+
+  if (Object.keys(params).length === 0) {
+    container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Müşteri bilgisi girildiğinde geçmiş siparişler burada gösterilecek</div>';
+    return;
+  }
+
+  container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Aranıyor...</div>';
 
   const tumSiparisler = await window.api.excelSearchOrder(params);
   const gecerliSiraNo = document.getElementById('siraNo')?.value;
@@ -1111,6 +1123,9 @@ async function clearForm() {
 }
 
 function alisverisGecmisiTemizle() {
+  clearTimeout(gecmisAramaTimeout);
+  gecmisSonArama = '';
+  arananSiparisId = null;
   const container = document.getElementById('alisverisGecmisi');
   if (container) {
     container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Müşteri bilgisi girildiğinde geçmiş siparişler burada gösterilecek</div>';
