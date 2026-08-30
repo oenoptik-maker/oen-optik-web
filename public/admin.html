@@ -244,6 +244,7 @@
                 <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <a href="https://utsuygulama.saglik.gov.tr/UTS/tibbiCihaz#/topluAlmaBildirimiEkle" target="_blank" rel="noopener noreferrer" class="btn btn-primary" onclick="document.documentElement.setAttribute('data-uts-auto-extract','1');">🌐 UTS Sayfasını Aç</a>
                   <button class="btn btn-outline" onclick="openCredentialModal()">⚙️ UTS Ayarları</button>
+                  <button class="btn btn-danger" onclick="eklentiIndir()">🧩 Eklenti Yükle</button>
                 </div>
               </div>
               <div id="utsDurum" style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; display: none;">
@@ -659,6 +660,7 @@
 
   <script src="js/api.js"></script>
   <script src="js/excel.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/app.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/session-timer.js"></script>
@@ -724,6 +726,45 @@
         } catch(e) {}
       }
     })();
+
+    var eklentiDosyalari = ['manifest.json','content.js','background.js','admin-content.js','popup.html','popup.js','icon.png'];
+
+    async function eklentiIndir() {
+      if (typeof JSZip === 'undefined') {
+        showToast('JSZip yukleniyor, lutfen bekleyin...', 'warning');
+        return;
+      }
+      showToast('Eklenti paketleniyor...', 'info');
+      var zip = new JSZip();
+      var folder = zip.folder('oen-optik-eklenti');
+      var base = '/chrome-eklenti/';
+      try {
+        for (var i = 0; i < eklentiDosyalari.length; i++) {
+          var dosya = eklentiDosyalari[i];
+          var resp = await fetch(base + dosya);
+          if (!resp.ok) { showToast(dosya + ' indirilemedi!', 'error'); return; }
+          if (dosya.endsWith('.png')) {
+            var buf = await resp.arrayBuffer();
+            folder.file(dosya, buf);
+          } else {
+            var text = await resp.text();
+            folder.file(dosya, text);
+          }
+        }
+        var blob = await zip.generateAsync({ type: 'blob' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'oen-optik-eklenti.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Eklenti indirildi! Zip dosyasini cikartin ve Chrome > chrome://extensions > Yuklenmemis paketi yukle ile kurun.', 'success', 8000);
+      } catch(e) {
+        showToast('Hata: ' + e.message, 'error');
+      }
+    }
   </script>
 </body>
 </html>

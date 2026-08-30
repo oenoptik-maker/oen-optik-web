@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { width: 320px; padding: 16px; font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; }
+  h2 { margin: 0 0 12px; font-size: 16px; color: #00d4aa; }
+  .info { font-size: 12px; color: #aaa; margin-bottom: 12px; }
+  button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
+  .btn-aktar { background: #f59e0b; color: #000; }
+  .btn-aktar:hover { background: #d97706; }
+  .btn-ac { background: #00d4aa; color: #000; }
+  .btn-ac:hover { background: #00b894; }
+  #durum { font-size: 12px; padding: 8px; border-radius: 6px; margin-top: 8px; display: none; }
+  .basarili { background: #065f46; color: #6ee7b7; display: block; }
+  .hata { background: #7f1d1d; color: #fca5a5; display: block; }
+</style>
+</head>
+<body>
+  <h2>OEN Optik - UTS Aktarım</h2>
+  <p class="info">UTS sayfasında ürünleri işaretledikten sonra "Ürünleri Aktar" butonuna basın.</p>
+  <button class="btn-aktar" id="aktarBtn">Ürünleri Aktar</button>
+  <button class="btn-ac" id="oenAcBtn">OEN Optik'i Aç</button>
+  <div id="durum"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
