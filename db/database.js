@@ -160,6 +160,37 @@ async function initTables() {
     console.log('Varsayilan admin kullanici olusturuldu: oguzhan / Oguzhanemel123');
   }
 
+  // Vercel'de veritabani bos ise seed data ile doldur
+  if (IS_VERCEL) {
+    const urunSayisi = await dbGet('SELECT COUNT(*) as count FROM urunler');
+    if (urunSayisi && urunSayisi.count === 0) {
+      try {
+        const seedPath = path.join(__dirname, 'seed-data.json');
+        if (fs.existsSync(seedPath)) {
+          const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+          console.log('Seed data yukleniyor:', seedData.urunler.length, 'urun,', seedData.kategoriler.length, 'kategori');
+
+          for (const k of seedData.kategoriler) {
+            await dbRun('INSERT OR IGNORE INTO kategoriler (KATEGORI_ADI) VALUES (?)', [k.KATEGORI_ADI]);
+          }
+
+          const BATCH = 500;
+          for (let i = 0; i < seedData.urunler.length; i += BATCH) {
+            const chunk = seedData.urunler.slice(i, i + BATCH);
+            const stmts = chunk.map(u => ({
+              sql: 'INSERT INTO urunler (KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              params: [u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI || 0, u.FIYAT || 0, u.ADET || 0, u.KAREKOD || '', u.MENSEI || '']
+            }));
+            await dbBatch(stmts);
+          }
+          console.log('Seed data basariyla yuklendi!');
+        }
+      } catch (e) {
+        console.error('Seed data yukleme hatasi:', e.message);
+      }
+    }
+  }
+
   // Mekrer urun temizligi - tek SQL ile hizli temizlik
   try {
     // Adetleri birlestir: en buyuk ID'yi koru, digerlerinin adedini ekle
