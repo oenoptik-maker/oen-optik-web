@@ -1413,16 +1413,132 @@ async function uploadBackupExcel(event) {
       'Excel Yükleme Onayı'
     ))) return;
 
-    showToast('Excel dosyası yükleniyor...', 'info');
-    const result = await window.api.importBackupExcel(file);
-    if (result && result.success) {
-      showToast('Excel yedek başarıyla yüklendi.', 'success');
-      closeBackupModal();
-      await loadKategoriler();
-      await loadUrunler();
-    } else {
-      showToast('Yükleme hatası: ' + (result ? result.message : 'Bilinmeyen hata'), 'error');
+    showToast('Excel dosyası okunuyor...', 'info');
+
+    if (typeof XLSX === 'undefined') {
+      showToast('SheetJS kütüphanesi yüklenemedi. Sayfayı yenileyin.', 'error');
+      return;
     }
+
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, { type: 'array' });
+    const yedek = { kategoriler: [], urunler: [], siparisler: [] };
+
+    for (const name of wb.SheetNames) {
+      const lower = name.toLocaleLowerCase('tr-TR').trim();
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' });
+      if (rows.length === 0) continue;
+
+      if (lower.includes('kategori')) {
+        yedek.kategoriler = rows.map((k, i) => ({
+          KATEGORI_ID: i + 1,
+          KATEGORI_ADI: k.KATEGORI_ADI || k['Kategori Adı'] || k['kategori_adi'] || ''
+        })).filter(k => k.KATEGORI_ADI);
+      } else if (lower.includes('urun')) {
+        yedek.urunler = rows.map(u => {
+          const cols = Object.keys(u);
+          const get = (...keys) => {
+            for (const k of keys) {
+              const found = cols.find(c => c.toLocaleUpperCase('tr-TR') === k.toLocaleUpperCase('tr-TR'));
+              if (found !== undefined && u[found] !== '' && u[found] !== null) return u[found];
+            }
+            return '';
+          };
+          return {
+            URUN_ID: parseInt(get('URUN_ID', 'ID')) || null,
+            KATEGORI_ADI: get('KATEGORI_ADI', 'Kategori', 'kategori_adi'),
+            URUN_ADI: get('URUN_ADI', 'Urun Adi', 'Ürün Adı', 'urun_adi'),
+            ALIS_FIYATI: parseFloat(get('ALIS_FIYATI', 'Alis Fiyati', 'Alış Fiyatı')) || 0,
+            FIYAT: parseFloat(get('FIYAT', 'Satis Fiyati', 'Satış Fiyatı', 'Fiyat')) || 0,
+            ADET: parseInt(get('ADET', 'Adet')) || 0,
+            KAREKOD: get('KAREKOD', 'Barkod'),
+            MENSEI: get('MENSEI', 'Menşei', 'mensei')
+          };
+        }).filter(u => u.URUN_ADI);
+      } else if (lower.includes('siparis')) {
+        const sipCols = [
+          'SIRA_NO', 'AD_SOYAD', 'TC_KIMLIK', 'TELEFON', 'SIPARIS_TARIHI', 'TESLIM_TARIHI',
+          'EMAIL', 'ADRES', 'SAG_SPH_UZAK', 'SAG_CYL_UZAK', 'SAG_AXE_UZAK',
+          'SOL_SPH_UZAK', 'SOL_CYL_UZAK', 'SOL_AXE_UZAK', 'SAG_SPH_YAKIN', 'SAG_CYL_YAKIN',
+          'SAG_AXE_YAKIN', 'SOL_SPH_YAKIN', 'SOL_CYL_YAKIN', 'SOL_AXE_YAKIN',
+          'ADD_DEGER', 'PD_SAG_UZAK', 'PD_SOL_UZAK', 'PD_SAG_YAKIN', 'PD_SOL_YAKIN',
+          'YUKSEKLIK_SAG_UZAK', 'YUKSEKLIK_SOL_UZAK', 'YUKSEKLIK_SAG_YAKIN', 'YUKSEKLIK_SOL_YAKIN',
+          'CAP_SAG_UZAK', 'CAP_SOL_UZAK', 'CAP_SAG_YAKIN', 'CAP_SOL_YAKIN',
+          'ACIKLAMA_UZAK', 'ACIKLAMA_YAKIN', 'ODEME_DETAYLARI', 'SECILEN_URUNLER',
+          'TOPLAM', 'ALINAN', 'KALAN', 'INDIRIM', 'INDIRIM_NOTU'
+        ];
+        yedek.siparisler = rows.map(s => {
+          const cols = Object.keys(s);
+          const obj = {};
+          for (const c of sipCols) {
+            const found = cols.find(cl => cl.toLocaleUpperCase('tr-TR') === c.toLocaleUpperCase('tr-TR'));
+            obj[c] = found !== undefined ? s[found] : null;
+          }
+          return obj;
+        });
+      }
+    }
+
+    const ozet = `${yedek.kategoriler.length} kategori, ${yedek.urunler.length} ürün, ${yedek.siparisler.length} sipariş`;
+    showToast(`Excel okundu: ${ozet}. Yükleniyor...`, 'info');
+
+    const CHUNK = 2000;
+    const allBatches = [];
+
+    if (yedek.kategoriler.length > 0) {
+      allBatches.push({ sql: 'DELETE FROM kategoriler' });
+      for (const k of yedek.kategoriler) {
+        allBatches.push({
+          sql: 'INSERT OR REPLACE INTO kategoriler (KATEGORI_ADI) VALUES (?)',
+          params: [k.KATEGORI_ADI]
+        });
+      }
+    }
+    if (yedek.urunler.length > 0) {
+      allBatches.push({ sql: 'DELETE FROM urunler' });
+      for (const u of yedek.urunler) {
+        allBatches.push({
+          sql: 'INSERT OR REPLACE INTO urunler (URUN_ID, KATEGORI_ADI, URUN_ADI, ALIS_FIYATI, FIYAT, ADET, KAREKOD, MENSEI) VALUES (?,?,?,?,?,?,?,?)',
+          params: [u.URUN_ID, u.KATEGORI_ADI, u.URUN_ADI, u.ALIS_FIYATI, u.FIYAT, u.ADET, u.KAREKOD, u.MENSEI]
+        });
+      }
+    }
+    if (yedek.siparisler.length > 0) {
+      allBatches.push({ sql: 'DELETE FROM siparisler' });
+      const sipCols = [
+        'SIRA_NO', 'AD_SOYAD', 'TC_KIMLIK', 'TELEFON', 'SIPARIS_TARIHI', 'TESLIM_TARIHI',
+        'EMAIL', 'ADRES', 'SAG_SPH_UZAK', 'SAG_CYL_UZAK', 'SAG_AXE_UZAK',
+        'SOL_SPH_UZAK', 'SOL_CYL_UZAK', 'SOL_AXE_UZAK', 'SAG_SPH_YAKIN', 'SAG_CYL_YAKIN',
+        'SAG_AXE_YAKIN', 'SOL_SPH_YAKIN', 'SOL_CYL_YAKIN', 'SOL_AXE_YAKIN',
+        'ADD_DEGER', 'PD_SAG_UZAK', 'PD_SOL_UZAK', 'PD_SAG_YAKIN', 'PD_SOL_YAKIN',
+        'YUKSEKLIK_SAG_UZAK', 'YUKSEKLIK_SOL_UZAK', 'YUKSEKLIK_SAG_YAKIN', 'YUKSEKLIK_SOL_YAKIN',
+        'CAP_SAG_UZAK', 'CAP_SOL_UZAK', 'CAP_SAG_YAKIN', 'CAP_SOL_YAKIN',
+        'ACIKLAMA_UZAK', 'ACIKLAMA_YAKIN', 'ODEME_DETAYLARI', 'SECILEN_URUNLER',
+        'TOPLAM', 'ALINAN', 'KALAN', 'INDIRIM', 'INDIRIM_NOTU'
+      ];
+      const placeholders = sipCols.map(() => '?').join(',');
+      const colStr = sipCols.join(', ');
+      for (const s of yedek.siparisler) {
+        allBatches.push({
+          sql: `INSERT OR REPLACE INTO siparisler (${colStr}) VALUES (${placeholders})`,
+          params: sipCols.map(c => s[c] !== undefined ? s[c] : null)
+        });
+      }
+    }
+
+    for (let i = 0; i < allBatches.length; i += CHUNK) {
+      const chunk = allBatches.slice(i, i + CHUNK);
+      const result = await apiFetch('/api/backup/yukle-geri-yukle', {
+        method: 'POST',
+        body: JSON.stringify({ yedek: { kategoriler: [], urunler: [], siparisler: [], _batches: chunk } })
+      });
+      if (!result || !result.success) throw new Error(result ? result.message : 'Yükleme başarısız');
+    }
+
+    showToast(`${ozet} başarıyla yüklendi!`, 'success');
+    closeBackupModal();
+    await loadKategoriler();
+    await loadUrunler();
   } catch (err) {
     showToast('Excel yükleme hatası: ' + err.message, 'error');
   }

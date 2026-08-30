@@ -106,7 +106,14 @@ router.post('/yukle-geri-yukle', async (req, res) => {
     const { yedek } = req.body;
     if (!yedek) return res.status(400).json({ success: false, message: 'Yedek verisi gerekli' });
 
-    await importYedek(yedek);
+    if (yedek._batches && Array.isArray(yedek._batches)) {
+      const CHUNK = 500;
+      for (let i = 0; i < yedek._batches.length; i += CHUNK) {
+        await dbBatch(yedek._batches.slice(i, i + CHUNK));
+      }
+    } else {
+      await importYedek(yedek);
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
