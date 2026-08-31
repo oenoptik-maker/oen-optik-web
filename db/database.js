@@ -6,6 +6,7 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'oen-optik.db');
 
 let db = null;
 let dbType = null;
+let tursoError = null;
 
 async function getDb() {
   if (db) return db;
@@ -34,6 +35,7 @@ async function getDb() {
       console.log('Turso veritabanina baglanildi');
     } catch (err) {
       console.error('Turso baglanti hatasi:', err.message);
+      tursoError = err.message;
       db = null;
       dbType = null;
     }
@@ -256,5 +258,6 @@ process.on('SIGINT', () => { closeDb(); process.exit(0); });
 process.on('SIGTERM', () => { closeDb(); process.exit(0); });
 
 function getDbType() { return dbType; }
+function getTursoError() { return tursoError; }
 
-module.exports = { getDb, closeDb, saveDb, dbAll, dbGet, dbRun, dbBatch, getDbType };
+module.exports = { getDb, closeDb, saveDb, dbAll, dbGet, dbRun, dbBatch, getDbType, getTursoError };

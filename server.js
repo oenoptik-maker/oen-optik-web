@@ -46,14 +46,29 @@ const authMiddleware = require('./middleware/auth');
 // Health check (auth-free)
 app.get('/api/health', async (req, res) => {
   try {
-    const { getDb, dbAll, getDbType } = require('./db/database');
+    const { getDb, dbAll, getDbType, getTursoError } = require('./db/database');
     await getDb();
     const users = await dbAll('SELECT id, username FROM users');
+    const tursoUrl = (process.env.TURSO_DATABASE_URL || '').replace(/[\r\n]/g, '').trim();
+    const tursoToken = (process.env.TURSO_AUTH_TOKEN || '').replace(/[\r\n]/g, '').trim();
+    const libsqlIdx = tursoUrl.indexOf('libsql://');
+    const cleanUrl = libsqlIdx >= 0 ? tursoUrl.substring(libsqlIdx) : tursoUrl;
+    const jwtIdx = tursoToken.indexOf('eyJ');
+    const cleanToken = jwtIdx >= 0 ? tursoToken.substring(jwtIdx) : tursoToken;
     res.json({
       status: 'ok',
       dbType: getDbType(),
       isVercel: !!process.env.VERCEL,
       userCount: users.length,
+      debug: {
+        tursoUrlSet: !!tursoUrl,
+        tursoUrlPrefix: cleanUrl.substring(0, 25),
+        tursoUrlLen: cleanUrl.length,
+        tursoTokenSet: !!tursoToken,
+        tursoTokenPrefix: cleanToken.substring(0, 10),
+        tursoTokenLen: cleanToken.length,
+        tursoError: getTursoError(),
+      }
     });
   } catch (err) {
     res.status(500).json({ status: 'error', message: err.message });
