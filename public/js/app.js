@@ -26,6 +26,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     initTheme();
 
+    // Tarayici otomatik doldurmayi engelle
+    setTimeout(() => {
+      ['tcKimlik','adSoyad','telefon','email','adres','siparisDetaylari'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value && el.value === el.value) {
+          // placeholder degeri degilse temizle
+        }
+      });
+      // Tarayici otomatik doldurmasini onle
+      document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=date]):not([type=number]):not([readonly]), textarea').forEach(el => {
+        if (!el.value) {
+          el.setAttribute('autocomplete', 'new-password');
+          el.value = ' ';
+          el.value = '';
+        }
+      });
+    }, 100);
+
     const isListPage = window.location.pathname.includes('list.html');
     const isAdminPage = window.location.pathname.includes('admin.html');
 
