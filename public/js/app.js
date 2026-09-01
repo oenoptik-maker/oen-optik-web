@@ -26,23 +26,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     initTheme();
 
-    // Tarayici otomatik doldurmayi engelle
+    // Tarayici otomatik doldurmayi engelle - tuzak inputlari temizle
     setTimeout(() => {
-      ['tcKimlik','adSoyad','telefon','email','adres','siparisDetaylari'].forEach(id => {
+      document.querySelectorAll('input[name=fakeuser], input[name=fakepass]').forEach(el => { el.value = ''; });
+      // Tum inputlari kontrol et, placeholder disinda deger varsa ve kullanici girmemisse temizle
+      ['email','tcKimlik','adSoyad','telefon','adres'].forEach(id => {
         const el = document.getElementById(id);
-        if (el && el.value && el.value === el.value) {
-          // placeholder degeri degilse temizle
+        if (el) {
+          el.removeAttribute('autocomplete');
+          el.setAttribute('autocomplete', 'one-time-code');
         }
       });
-      // Tarayici otomatik doldurmasini onle
-      document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=date]):not([type=number]):not([readonly]), textarea').forEach(el => {
-        if (!el.value) {
-          el.setAttribute('autocomplete', 'new-password');
-          el.value = ' ';
-          el.value = '';
+    }, 50);
+    // Autofill yakalama - mutation observer
+    setTimeout(() => {
+      ['email','tcKimlik','adSoyad','telefon','adres'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const check = () => {
+            if (el.value && el.value.toLowerCase() === 'oguzhan') {
+              el.value = '';
+            }
+          };
+          el.addEventListener('change', check);
+          el.addEventListener('input', check);
+          check();
         }
       });
-    }, 100);
+    }, 500);
 
     const isListPage = window.location.pathname.includes('list.html');
     const isAdminPage = window.location.pathname.includes('admin.html');

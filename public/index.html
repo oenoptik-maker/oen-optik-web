@@ -81,7 +81,10 @@
   </header>
 
   <main class="container">
-    <div class="form-grid">
+    <div class="form-grid" style="position:relative;">
+      <!-- Tarayici otomatik doldurma tuzagi -->
+      <input type="text" name="fakeuser" style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;border:none;padding:0;" tabindex="-1" autocomplete="username">
+      <input type="password" name="fakepass" style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;border:none;padding:0;" tabindex="-1" autocomplete="current-password">
       <!-- Sol Kolon: Müşteri Bilgileri -->
       <div class="form-section">
         <div class="card">
@@ -109,7 +112,7 @@
             </div>
             <div class="form-group">
               <label>E-Mail</label>
-              <input type="email" id="email" placeholder="ornek@email.com" oninput="kucukHarf(this)" autocomplete="new-password">
+              <input type="text" id="email" placeholder="ornek@email.com" oninput="kucukHarf(this)" autocomplete="one-time-code">
             </div>
           </div>
           <div class="form-row">
