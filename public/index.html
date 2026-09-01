@@ -95,21 +95,21 @@
             </div>
             <div class="form-group">
               <label>TC Kimlik No</label>
-              <input type="text" id="tcKimlik" maxlength="11" placeholder="" onblur="tcKimlikKontrol(this)" oninput="alisverisGecmisiKontrol()">
+              <input type="text" id="tcKimlik" maxlength="11" placeholder="" onblur="tcKimlikKontrol(this)" oninput="alisverisGecmisiKontrol()" autocomplete="off">
             </div>
           </div>
             <div class="form-group">
               <label>Adı Soyadı</label>
-              <input type="text" id="adSoyad" placeholder="Müşteri adı soyadı" oninput="turkceBuyukHarf(this); adSoyadAraKontrol(this); alisverisGecmisiKontrol()" onblur="adSoyadKontrol(this)">
+              <input type="text" id="adSoyad" placeholder="Müşteri adı soyadı" oninput="turkceBuyukHarf(this); adSoyadAraKontrol(this); alisverisGecmisiKontrol()" onblur="adSoyadKontrol(this)" autocomplete="off">
             </div>
           <div class="form-row">
             <div class="form-group">
               <label>Telefon</label>
-              <input type="tel" id="telefon" placeholder="" maxlength="11" oninput="telefonInputDuzenle(this); telefonAraKontrol(this); alisverisGecmisiKontrol()" onblur="telefonKontrol(this)">
+              <input type="tel" id="telefon" placeholder="" maxlength="11" oninput="telefonInputDuzenle(this); telefonAraKontrol(this); alisverisGecmisiKontrol()" onblur="telefonKontrol(this)" autocomplete="off">
             </div>
             <div class="form-group">
               <label>E-Mail</label>
-              <input type="email" id="email" placeholder="ornek@email.com" oninput="kucukHarf(this)">
+              <input type="email" id="email" placeholder="ornek@email.com" oninput="kucukHarf(this)" autocomplete="off">
             </div>
           </div>
           <div class="form-row">
@@ -124,7 +124,7 @@
           </div>
           <div class="form-group">
             <label>Adres</label>
-            <textarea id="adres" rows="2" placeholder="Müşteri adresi" oninput="turkceBuyukHarf(this)"></textarea>
+            <textarea id="adres" rows="2" placeholder="Müşteri adresi" oninput="turkceBuyukHarf(this)" autocomplete="off"></textarea>
           </div>
         </div>
 
@@ -339,7 +339,7 @@
             <h2 class="card-title">📝 Sipariş Detayları</h2>
           </div>
           <div class="form-group" style="width:100%;padding:0 12px 12px;">
-            <textarea id="siparisDetaylari" rows="4" placeholder="Sipariş detaylarını buraya yazabilirsiniz..." oninput="turkceBuyukHarf(this)" style="width:100%;resize:both;min-height:80px;"></textarea>
+            <textarea id="siparisDetaylari" rows="4" placeholder="Sipariş detaylarını buraya yazabilirsiniz..." oninput="turkceBuyukHarf(this)" autocomplete="off" style="width:100%;resize:both;min-height:80px;"></textarea>
           </div>
         </div>
       </div>
