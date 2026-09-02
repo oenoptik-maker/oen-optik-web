@@ -1659,35 +1659,42 @@ async function etiketModalAc(urunId) {
   document.getElementById('etiketModal').classList.add('active');
   etiketOnizlemeGuncelle();
 
-  const yaziciSelect = document.getElementById('etiketYaziciSec');
-  if (window.api && window.api.yaziciListesi) {
-    try {
-      const yazicilar = await window.api.yaziciListesi();
-      const kayitliYazici = localStorage.getItem('etiketYaziciAdi') || '';
-      yaziciSelect.innerHTML = '';
-      if (yazicilar && yazicilar.length > 0) {
-        yazicilar.forEach(y => {
-          const opt = document.createElement('option');
-          opt.value = y.name;
-          opt.textContent = y.displayName || y.name;
-          if (y.isDefault) opt.textContent += ' (Varsayılan)';
-          if (y.name === kayitliYazici) opt.selected = true;
-          yaziciSelect.appendChild(opt);
-        });
-        if (!kayitliYazici && yazicilar.length > 0) {
-          const varsayilan = yazicilar.find(y => y.isDefault);
-          if (varsayilan) yaziciSelect.value = varsayilan.name;
-        }
-      } else {
-        yaziciSelect.innerHTML = '<option value="">Yazıcı bulunamadı</option>';
-      }
-      yaziciSelect.onchange = function() {
-        localStorage.setItem('etiketYaziciAdi', this.value);
-      };
-    } catch(e) {
-      yaziciSelect.innerHTML = '<option value="">Yazıcı yüklenemedi</option>';
-    }
+  const yaziciInput = document.getElementById('etiketYaziciSec');
+  const yaziciDatalist = document.getElementById('yaziciListesi');
+  const kayitliYazici = localStorage.getItem('etiketYaziciAdi') || '';
+
+  // localStorage'dan onceki yazici adlarini yukle
+  const oncekiYazicilar = JSON.parse(localStorage.getItem('yaziciListesi') || '[]');
+  if (yaziciDatalist) {
+    yaziciDatalist.innerHTML = '';
+    oncekiYazicilar.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      yaziciDatalist.appendChild(opt);
+    });
   }
+
+  // Kayitli yaziciyi goster
+  if (kayitliYazici) yaziciInput.value = kayitliYazici;
+
+  // Yazici degistiginde kaydet
+  yaziciInput.onchange = function() {
+    const val = this.value.trim();
+    if (val) {
+      localStorage.setItem('etiketYaziciAdi', val);
+      const liste = JSON.parse(localStorage.getItem('yaziciListesi') || '[]');
+      if (!liste.includes(val)) {
+        liste.push(val);
+        localStorage.setItem('yaziciListesi', JSON.stringify(liste));
+        // Datalist'i de guncelle
+        if (yaziciDatalist) {
+          const opt = document.createElement('option');
+          opt.value = val;
+          yaziciDatalist.appendChild(opt);
+        }
+      }
+    }
+  };
 }
 
 function closeEtiketModal() {

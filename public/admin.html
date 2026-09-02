@@ -424,9 +424,8 @@
       </div>
       <div class="action-bar" style="border:none;padding:0;">
         <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <select id="etiketYaziciSec" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.75rem;background:var(--bg-secondary);color:var(--text);min-width:180px;">
-            <option value="">Yazıcı yükleniyor...</option>
-          </select>
+          <input type="text" id="etiketYaziciSec" list="yaziciListesi" placeholder="Yazıcı adı yazın..." style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.75rem;background:var(--bg-secondary);color:var(--text);min-width:180px;">
+          <datalist id="yaziciListesi"></datalist>
           <button class="btn btn-warning btn-sm" onclick="etiketTasarlamaAc()">🎨 Etiket Tasarlama</button>
           <button class="btn btn-primary" onclick="etiketYazdir()">🖨️ Yazdır</button>
         </div>
