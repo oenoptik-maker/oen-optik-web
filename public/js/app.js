@@ -396,9 +396,30 @@ async function modalUrunKaydet() {
   });
 
   if (result) {
-    showToast('Ürün kaydedildi.', 'success');
+    showToast('Ürün kaydedildi ve siparişe eklendi.', 'success');
     closeUrunModal();
     tumUrunler = await window.api.urunRead();
+
+    // Yeni kaydedilen urunu siparise otomatik ekle
+    const yeniUrun = tumUrunler.find(u => String(u.URUN_ID) === String(urunId));
+    if (yeniUrun) {
+      const mevcut = seciliUrunlerListesi.find(item => String(item.URUN_ID) === String(yeniUrun.URUN_ID));
+      if (mevcut) {
+        mevcut.ADET += 1;
+      } else {
+        seciliUrunlerListesi.push({
+          URUN_ID: yeniUrun.URUN_ID,
+          URUN_ADI: yeniUrun.URUN_ADI,
+          KATEGORI_ADI: yeniUrun.KATEGORI_ADI,
+          ALIS_FIYATI: parseFloat(yeniUrun.ALIS_FIYATI) || 0,
+          FIYAT: parseFloat(yeniUrun.FIYAT) || 0,
+          ADET: 1,
+          INDIRIM_TL: 0,
+          INDIRIM_YUZDE: 0
+        });
+      }
+      renderSeciliUrunler();
+    }
   } else {
     showToast('Kaydetme hatası!', 'error');
   }
