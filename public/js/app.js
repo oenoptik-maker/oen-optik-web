@@ -1317,6 +1317,7 @@ async function siparisAra(alan, deger) {
     await yeniSatisMusteriBilgisiYukle(enYeni);
   } else {
     duzenlemeModuKapat();
+    alisverisGecmisiTemizle();
   }
 }
 
