@@ -229,11 +229,22 @@ window.api = {
   etiketDesignKaydet: (design) => apiFetch('/api/etiket/tasarim', { method: 'POST', body: JSON.stringify(design) }),
   etiketDesignOku: () => apiFetch('/api/etiket/tasarim'),
   etiketYazdir: (params) => {
-    // Yazdırma: HTML'i yeni pencerede aç ve yazdır
-    const win = window.open('', '_blank');
-    win.document.write(params.html);
-    win.document.close();
-    setTimeout(() => { win.print(); }, 1000);
+    // Yazdırma: iframe icinde ac ve yazdir
+    let printFrame = document.getElementById('etiketPrintFrame');
+    if (!printFrame) {
+      printFrame = document.createElement('iframe');
+      printFrame.id = 'etiketPrintFrame';
+      printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
+      document.body.appendChild(printFrame);
+    }
+    const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+    doc.open();
+    doc.write(params.html);
+    doc.close();
+    setTimeout(() => {
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+    }, 800);
     return Promise.resolve({ success: true });
   },
   yaziciListesi: () => apiFetch('/api/etiket/yazicilar')
