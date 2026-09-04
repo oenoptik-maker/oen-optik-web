@@ -397,12 +397,20 @@ function etiketTekEtiketHTML(elemanlar, u, qrUrl, tarih) {
 
 function yaziciAc(htmlContent, callback) {
   showToast('Yazdırma penceresi açılıyor...', 'info');
-  const pw = window.open('', '_blank', 'width=800,height=600');
-  pw.document.write(htmlContent);
-  pw.document.close();
+  let printFrame = document.getElementById('etiketPrintFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'etiketPrintFrame';
+    printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
+    document.body.appendChild(printFrame);
+  }
+  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
   setTimeout(function() {
-    pw.focus();
-    pw.print();
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
     if (callback) setTimeout(callback, 1500);
   }, 1500);
 }
