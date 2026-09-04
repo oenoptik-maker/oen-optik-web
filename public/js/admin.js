@@ -479,25 +479,28 @@ async function seciliUrunleriYazdir() {
   const htmlContent = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <style>
-      @page{size:${genislik}mm ${yukseklik}mm;margin:0;padding:0;}
-      html{margin:0;padding:0;}
-      body{margin:0;padding:0;background:white;width:${genislik}mm;height:${yukseklik}mm;}
+      @page{margin:0;padding:0;}
+      html,body{margin:0;padding:0;background:white;}
       *{margin:0;padding:0;box-sizing:border-box;}
-      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;}
+      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;border:0.3pt solid #ccc;}
       .etiket:last-child{page-break-after:auto;}
     </style>
   </head><body>${tumEtiketler}</body></html>`;
 
-  if (window.api && window.api.etiketYazdir) {
-    showToast(`${seciliUrunVerileri.length} ürün etiketi yazdırılıyor...`, 'info');
-    const seciliYazici = document.getElementById('etiketYaziciSec') ? document.getElementById('etiketYaziciSec').value : '';
-    const toplamAdet = seciliUrunVerileri.reduce((s, u) => s + u.ADET, 0);
-    const sonuc = await window.api.etiketYazdir({ html: htmlContent, genislik, yukseklik, bosluk: boslukY, adet: toplamAdet, yaziciAdi: seciliYazici });
-    if (sonuc && sonuc.success) showToast(`${toplamAdet} etiket yazdırma gönderildi.`, 'success');
-    else showToast('Yazdırma hatası: ' + (sonuc ? sonuc.error : 'Bilinmeyen'), 'error');
-  } else {
-    showToast('Yazdırma API bulunamadı.', 'error');
+  const toplamAdet = seciliUrunVerileri.reduce((s, u) => s + u.ADET, 0);
+  showToast(`Yazdırma penceresi açılıyor (${toplamAdet} etiket)...`, 'info');
+  let printFrame = document.getElementById('etiketPrintFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'etiketPrintFrame';
+    printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
+    document.body.appendChild(printFrame);
   }
+  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+  setTimeout(function() { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
 }
 
 function debouncedFilterUrunler() {
@@ -2503,40 +2506,31 @@ async function etiketYazdir() {
   const htmlContent = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <style>
-      @page{size:${genislik}mm ${yukseklik}mm;margin:0;padding:0;}
-      html{margin:0;padding:0;}
-      body{margin:0;padding:0;background:white;width:${genislik}mm;height:${yukseklik}mm;}
+      @page{margin:0;padding:0;}
+      html,body{margin:0;padding:0;background:white;}
       *{margin:0;padding:0;box-sizing:border-box;}
-      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;}
+      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;border:0.3pt solid #ccc;}
       .etiket:last-child{page-break-after:auto;}
     </style>
   </head><body>${tumEtiketler}</body></html>`;
 
-  if (window.api && window.api.etiketYazdir) {
-    showToast('Yazdırılıyor...', 'info');
-    const seciliYazici = document.getElementById('etiketYaziciSec') ? document.getElementById('etiketYaziciSec').value : '';
-    const sonuc = await window.api.etiketYazdir({ html: htmlContent, genislik, yukseklik, bosluk: boslukY, adet, yaziciAdi: seciliYazici });
-    if (sonuc && sonuc.success) {
-      showToast('Yazdırma gönderildi.', 'success');
-      closeEtiketModal();
-    } else {
-      showToast('Yazdırma hatası: ' + (sonuc ? sonuc.error : 'Bilinmeyen'), 'error');
-    }
-  } else {
-    let printFrame = document.getElementById('etiketPrintFrame');
-    if (!printFrame) {
-      printFrame = document.createElement('iframe');
-      printFrame.id = 'etiketPrintFrame';
-      printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
-      document.body.appendChild(printFrame);
-    }
-    const doc = printFrame.contentDocument || printFrame.contentWindow.document;
-    doc.open();
-    doc.write(htmlContent);
-    doc.close();
-    setTimeout(function() { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 800);
-    closeEtiketModal();
+  showToast('Yazdırma penceresi açılıyor...', 'info');
+  let printFrame = document.getElementById('etiketPrintFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'etiketPrintFrame';
+    printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
+    document.body.appendChild(printFrame);
   }
+  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+  setTimeout(function() {
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
+  }, 500);
+  closeEtiketModal();
 }
 
 async function tumunuYazdir(kaynak) {
@@ -2634,35 +2628,27 @@ async function tumunuYazdir(kaynak) {
   const htmlContent = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <style>
-      @page{size:${genislik}mm ${yukseklik}mm;margin:0;padding:0;}
-      html{margin:0;padding:0;}
-      body{margin:0;padding:0;background:white;width:${genislik}mm;height:${yukseklik}mm;}
+      @page{margin:0;padding:0;}
+      html,body{margin:0;padding:0;background:white;}
       *{margin:0;padding:0;box-sizing:border-box;}
-      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;}
+      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;border:0.3pt solid #ccc;}
       .etiket:last-child{page-break-after:auto;}
     </style>
   </head><body>${tumEtiketler}</body></html>`;
 
-  if (window.api && window.api.etiketYazdir) {
-    showToast('Toplu yazdırılıyor...', 'info');
-    const seciliYazici = document.getElementById('etiketYaziciSec') ? document.getElementById('etiketYaziciSec').value : '';
-    const sonuc = await window.api.etiketYazdir({ html: htmlContent, genislik, yukseklik, bosluk: boslukY, adet: urunler.length, yaziciAdi: seciliYazici });
-    if (sonuc && sonuc.success) showToast('Yazdırma gönderildi.', 'success');
-    else showToast('Yazdırma hatası: ' + (sonuc ? sonuc.error : 'Bilinmeyen'), 'error');
-  } else {
-    let printFrame = document.getElementById('etiketPrintFrame');
-    if (!printFrame) {
-      printFrame = document.createElement('iframe');
-      printFrame.id = 'etiketPrintFrame';
-      printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
-      document.body.appendChild(printFrame);
-    }
-    const doc = printFrame.contentDocument || printFrame.contentWindow.document;
-    doc.open();
-    doc.write(htmlContent);
-    doc.close();
-    setTimeout(function() { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 800);
+  showToast('Yazdırma penceresi açılıyor...', 'info');
+  let printFrame = document.getElementById('etiketPrintFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'etiketPrintFrame';
+    printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
+    document.body.appendChild(printFrame);
   }
+  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+  setTimeout(function() { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
 }
 
 // ===== UTS TOPLU ALIM VERİ ÇEKME =====
