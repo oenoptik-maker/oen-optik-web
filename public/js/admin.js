@@ -2446,7 +2446,6 @@ async function etiketYazdir() {
       icerik = `<img src="${qrUrl}" style="width:${eleman.genislik - 2}mm;height:${eleman.yukseklik - 2}mm;" />`;
       return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
     }
-
     if (eleman.tip === 'urun_adi') icerik = u.URUN_ADI || '';
     else if (eleman.tip === 'tarih') icerik = tarih;
     else if (eleman.tip === 'fiyat') icerik = '₺' + parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -2454,7 +2453,6 @@ async function etiketYazdir() {
     else if (eleman.tip === 'menşei') icerik = u.MENSEI || '';
     else icerik = eleman.icerik || '';
 
-    const mmToPt = 2.835;
     const sagmaSatir = eleman.tip === 'urun_adi' || eleman.tip === 'metin';
     const yaziBoyutu = elemanYaziBoyutuHesapla(eleman, icerik);
 
@@ -2469,33 +2467,32 @@ async function etiketYazdir() {
   }
 
   let tumEtiketler = '';
-
   let tekEtiketHTML = '';
   for (const eleman of tasarim.elemanlar) {
     tekEtiketHTML += elemanHTML(eleman, etiketSeciliUrun, qrDataUrl, bugun);
   }
-  const tekEtiketDiv = `<div class="etiket" style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;">${tekEtiketHTML}</div>`;
 
   if (yaziciTipi === 'termal') {
     for (let i = 0; i < adet; i++) {
-      tumEtiketler += tekEtiketDiv;
+      tumEtiketler += `<div style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #ddd;">${tekEtiketHTML}</div>`;
     }
   } else {
     let sayfaG, sayfaY;
     if (yaziciTipi === 'A5') { sayfaG = 148; sayfaY = 210; } else { sayfaG = 210; sayfaY = 297; }
-    const yatayAdet = Math.floor((sayfaG + 5) / (genislik + 5));
-    const dikeyAdet = Math.floor((sayfaY + 5) / (yukseklik + 5));
+    const kenarBosluk = 5;
+    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukY) / (genislik + boslukY));
+    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukY) / (yukseklik + boslukY));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
     const toplamSayfa = Math.ceil(adet / sayfaBasinaEtiket);
     let etiketSayisi = 0;
 
     for (let sayfa = 0; sayfa < toplamSayfa; sayfa++) {
-      tumEtiketler += `<div class="etiket-sayfa" style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;">`;
+      tumEtiketler += `<div style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;page-break-inside:avoid;">`;
       for (let dy = 0; dy < dikeyAdet && etiketSayisi < adet; dy++) {
         for (let yt = 0; yt < yatayAdet && etiketSayisi < adet; yt++) {
-          const left = yt * (genislik + 5);
-          const top = dy * (yukseklik + 5);
-          tumEtiketler += `<div style="position:absolute;left:${left}mm;top:${top}mm;">${tekEtiketHTML}</div>`;
+          const left = kenarBosluk + yt * (genislik + boslukY);
+          const top = kenarBosluk + dy * (yukseklik + boslukY);
+          tumEtiketler += `<div style="position:absolute;left:${left}mm;top:${top}mm;width:${genislik}mm;height:${yukseklik}mm;border:0.5pt solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${tekEtiketHTML}</div>`;
           etiketSayisi++;
         }
       }
@@ -2503,15 +2500,24 @@ async function etiketYazdir() {
     }
   }
 
-  const htmlContent = `<!DOCTYPE html><html><head>
-    <meta charset="UTF-8">
-    <style>
+  let printCSS = '';
+  if (yaziciTipi === 'termal') {
+    printCSS = `
+      @page{size:${genislik}mm auto;margin:0;padding:0;}
+      html,body{margin:0;padding:0;background:white;}
+      *{margin:0;padding:0;box-sizing:border-box;}
+    `;
+  } else {
+    printCSS = `
       @page{margin:0;padding:0;}
       html,body{margin:0;padding:0;background:white;}
       *{margin:0;padding:0;box-sizing:border-box;}
-      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;border:0.3pt solid #ccc;}
-      .etiket:last-child{page-break-after:auto;}
-    </style>
+    `;
+  }
+
+  const htmlContent = `<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <style>${printCSS}</style>
   </head><body>${tumEtiketler}</body></html>`;
 
   showToast('Yazdırma penceresi açılıyor...', 'info');
@@ -2590,13 +2596,14 @@ async function tumunuYazdir(kaynak) {
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
       }
-      tumEtiketler += `<div class="etiket" style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;">${icerik}</div>`;
+      tumEtiketler += `<div style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #ddd;">${icerik}</div>`;
     }
   } else {
     let sayfaG, sayfaY;
     if (yaziciTipi === 'A5') { sayfaG = 148; sayfaY = 210; } else { sayfaG = 210; sayfaY = 297; }
-    const yatayAdet = Math.floor((sayfaG + 5) / (genislik + 5));
-    const dikeyAdet = Math.floor((sayfaY + 5) / (yukseklik + 5));
+    const kenarBosluk = 5;
+    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukY) / (genislik + boslukY));
+    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukY) / (yukseklik + boslukY));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
     let tumEtiketlerDuz = [];
     const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150)));
@@ -2607,16 +2614,16 @@ async function tumunuYazdir(kaynak) {
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
       }
-      tumEtiketlerDuz.push(`<div style="position:absolute;width:${genislik}mm;height:${yukseklik}mm;border:0.3px solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${icerik}</div>`);
+      tumEtiketlerDuz.push(`<div style="position:absolute;width:${genislik}mm;height:${yukseklik}mm;border:0.5pt solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${icerik}</div>`);
     }
     const toplamSayfa = Math.ceil(tumEtiketlerDuz.length / sayfaBasinaEtiket);
     let idx = 0;
     for (let sayfa = 0; sayfa < toplamSayfa; sayfa++) {
-      tumEtiketler += `<div style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;">`;
+      tumEtiketler += `<div style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;page-break-inside:avoid;">`;
       for (let dy = 0; dy < dikeyAdet && idx < tumEtiketlerDuz.length; dy++) {
         for (let yt = 0; yt < yatayAdet && idx < tumEtiketlerDuz.length; yt++) {
-          const left = yt * (genislik + 5);
-          const top = dy * (yukseklik + 5);
+          const left = kenarBosluk + yt * (genislik + boslukY);
+          const top = kenarBosluk + dy * (yukseklik + boslukY);
           tumEtiketler += `<div style="position:absolute;left:${left}mm;top:${top}mm;">${tumEtiketlerDuz[idx]}</div>`;
           idx++;
         }
@@ -2625,15 +2632,16 @@ async function tumunuYazdir(kaynak) {
     }
   }
 
+  let printCSS = '';
+  if (yaziciTipi === 'termal') {
+    printCSS = `@page{size:${genislik}mm auto;margin:0;padding:0;}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}`;
+  } else {
+    printCSS = `@page{margin:0;padding:0;}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}`;
+  }
+
   const htmlContent = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
-    <style>
-      @page{margin:0;padding:0;}
-      html,body{margin:0;padding:0;background:white;}
-      *{margin:0;padding:0;box-sizing:border-box;}
-      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;border:0.3pt solid #ccc;}
-      .etiket:last-child{page-break-after:auto;}
-    </style>
+    <style>${printCSS}</style>
   </head><body>${tumEtiketler}</body></html>`;
 
   showToast('Yazdırma penceresi açılıyor...', 'info');
