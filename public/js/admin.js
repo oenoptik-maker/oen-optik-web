@@ -396,34 +396,30 @@ function etiketTekEtiketHTML(elemanlar, u, qrUrl, tarih) {
 }
 
 function yaziciAc(html, callback, sayfaBoyutuMM) {
-  const mevcut = document.getElementById('etiketPrintDiv');
-  if (mevcut) mevcut.remove();
-  const mevcutStil = document.getElementById('etiketPrintStyle');
-  if (mevcutStil) mevcutStil.remove();
-
-  const printDiv = document.createElement('div');
-  printDiv.id = 'etiketPrintDiv';
-  printDiv.style.cssText = 'display:none;';
-  document.body.appendChild(printDiv);
-
-  const style = document.createElement('style');
-  style.id = 'etiketPrintStyle';
-  style.textContent = `@media print{body>*:not(#etiketPrintDiv){display:none!important;}#etiketPrintDiv{display:block!important;margin:0!important;padding:0!important;}}`;
-  document.head.appendChild(style);
-
   const pageCSS = sayfaBoyutuMM
     ? `@page{size:${sayfaBoyutuMM.w}mm ${sayfaBoyutuMM.h}mm;margin:0;padding:0;}`
     : `@page{margin:0;}`;
-  printDiv.innerHTML = `<style>${pageCSS}html,body,div{margin:0!important;padding:0!important;background:white;}</style>${html}`;
-  printDiv.style.display = 'block';
+  const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>${pageCSS}html,body,div{margin:0!important;padding:0!important;background:white;box-sizing:border-box;}</style>
+  </head><body>${html}</body></html>`;
 
-  window.print();
-
-  setTimeout(() => {
-    printDiv.remove();
-    style.remove();
-    if (callback) callback();
-  }, 2000);
+  showToast('Yazdırma penceresi açılıyor...', 'info');
+  let printFrame = document.getElementById('etiketPrintFrame');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'etiketPrintFrame';
+    printFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;';
+    document.body.appendChild(printFrame);
+  }
+  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+  setTimeout(function() {
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
+    if (callback) setTimeout(callback, 1500);
+  }, 500);
 }
 
 async function seciliUrunleriYazdir() {
