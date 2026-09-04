@@ -440,7 +440,7 @@ async function seciliUrunleriYazdir() {
         tekHTML += elemanHTML(eleman, u, qrDataUrl, bugun);
       }
       for (let j = 0; j < u.ADET; j++) {
-        tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;page-break-after:always;page-break-inside:avoid;">${tekHTML}</div>`;
+        tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;">${tekHTML}</div>`;
       }
     }
   } else {
@@ -2474,7 +2474,7 @@ async function etiketYazdir() {
 
   if (yaziciTipi === 'termal') {
     for (let i = 0; i < adet; i++) {
-      tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;page-break-after:always;page-break-inside:avoid;">${tekEtiketHTML}</div>`;
+      tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;">${tekEtiketHTML}</div>`;
     }
   } else {
     let sayfaG, sayfaY;
@@ -2582,7 +2582,7 @@ async function tumunuYazdir(kaynak) {
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
       }
-      tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;page-break-after:always;page-break-inside:avoid;">${icerik}</div>`;
+      tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;">${icerik}</div>`;
     }
   } else {
     let sayfaG, sayfaY;
