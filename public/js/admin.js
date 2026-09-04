@@ -398,36 +398,40 @@ async function seciliUrunleriYazdir() {
   }
 
   const yaziciTipi = document.getElementById('etiketSayfaBoyutu').value;
-  const genislik = etiketTasarim.genislik || parseInt(document.getElementById('etiketGenislik').value) || 70;
-  const yukseklik = etiketTasarim.yukseklik || parseInt(document.getElementById('etiketYukseklik').value) || 40;
+  const genislikMM = etiketTasarim.genislik || parseInt(document.getElementById('etiketGenislik').value) || 70;
+  const yukseklikMM = etiketTasarim.yukseklik || parseInt(document.getElementById('etiketYukseklik').value) || 40;
   const boslukY = parseInt(document.getElementById('etiketBoslukY').value) || 3;
   const bugun = new Date().toLocaleDateString('tr-TR');
   const tasarim = etiketTasarim.elemanlar && etiketTasarim.elemanlar.length > 0 ? etiketTasarim : etiketTasarimVarsayilan();
 
+  const mm2px = (mm) => Math.round(mm * 3.7795);
+
   function elemanHTML(eleman, u, qrUrl, tarih) {
     let icerik = '';
     if (eleman.tip === 'karekod') {
-      icerik = `<img src="${qrUrl}" style="width:${eleman.genislik - 2}mm;height:${eleman.yukseklik - 2}mm;" />`;
-      return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
+      icerik = `<img src="${qrUrl}" style="width:${mm2px(eleman.genislik - 3)}px;height:${mm2px(eleman.yukseklik - 3)}px;display:block;" />`;
+    } else if (eleman.tip === 'urun_adi') {
+      icerik = `<div style="font-size:8pt;font-weight:bold;text-align:center;line-height:1.1;word-break:break-word;">${u.URUN_ADI || ''}</div>`;
+    } else if (eleman.tip === 'tarih') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${tarih}</div>`;
+    } else if (eleman.tip === 'fiyat') {
+      icerik = `<div style="font-size:8pt;font-weight:bold;text-align:center;color:${eleman.renk || '#c00'};">₺${parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>`;
+    } else if (eleman.tip === 'kategori') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${u.KATEGORI_ADI || ''}</div>`;
+    } else if (eleman.tip === 'menşei') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${u.MENSEI || ''}</div>`;
+    } else {
+      icerik = `<div style="font-size:6pt;text-align:center;">${eleman.icerik || ''}</div>`;
     }
-    if (eleman.tip === 'urun_adi') icerik = u.URUN_ADI || '';
-    else if (eleman.tip === 'tarih') icerik = tarih;
-    else if (eleman.tip === 'fiyat') icerik = '₺' + parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    else if (eleman.tip === 'kategori') icerik = u.KATEGORI_ADI || '';
-    else if (eleman.tip === 'menşei') icerik = u.MENSEI || '';
-    else icerik = eleman.icerik || '';
-    const sagmaSatir = eleman.tip === 'urun_adi' || eleman.tip === 'metin';
-    const yaziBoyutu = elemanYaziBoyutuHesapla(eleman, icerik);
-    let overflowCSS = sagmaSatir
-      ? 'overflow:hidden;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.15;'
-      : 'overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
-    return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;font-size:${yaziBoyutu}pt;font-weight:${eleman.bold ? 'bold' : 'normal'};color:${eleman.renk};text-align:center;padding:1mm;${overflowCSS}">${icerik}</div>`;
+    return `<div style="position:absolute;left:${mm2px(eleman.x)}px;top:${mm2px(eleman.y)}px;width:${mm2px(eleman.genislik)}px;height:${mm2px(eleman.yukseklik)}px;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
   }
 
   let tumEtiketler = '';
+  const labelW = mm2px(genislikMM);
+  const labelH = mm2px(yukseklikMM);
 
   if (yaziciTipi === 'termal') {
-    const qrUrls = await Promise.all(seciliUrunVerileri.map(u => generateQRDataUrl(u.KAREKOD || u.URUN_ID.toString(), 150)));
+    const qrUrls = await Promise.all(seciliUrunVerileri.map(u => generateQRDataUrl(u.KAREKOD || u.URUN_ID.toString(), 200)));
     for (let i = 0; i < seciliUrunVerileri.length; i++) {
       const u = seciliUrunVerileri[i];
       const qrDataUrl = qrUrls[i];
@@ -435,19 +439,20 @@ async function seciliUrunleriYazdir() {
       for (const eleman of tasarim.elemanlar) {
         tekHTML += elemanHTML(eleman, u, qrDataUrl, bugun);
       }
-      const tekDiv = `<div class="etiket" style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;">${tekHTML}</div>`;
-      for (let i = 0; i < u.ADET; i++) {
-        tumEtiketler += tekDiv;
+      for (let j = 0; j < u.ADET; j++) {
+        tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;page-break-after:always;page-break-inside:avoid;">${tekHTML}</div>`;
       }
     }
   } else {
     let sayfaG, sayfaY;
-    if (yaziciTipi === 'A5') { sayfaG = 148; sayfaY = 210; } else { sayfaG = 210; sayfaY = 297; }
-    const yatayAdet = Math.floor((sayfaG + 5) / (genislik + 5));
-    const dikeyAdet = Math.floor((sayfaY + 5) / (yukseklik + 5));
+    if (yaziciTipi === 'A5') { sayfaG = mm2px(148); sayfaY = mm2px(210); } else { sayfaG = mm2px(210); sayfaY = mm2px(297); }
+    const kenarBosluk = mm2px(5);
+    const boslukPx = mm2px(boslukY);
+    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukPx) / (labelW + boslukPx));
+    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukPx) / (labelH + boslukPx));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
     let tumEtiketlerDuz = [];
-    const qrUrls = await Promise.all(seciliUrunVerileri.map(u => generateQRDataUrl(u.KAREKOD || u.URUN_ID.toString(), 150)));
+    const qrUrls = await Promise.all(seciliUrunVerileri.map(u => generateQRDataUrl(u.KAREKOD || u.URUN_ID.toString(), 200)));
     for (let i = 0; i < seciliUrunVerileri.length; i++) {
       const u = seciliUrunVerileri[i];
       const qrDataUrl = qrUrls[i];
@@ -455,20 +460,19 @@ async function seciliUrunleriYazdir() {
       for (const eleman of tasarim.elemanlar) {
         tekHTML += elemanHTML(eleman, u, qrDataUrl, bugun);
       }
-      const tekDiv = `<div style="position:absolute;width:${genislik}mm;height:${yukseklik}mm;border:0.3px solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${tekHTML}</div>`;
-      for (let i = 0; i < u.ADET; i++) {
-        tumEtiketlerDuz.push(tekDiv);
+      for (let j = 0; j < u.ADET; j++) {
+        tumEtiketlerDuz.push(`<div style="position:absolute;width:${labelW}px;height:${labelH}px;border:1px solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${tekHTML}</div>`);
       }
     }
     const toplamSayfa = Math.ceil(tumEtiketlerDuz.length / sayfaBasinaEtiket);
     let idx = 0;
     for (let sayfa = 0; sayfa < toplamSayfa; sayfa++) {
-      tumEtiketler += `<div style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;">`;
+      tumEtiketler += `<div style="width:${sayfaG}px;height:${sayfaY}px;position:relative;page-break-after:always;page-break-inside:avoid;">`;
       for (let dy = 0; dy < dikeyAdet && idx < tumEtiketlerDuz.length; dy++) {
         for (let yt = 0; yt < yatayAdet && idx < tumEtiketlerDuz.length; yt++) {
-          const left = yt * (genislik + 5);
-          const top = dy * (yukseklik + 5);
-          tumEtiketler += `<div style="position:absolute;left:${left}mm;top:${top}mm;">${tumEtiketlerDuz[idx]}</div>`;
+          const left = kenarBosluk + yt * (labelW + boslukPx);
+          const top = kenarBosluk + dy * (labelH + boslukPx);
+          tumEtiketler += `<div style="position:absolute;left:${left}px;top:${top}px;">${tumEtiketlerDuz[idx]}</div>`;
           idx++;
         }
       }
@@ -476,14 +480,11 @@ async function seciliUrunleriYazdir() {
     }
   }
 
-  const htmlContent = `<!DOCTYPE html><html><head>
-    <meta charset="UTF-8">
+  const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>
-      @page{margin:0;padding:0;}
+      @page{margin:0;}
       html,body{margin:0;padding:0;background:white;}
       *{margin:0;padding:0;box-sizing:border-box;}
-      .etiket{width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;border:0.3pt solid #ccc;}
-      .etiket:last-child{page-break-after:auto;}
     </style>
   </head><body>${tumEtiketler}</body></html>`;
 
@@ -2428,71 +2429,71 @@ async function etiketYazdir() {
   if (!etiketSeciliUrun) return;
 
   const yaziciTipi = document.getElementById('etiketSayfaBoyutu').value;
-  const genislik = parseInt(document.getElementById('etiketGenislik').value) || 70;
-  const yukseklik = parseInt(document.getElementById('etiketYukseklik').value) || 40;
+  const genislikMM = parseInt(document.getElementById('etiketGenislik').value) || 70;
+  const yukseklikMM = parseInt(document.getElementById('etiketYukseklik').value) || 40;
   const boslukY = parseInt(document.getElementById('etiketBoslukY').value) || 3;
   const adet = parseInt(document.getElementById('etiketAdet').value) || 1;
 
   const bugun = new Date().toLocaleDateString('tr-TR');
   const karekodInput = document.getElementById('etiketKarekod');
   const karekodDegeri = (karekodInput ? karekodInput.value.trim() : '') || etiketSeciliUrun.KAREKOD || etiketSeciliUrun.URUN_ID.toString();
-  const qrDataUrl = await generateQRDataUrl(karekodDegeri, 150);
+  const qrDataUrl = await generateQRDataUrl(karekodDegeri, 200);
 
   const tasarim = etiketTasarim.elemanlar && etiketTasarim.elemanlar.length > 0 ? etiketTasarim : etiketTasarimVarsayilan();
+
+  const mm2px = (mm) => Math.round(mm * 3.7795);
 
   function elemanHTML(eleman, u, qrUrl, tarih) {
     let icerik = '';
     if (eleman.tip === 'karekod') {
-      icerik = `<img src="${qrUrl}" style="width:${eleman.genislik - 2}mm;height:${eleman.yukseklik - 2}mm;" />`;
-      return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
-    }
-    if (eleman.tip === 'urun_adi') icerik = u.URUN_ADI || '';
-    else if (eleman.tip === 'tarih') icerik = tarih;
-    else if (eleman.tip === 'fiyat') icerik = '₺' + parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    else if (eleman.tip === 'kategori') icerik = u.KATEGORI_ADI || '';
-    else if (eleman.tip === 'menşei') icerik = u.MENSEI || '';
-    else icerik = eleman.icerik || '';
-
-    const sagmaSatir = eleman.tip === 'urun_adi' || eleman.tip === 'metin';
-    const yaziBoyutu = elemanYaziBoyutuHesapla(eleman, icerik);
-
-    let overflowCSS;
-    if (sagmaSatir) {
-      overflowCSS = 'overflow:hidden;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.15;';
+      icerik = `<img src="${qrUrl}" style="width:${mm2px(eleman.genislik - 3)}px;height:${mm2px(eleman.yukseklik - 3)}px;display:block;" />`;
+    } else if (eleman.tip === 'urun_adi') {
+      icerik = `<div style="font-size:8pt;font-weight:bold;text-align:center;line-height:1.1;word-break:break-word;">${u.URUN_ADI || ''}</div>`;
+    } else if (eleman.tip === 'tarih') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${tarih}</div>`;
+    } else if (eleman.tip === 'fiyat') {
+      icerik = `<div style="font-size:8pt;font-weight:bold;text-align:center;color:${eleman.renk || '#c00'};">₺${parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>`;
+    } else if (eleman.tip === 'kategori') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${u.KATEGORI_ADI || ''}</div>`;
+    } else if (eleman.tip === 'menşei') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${u.MENSEI || ''}</div>`;
     } else {
-      overflowCSS = 'overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+      icerik = `<div style="font-size:6pt;text-align:center;">${eleman.icerik || ''}</div>`;
     }
-
-    return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;font-size:${yaziBoyutu}pt;font-weight:${eleman.bold ? 'bold' : 'normal'};color:${eleman.renk};text-align:center;padding:1mm;${overflowCSS}">${icerik}</div>`;
+    return `<div style="position:absolute;left:${mm2px(eleman.x)}px;top:${mm2px(eleman.y)}px;width:${mm2px(eleman.genislik)}px;height:${mm2px(eleman.yukseklik)}px;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
   }
 
-  let tumEtiketler = '';
   let tekEtiketHTML = '';
   for (const eleman of tasarim.elemanlar) {
     tekEtiketHTML += elemanHTML(eleman, etiketSeciliUrun, qrDataUrl, bugun);
   }
 
+  let tumEtiketler = '';
+  const labelW = mm2px(genislikMM);
+  const labelH = mm2px(yukseklikMM);
+
   if (yaziciTipi === 'termal') {
     for (let i = 0; i < adet; i++) {
-      tumEtiketler += `<div style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #ddd;">${tekEtiketHTML}</div>`;
+      tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;page-break-after:always;page-break-inside:avoid;">${tekEtiketHTML}</div>`;
     }
   } else {
     let sayfaG, sayfaY;
-    if (yaziciTipi === 'A5') { sayfaG = 148; sayfaY = 210; } else { sayfaG = 210; sayfaY = 297; }
-    const kenarBosluk = 5;
-    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukY) / (genislik + boslukY));
-    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukY) / (yukseklik + boslukY));
+    if (yaziciTipi === 'A5') { sayfaG = mm2px(148); sayfaY = mm2px(210); } else { sayfaG = mm2px(210); sayfaY = mm2px(297); }
+    const kenarBosluk = mm2px(5);
+    const boslukPx = mm2px(boslukY);
+    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukPx) / (labelW + boslukPx));
+    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukPx) / (labelH + boslukPx));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
     const toplamSayfa = Math.ceil(adet / sayfaBasinaEtiket);
     let etiketSayisi = 0;
 
     for (let sayfa = 0; sayfa < toplamSayfa; sayfa++) {
-      tumEtiketler += `<div style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;page-break-inside:avoid;">`;
+      tumEtiketler += `<div style="width:${sayfaG}px;height:${sayfaY}px;position:relative;page-break-after:always;page-break-inside:avoid;">`;
       for (let dy = 0; dy < dikeyAdet && etiketSayisi < adet; dy++) {
         for (let yt = 0; yt < yatayAdet && etiketSayisi < adet; yt++) {
-          const left = kenarBosluk + yt * (genislik + boslukY);
-          const top = kenarBosluk + dy * (yukseklik + boslukY);
-          tumEtiketler += `<div style="position:absolute;left:${left}mm;top:${top}mm;width:${genislik}mm;height:${yukseklik}mm;border:0.5pt solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${tekEtiketHTML}</div>`;
+          const left = kenarBosluk + yt * (labelW + boslukPx);
+          const top = kenarBosluk + dy * (labelH + boslukPx);
+          tumEtiketler += `<div style="position:absolute;left:${left}px;top:${top}px;width:${labelW}px;height:${labelH}px;border:1px solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${tekEtiketHTML}</div>`;
           etiketSayisi++;
         }
       }
@@ -2500,24 +2501,12 @@ async function etiketYazdir() {
     }
   }
 
-  let printCSS = '';
-  if (yaziciTipi === 'termal') {
-    printCSS = `
-      @page{size:${genislik}mm auto;margin:0;padding:0;}
+  const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      @page{margin:0;}
       html,body{margin:0;padding:0;background:white;}
       *{margin:0;padding:0;box-sizing:border-box;}
-    `;
-  } else {
-    printCSS = `
-      @page{margin:0;padding:0;}
-      html,body{margin:0;padding:0;background:white;}
-      *{margin:0;padding:0;box-sizing:border-box;}
-    `;
-  }
-
-  const htmlContent = `<!DOCTYPE html><html><head>
-    <meta charset="UTF-8">
-    <style>${printCSS}</style>
+    </style>
   </head><body>${tumEtiketler}</body></html>`;
 
   showToast('Yazdırma penceresi açılıyor...', 'info');
@@ -2535,7 +2524,7 @@ async function etiketYazdir() {
   setTimeout(function() {
     printFrame.contentWindow.focus();
     printFrame.contentWindow.print();
-  }, 500);
+  }, 1000);
   closeEtiketModal();
 }
 
@@ -2552,43 +2541,40 @@ async function tumunuYazdir(kaynak) {
   if (urunler.length === 0) { showToast('Yazdırılacak ürün bulunamadı.', 'warning'); return; }
 
   const yaziciTipi = document.getElementById('etiketSayfaBoyutu').value;
-  const genislik = parseInt(document.getElementById('etiketGenislik').value) || 70;
-  const yukseklik = parseInt(document.getElementById('etiketYukseklik').value) || 40;
+  const genislikMM = parseInt(document.getElementById('etiketGenislik').value) || 70;
+  const yukseklikMM = parseInt(document.getElementById('etiketYukseklik').value) || 40;
   const boslukY = parseInt(document.getElementById('etiketBoslukY').value) || 3;
   const bugun = new Date().toLocaleDateString('tr-TR');
   const tasarim = etiketTasarim.elemanlar && etiketTasarim.elemanlar.length > 0 ? etiketTasarim : etiketTasarimVarsayilan();
 
+  const mm2px = (mm) => Math.round(mm * 3.7795);
+
   function elemanHTML(eleman, u, qrUrl, tarih) {
     let icerik = '';
     if (eleman.tip === 'karekod') {
-      icerik = `<img src="${qrUrl}" style="width:${eleman.genislik - 2}mm;height:${eleman.yukseklik - 2}mm;" />`;
-      return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
-    }
-
-    if (eleman.tip === 'urun_adi') icerik = u.URUN_ADI || '';
-    else if (eleman.tip === 'tarih') icerik = tarih;
-    else if (eleman.tip === 'fiyat') icerik = '₺' + parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    else if (eleman.tip === 'kategori') icerik = u.KATEGORI_ADI || '';
-    else if (eleman.tip === 'menşei') icerik = u.MENSEI || '';
-    else icerik = eleman.icerik || '';
-
-    const sagmaSatir = eleman.tip === 'urun_adi' || eleman.tip === 'metin';
-    const yaziBoyutu = elemanYaziBoyutuHesapla(eleman, icerik);
-
-    let overflowCSS;
-    if (sagmaSatir) {
-      overflowCSS = 'overflow:hidden;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.15;';
+      icerik = `<img src="${qrUrl}" style="width:${mm2px(eleman.genislik - 3)}px;height:${mm2px(eleman.yukseklik - 3)}px;display:block;" />`;
+    } else if (eleman.tip === 'urun_adi') {
+      icerik = `<div style="font-size:8pt;font-weight:bold;text-align:center;line-height:1.1;word-break:break-word;">${u.URUN_ADI || ''}</div>`;
+    } else if (eleman.tip === 'tarih') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${tarih}</div>`;
+    } else if (eleman.tip === 'fiyat') {
+      icerik = `<div style="font-size:8pt;font-weight:bold;text-align:center;color:${eleman.renk || '#c00'};">₺${parseFloat(u.FIYAT || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>`;
+    } else if (eleman.tip === 'kategori') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${u.KATEGORI_ADI || ''}</div>`;
+    } else if (eleman.tip === 'menşei') {
+      icerik = `<div style="font-size:6pt;text-align:center;">${u.MENSEI || ''}</div>`;
     } else {
-      overflowCSS = 'overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+      icerik = `<div style="font-size:6pt;text-align:center;">${eleman.icerik || ''}</div>`;
     }
-
-    return `<div style="position:absolute;left:${eleman.x}mm;top:${eleman.y}mm;width:${eleman.genislik}mm;height:${eleman.yukseklik}mm;display:flex;align-items:center;justify-content:center;font-size:${yaziBoyutu}pt;font-weight:${eleman.bold ? 'bold' : 'normal'};color:${eleman.renk};text-align:center;padding:1mm;${overflowCSS}">${icerik}</div>`;
+    return `<div style="position:absolute;left:${mm2px(eleman.x)}px;top:${mm2px(eleman.y)}px;width:${mm2px(eleman.genislik)}px;height:${mm2px(eleman.yukseklik)}px;display:flex;align-items:center;justify-content:center;overflow:hidden;">${icerik}</div>`;
   }
 
   let tumEtiketler = '';
+  const labelW = mm2px(genislikMM);
+  const labelH = mm2px(yukseklikMM);
 
   if (yaziciTipi === 'termal') {
-    const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150)));
+    const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 200)));
     for (let i = 0; i < urunler.length; i++) {
       const u = urunler[i];
       const qrUrl = qrUrls[i];
@@ -2596,17 +2582,18 @@ async function tumunuYazdir(kaynak) {
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
       }
-      tumEtiketler += `<div style="width:${genislik}mm;height:${yukseklik}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #ddd;">${icerik}</div>`;
+      tumEtiketler += `<div style="width:${labelW}px;height:${labelH}px;position:relative;overflow:hidden;font-family:Arial,sans-serif;border-bottom:1px dashed #999;page-break-after:always;page-break-inside:avoid;">${icerik}</div>`;
     }
   } else {
     let sayfaG, sayfaY;
-    if (yaziciTipi === 'A5') { sayfaG = 148; sayfaY = 210; } else { sayfaG = 210; sayfaY = 297; }
-    const kenarBosluk = 5;
-    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukY) / (genislik + boslukY));
-    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukY) / (yukseklik + boslukY));
+    if (yaziciTipi === 'A5') { sayfaG = mm2px(148); sayfaY = mm2px(210); } else { sayfaG = mm2px(210); sayfaY = mm2px(297); }
+    const kenarBosluk = mm2px(5);
+    const boslukPx = mm2px(boslukY);
+    const yatayAdet = Math.floor((sayfaG - kenarBosluk * 2 + boslukPx) / (labelW + boslukPx));
+    const dikeyAdet = Math.floor((sayfaY - kenarBosluk * 2 + boslukPx) / (labelH + boslukPx));
     const sayfaBasinaEtiket = yatayAdet * dikeyAdet;
+    const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 200)));
     let tumEtiketlerDuz = [];
-    const qrUrls = await Promise.all(urunler.map(u => generateQRDataUrl(u.KAREKOD || String(u.URUN_ID), 150)));
     for (let i = 0; i < urunler.length; i++) {
       const u = urunler[i];
       const qrUrl = qrUrls[i];
@@ -2614,17 +2601,17 @@ async function tumunuYazdir(kaynak) {
       for (const eleman of tasarim.elemanlar) {
         icerik += elemanHTML(eleman, u, qrUrl, bugun);
       }
-      tumEtiketlerDuz.push(`<div style="position:absolute;width:${genislik}mm;height:${yukseklik}mm;border:0.5pt solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${icerik}</div>`);
+      tumEtiketlerDuz.push(`<div style="position:absolute;width:${labelW}px;height:${labelH}px;border:1px solid #ccc;overflow:hidden;font-family:Arial,sans-serif;">${icerik}</div>`);
     }
     const toplamSayfa = Math.ceil(tumEtiketlerDuz.length / sayfaBasinaEtiket);
     let idx = 0;
     for (let sayfa = 0; sayfa < toplamSayfa; sayfa++) {
-      tumEtiketler += `<div style="width:${sayfaG}mm;height:${sayfaY}mm;position:relative;page-break-after:always;page-break-inside:avoid;">`;
+      tumEtiketler += `<div style="width:${sayfaG}px;height:${sayfaY}px;position:relative;page-break-after:always;page-break-inside:avoid;">`;
       for (let dy = 0; dy < dikeyAdet && idx < tumEtiketlerDuz.length; dy++) {
         for (let yt = 0; yt < yatayAdet && idx < tumEtiketlerDuz.length; yt++) {
-          const left = kenarBosluk + yt * (genislik + boslukY);
-          const top = kenarBosluk + dy * (yukseklik + boslukY);
-          tumEtiketler += `<div style="position:absolute;left:${left}mm;top:${top}mm;">${tumEtiketlerDuz[idx]}</div>`;
+          const left = kenarBosluk + yt * (labelW + boslukPx);
+          const top = kenarBosluk + dy * (labelH + boslukPx);
+          tumEtiketler += `<div style="position:absolute;left:${left}px;top:${top}px;">${tumEtiketlerDuz[idx]}</div>`;
           idx++;
         }
       }
@@ -2632,16 +2619,12 @@ async function tumunuYazdir(kaynak) {
     }
   }
 
-  let printCSS = '';
-  if (yaziciTipi === 'termal') {
-    printCSS = `@page{size:${genislik}mm auto;margin:0;padding:0;}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}`;
-  } else {
-    printCSS = `@page{margin:0;padding:0;}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}`;
-  }
-
-  const htmlContent = `<!DOCTYPE html><html><head>
-    <meta charset="UTF-8">
-    <style>${printCSS}</style>
+  const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      @page{margin:0;}
+      html,body{margin:0;padding:0;background:white;}
+      *{margin:0;padding:0;box-sizing:border-box;}
+    </style>
   </head><body>${tumEtiketler}</body></html>`;
 
   showToast('Yazdırma penceresi açılıyor...', 'info');
@@ -2656,7 +2639,7 @@ async function tumunuYazdir(kaynak) {
   doc.open();
   doc.write(htmlContent);
   doc.close();
-  setTimeout(function() { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
+  setTimeout(function() { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 1000);
 }
 
 // ===== UTS TOPLU ALIM VERİ ÇEKME =====
