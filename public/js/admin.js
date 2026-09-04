@@ -480,12 +480,11 @@ async function seciliUrunleriYazdir() {
     }
   }
 
+  const pageCSS1 = yaziciTipi === 'termal'
+    ? `@page{size:${genislikMM}mm ${yukseklikMM}mm;margin:0;padding:0;}`
+    : `@page{margin:0;}`;
   const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <style>
-      @page{margin:0;}
-      html,body{margin:0;padding:0;background:white;}
-      *{margin:0;padding:0;box-sizing:border-box;}
-    </style>
+    <style>${pageCSS1}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}</style>
   </head><body>${tumEtiketler}</body></html>`;
 
   const toplamAdet = seciliUrunVerileri.reduce((s, u) => s + u.ADET, 0);
@@ -2501,12 +2500,11 @@ async function etiketYazdir() {
     }
   }
 
+  const pageCSS2 = yaziciTipi === 'termal'
+    ? `@page{size:${genislikMM}mm ${yukseklikMM}mm;margin:0;padding:0;}`
+    : `@page{margin:0;}`;
   const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <style>
-      @page{margin:0;}
-      html,body{margin:0;padding:0;background:white;}
-      *{margin:0;padding:0;box-sizing:border-box;}
-    </style>
+    <style>${pageCSS2}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}</style>
   </head><body>${tumEtiketler}</body></html>`;
 
   showToast('Yazdırma penceresi açılıyor...', 'info');
@@ -2619,12 +2617,11 @@ async function tumunuYazdir(kaynak) {
     }
   }
 
+  const pageCSS3 = yaziciTipi === 'termal'
+    ? `@page{size:${genislikMM}mm ${yukseklikMM}mm;margin:0;padding:0;}`
+    : `@page{margin:0;}`;
   const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <style>
-      @page{margin:0;}
-      html,body{margin:0;padding:0;background:white;}
-      *{margin:0;padding:0;box-sizing:border-box;}
-    </style>
+    <style>${pageCSS3}html,body{margin:0;padding:0;background:white;}*{margin:0;padding:0;box-sizing:border-box;}</style>
   </head><body>${tumEtiketler}</body></html>`;
 
   showToast('Yazdırma penceresi açılıyor...', 'info');
