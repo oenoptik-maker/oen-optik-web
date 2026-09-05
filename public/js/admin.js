@@ -2106,8 +2106,6 @@ async function etiketTasarlamaAc() {
   document.getElementById('etiketTasarimModal').classList.add('active');
   etiketTasarimElemanlariniOlustur();
   etiketTasarimAlaniGuncelle();
-
-  document.addEventListener('keydown', etiketTasarimKeyDown, true);
 }
 
 function etiketTasarimElemanlariSığdir() {
@@ -2139,7 +2137,6 @@ function etiketTasarimElemanlariSığdir() {
 }
 
 function etiketTasarlamaKapat() {
-  document.removeEventListener('keydown', etiketTasarimKeyDown, true);
   document.getElementById('etiketTasarimModal').classList.remove('active');
   etiketOnizlemeGuncelle();
 }
@@ -2292,7 +2289,8 @@ function etiketTasarimElemanlariCiz() {
 }
 
 function etiketTasarimKeyDown(e) {
-  if (!etiketTasarimSeciliEleman) return;
+  const modalAcik = document.getElementById('etiketTasarimModal') && document.getElementById('etiketTasarimModal').classList.contains('active');
+  if (!modalAcik || !etiketTasarimSeciliEleman) return;
   const isInput = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
   const adm = e.shiftKey ? 5 : 1;
   let handled = false;
@@ -2307,6 +2305,7 @@ function etiketTasarimKeyDown(e) {
   }
   if (handled) { e.preventDefault(); e.stopPropagation(); etiketTasarimElemanlariCiz(); }
 }
+document.addEventListener('keydown', etiketTasarimKeyDown, true);
 
 function etiketElemanSil(index) {
   const eleman = etiketTasarim.elemanlar[index];
