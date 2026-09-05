@@ -2107,7 +2107,7 @@ async function etiketTasarlamaAc() {
   etiketTasarimElemanlariniOlustur();
   etiketTasarimAlaniGuncelle();
 
-  document.addEventListener('keydown', etiketTasarimKeyDown);
+  document.addEventListener('keydown', etiketTasarimKeyDown, true);
 }
 
 function etiketTasarimElemanlariSığdir() {
@@ -2139,8 +2139,8 @@ function etiketTasarimElemanlariSığdir() {
 }
 
 function etiketTasarlamaKapat() {
+  document.removeEventListener('keydown', etiketTasarimKeyDown, true);
   document.getElementById('etiketTasarimModal').classList.remove('active');
-  document.removeEventListener('keydown', etiketTasarimKeyDown);
   etiketOnizlemeGuncelle();
 }
 
@@ -2190,6 +2190,7 @@ function etiketTasarimAlaniGuncelle() {
 
   alan.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; };
   alan.ondrop = (e) => { e.preventDefault(); etiketTasarimElemanEkle(e); };
+  alan.onclick = () => alan.focus();
 
   void alan.offsetHeight;
   etiketTasarimElemanlariCiz();
@@ -2292,19 +2293,19 @@ function etiketTasarimElemanlariCiz() {
 
 function etiketTasarimKeyDown(e) {
   if (!etiketTasarimSeciliEleman) return;
+  const isInput = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
   const adm = e.shiftKey ? 5 : 1;
-  let moved = false;
-  if (e.key === 'ArrowLeft') { etiketTasarimSeciliEleman.x = Math.max(0, etiketTasarimSeciliEleman.x - adm); moved = true; }
-  else if (e.key === 'ArrowRight') { etiketTasarimSeciliEleman.x = Math.min(etiketTasarim.genislik - etiketTasarimSeciliEleman.genislik, etiketTasarimSeciliEleman.x + adm); moved = true; }
-  else if (e.key === 'ArrowUp') { etiketTasarimSeciliEleman.y = Math.max(0, etiketTasarimSeciliEleman.y - adm); moved = true; }
-  else if (e.key === 'ArrowDown') { etiketTasarimSeciliEleman.y = Math.min(etiketTasarim.yukseklik - etiketTasarimSeciliEleman.yukseklik, etiketTasarimSeciliEleman.y + adm); moved = true; }
-  else if (e.key === 'Delete' || e.key === 'Backspace') {
-    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  let handled = false;
+  if (e.key === 'ArrowLeft') { etiketTasarimSeciliEleman.x = Math.max(0, etiketTasarimSeciliEleman.x - adm); handled = true; }
+  else if (e.key === 'ArrowRight') { etiketTasarimSeciliEleman.x = Math.min(etiketTasarim.genislik - etiketTasarimSeciliEleman.genislik, etiketTasarimSeciliEleman.x + adm); handled = true; }
+  else if (e.key === 'ArrowUp') { etiketTasarimSeciliEleman.y = Math.max(0, etiketTasarimSeciliEleman.y - adm); handled = true; }
+  else if (e.key === 'ArrowDown') { etiketTasarimSeciliEleman.y = Math.min(etiketTasarim.yukseklik - etiketTasarimSeciliEleman.yukseklik, etiketTasarimSeciliEleman.y + adm); handled = true; }
+  else if ((e.key === 'Delete' || e.key === 'Backspace') && !isInput) {
     const index = etiketTasarim.elemanlar.indexOf(etiketTasarimSeciliEleman);
     if (index >= 0) etiketElemanSil(index);
-    return;
+    handled = true;
   }
-  if (moved) { e.preventDefault(); etiketTasarimElemanlariCiz(); }
+  if (handled) { e.preventDefault(); e.stopPropagation(); etiketTasarimElemanlariCiz(); }
 }
 
 function etiketElemanSil(index) {
