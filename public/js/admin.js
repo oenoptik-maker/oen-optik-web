@@ -2106,6 +2106,8 @@ async function etiketTasarlamaAc() {
   document.getElementById('etiketTasarimModal').classList.add('active');
   etiketTasarimElemanlariniOlustur();
   etiketTasarimAlaniGuncelle();
+
+  document.addEventListener('keydown', etiketTasarimKeyDown);
 }
 
 function etiketTasarimElemanlariSığdir() {
@@ -2138,6 +2140,7 @@ function etiketTasarimElemanlariSığdir() {
 
 function etiketTasarlamaKapat() {
   document.getElementById('etiketTasarimModal').classList.remove('active');
+  document.removeEventListener('keydown', etiketTasarimKeyDown);
   etiketOnizlemeGuncelle();
 }
 
@@ -2252,19 +2255,11 @@ function etiketTasarimElemanlariCiz() {
         ? '<span style="font-size:1.5rem;pointer-events:none;"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="2" height="14"/><rect x="5" y="1" width="1" height="14"/><rect x="8" y="1" width="3" height="14"/><rect x="13" y="1" width="2" height="14"/></svg></span>'
         : `<span style="pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${eleman.icerik || eleman.tip}</span>`;
 
-      html += `<div class="tasarim-eleman" data-index="${index}" style="position:absolute;left:${solPiksel}px;top:${ustPiksel}px;width:${genislikElPiksel}px;height:${yukseklikElPiksel}px;border:1px ${secili ? 'solid var(--accent)' : 'dashed var(--border)'};border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:move;font-size:${Math.max(8, eleman.yaziBoyutu)}px;color:${eleman.renk};font-weight:${eleman.bold ? 'bold' : 'normal'};overflow:visible;background:${secili ? 'rgba(13,110,253,0.08)' : 'rgba(255,255,255,0.9)'};user-select:none;">${icerik}<div class="tasarim-eleman-sil" style="position:absolute;top:-8px;right:-8px;width:18px;height:18px;background:var(--danger);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;cursor:pointer;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,0.3);line-height:1;pointer-events:auto;">✕</div></div>`;
+      html += `<div class="tasarim-eleman" data-index="${index}" style="position:absolute;left:${solPiksel}px;top:${ustPiksel}px;width:${genislikElPiksel}px;height:${yukseklikElPiksel}px;border:1px ${secili ? 'solid var(--accent)' : 'dashed var(--border)'};border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:move;font-size:${Math.max(8, eleman.yaziBoyutu)}px;color:${eleman.renk};font-weight:${eleman.bold ? 'bold' : 'normal'};overflow:hidden;background:${secili ? 'rgba(13,110,253,0.08)' : 'rgba(255,255,255,0.9)'};user-select:none;">${icerik}</div>`;
     });
   }
 
   alan.innerHTML = html;
-
-  alan.querySelectorAll('.tasarim-eleman-sil').forEach((silBtn, i) => {
-    silBtn.onmousedown = (e) => e.stopPropagation();
-    silBtn.onclick = (e) => {
-      e.stopPropagation();
-      etiketElemanSil(i);
-    };
-  });
 
   alan.querySelectorAll('.tasarim-eleman').forEach((div, index) => {
     const eleman = etiketTasarim.elemanlar[index];
@@ -2293,6 +2288,23 @@ function etiketTasarimElemanlariCiz() {
       etiketElemanAyarlariniGoster(eleman);
     };
   });
+}
+
+function etiketTasarimKeyDown(e) {
+  if (!etiketTasarimSeciliEleman) return;
+  const adm = e.shiftKey ? 5 : 1;
+  let moved = false;
+  if (e.key === 'ArrowLeft') { etiketTasarimSeciliEleman.x = Math.max(0, etiketTasarimSeciliEleman.x - adm); moved = true; }
+  else if (e.key === 'ArrowRight') { etiketTasarimSeciliEleman.x = Math.min(etiketTasarim.genislik - etiketTasarimSeciliEleman.genislik, etiketTasarimSeciliEleman.x + adm); moved = true; }
+  else if (e.key === 'ArrowUp') { etiketTasarimSeciliEleman.y = Math.max(0, etiketTasarimSeciliEleman.y - adm); moved = true; }
+  else if (e.key === 'ArrowDown') { etiketTasarimSeciliEleman.y = Math.min(etiketTasarim.yukseklik - etiketTasarimSeciliEleman.yukseklik, etiketTasarimSeciliEleman.y + adm); moved = true; }
+  else if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    const index = etiketTasarim.elemanlar.indexOf(etiketTasarimSeciliEleman);
+    if (index >= 0) etiketElemanSil(index);
+    return;
+  }
+  if (moved) { e.preventDefault(); etiketTasarimElemanlariCiz(); }
 }
 
 function etiketElemanSil(index) {
