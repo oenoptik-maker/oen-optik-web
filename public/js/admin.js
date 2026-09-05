@@ -470,11 +470,10 @@ async function seciliUrunleriYazdir() {
     const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
       <style>
         @page{size:${genislikMM}mm ${yukseklikMM}mm;margin:0;padding:0;}
-        html{margin:0;padding:0;}
-        body{margin:0;padding:0;background:white;width:${genislikMM}mm;height:${yukseklikMM}mm;}
+        html,body{margin:0;padding:0;background:white;}
         *{margin:0;padding:0;box-sizing:border-box;}
-        .etiket{width:${genislikMM}mm;height:${yukseklikMM}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;}
-        .etiket:last-child{page-break-after:auto;}
+        .etiket{width:${genislikMM}mm;height:${yukseklikMM}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;}
+
       </style>
     </head><body>${tumEtiketler}</body></html>`;
     showToast(`Yazdırma penceresi açılıyor (${toplamAdet} etiket)...`, 'info');
@@ -2480,11 +2479,10 @@ async function etiketYazdir() {
     const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8">
       <style>
         @page{size:${genislikMM}mm ${yukseklikMM}mm;margin:0;padding:0;}
-        html{margin:0;padding:0;}
-        body{margin:0;padding:0;background:white;width:${genislikMM}mm;height:${yukseklikMM}mm;}
+        html,body{margin:0;padding:0;background:white;}
         *{margin:0;padding:0;box-sizing:border-box;}
-        .etiket{width:${genislikMM}mm;height:${yukseklikMM}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;}
-        .etiket:last-child{page-break-after:auto;}
+        .etiket{width:${genislikMM}mm;height:${yukseklikMM}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;}
+
       </style>
     </head><body>${tumEtiketler}</body></html>`;
     showToast(`Yazdırma penceresi açılıyor (${adet} etiket)...`, 'info');
@@ -2571,10 +2569,10 @@ async function tumunuYazdir(kaynak) {
       <style>
         @page{size:${genislikMM}mm ${yukseklikMM}mm;margin:0;padding:0;}
         html{margin:0;padding:0;}
-        body{margin:0;padding:0;background:white;width:${genislikMM}mm;height:${yukseklikMM}mm;}
+        body{margin:0;padding:0;background:white;}
         *{margin:0;padding:0;box-sizing:border-box;}
-        .etiket{width:${genislikMM}mm;height:${yukseklikMM}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;page-break-after:always;page-break-inside:avoid;}
-        .etiket:last-child{page-break-after:auto;}
+        .etiket{width:${genislikMM}mm;height:${yukseklikMM}mm;position:relative;overflow:hidden;font-family:Arial,sans-serif;}
+
       </style>
     </head><body>${tumEtiketler}</body></html>`;
     showToast(`Yazdırma penceresi açılıyor (${urunler.length} etiket)...`, 'info');
