@@ -1910,3 +1910,12 @@ async function exportToExcel() {
     }
   }
 }
+
+document.addEventListener('input', function(e) {
+  const el = e.target;
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+    const pos = el.selectionStart;
+    el.value = el.value.toLocaleUpperCase('tr-TR');
+    el.setSelectionRange(pos, pos);
+  }
+}, true);
