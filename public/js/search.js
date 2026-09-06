@@ -83,7 +83,7 @@ function filterOrders() {
     if (searchTerm) {
       const matchFields = [
         order.AD_SOYAD, order.TC_KIMLIK, order.TELEFON, order.EMAIL,
-        order.ADRES, order.SIRA_NO
+        order.ADRES, order.SIRA_NO, order.SIPARIS_TARIHI, order.TESLIM_TARIHI
       ];
       if (!matchFields.some(f => f && String(f).toLowerCase().includes(searchTerm))) {
         return false;
@@ -201,11 +201,6 @@ function renderOrderTable() {
   const recordCount = document.getElementById('recordCount');
 
   if (!tbody) return;
-
-  // Guvenlik: filteredOrders bos ama allOrders dolu ise → filtre hatasi, geri yukle
-  if (filteredOrders.length === 0 && allOrders.length > 0) {
-    filteredOrders = [...allOrders];
-  }
 
   if (filteredOrders.length === 0) {
     tbody.innerHTML = '';
