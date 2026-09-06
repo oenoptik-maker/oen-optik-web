@@ -1782,3 +1782,49 @@ html.in-iframe.login-page {
 html.in-iframe .login-card {
   margin-bottom: 20px;
 }
+
+@media print {
+  *, *::before, *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  :root, [data-theme="dark"], [data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-input: #ffffff;
+    --bg-hover: #f0f0f0;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --border: #cccccc;
+    --border-focus: #000000;
+    --accent: #000000;
+    --accent-hover: #333333;
+    --accent-light: #f0f0f0;
+    --success: #000000;
+    --danger: #000000;
+    --warning: #000000;
+    --info: #000000;
+    --shadow: none;
+    --shadow-lg: none;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .sidebar, .navbar, .theme-toggle, .pagination-container, .empty-state, .modal-overlay, .toast-container {
+    display: none !important;
+  }
+  .content-area, .card, .table, .form-control, .btn {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #ccc !important;
+  }
+  a { color: #000 !important; text-decoration: underline; }
+  table { border-collapse: collapse !important; }
+  td, th { border: 1px solid #ccc !important; padding: 4px 8px !important; }
+  @page { margin: 10mm; }
+}
