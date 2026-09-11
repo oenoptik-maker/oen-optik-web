@@ -366,6 +366,15 @@ async function openUrunModal() {
 
   document.getElementById('urunModal').classList.add('active');
   document.getElementById('urunAdi').focus();
+
+  // Enter tusu ile kaydetme
+  const urunModal = document.getElementById('urunModal');
+  urunModal.onkeydown = function(e) {
+    if (e.key === 'Enter' && e.target.tagName !== 'SELECT') {
+      e.preventDefault();
+      modalUrunKaydet();
+    }
+  };
 }
 
 function closeUrunModal() {
@@ -419,6 +428,7 @@ async function modalUrunKaydet() {
         });
       }
       renderSeciliUrunler();
+      urunToplamiGuncelle();
     }
   } else {
     showToast('Kaydetme hatası!', 'error');
